@@ -1,0 +1,2730 @@
+{
+ "scriptContent": {
+  "header": {
+   "scriptName": "Landing_AetnaHealth_SL",
+   "busNo": 4601541,
+   "mediaType": 4,
+   "mediaTypeName": "call",
+   "purposeType": "General",
+   "variableRedaction": "",
+   "nextActionId": 60,
+   "status": "Active",
+   "lastSavedIn": "stx",
+   "wasLayoutAlgorithmRun": true
+  },
+  "actions": {
+   "1": {
+    "actionId": 1,
+    "libraryId": "B2F794C5-0232-40E7-9830-76D573BF57D7",
+    "name": "BEGIN",
+    "version": 1,
+    "label": "Aetna Health Landing",
+    "dependencyOrder": "0",
+    "implType": "0",
+    "x": 296,
+    "y": 680,
+    "xws": 296,
+    "yws": 680
+   },
+   "4": {
+    "actionId": 4,
+    "libraryId": "F8B958D0-8CD3-40DF-97D3-5862930B0807",
+    "name": "RUNSUB",
+    "version": 1,
+    "label": "Check Ports",
+    "dependencyOrder": "1",
+    "implType": "0",
+    "x": 1184,
+    "y": 664,
+    "xws": 1184,
+    "yws": 664
+   },
+   "5": {
+    "actionId": 5,
+    "libraryId": "7D5D3B99-DF55-4CCC-A78A-981B3F99F5BE",
+    "name": "VOICEPARAMS",
+    "version": 1,
+    "label": "Voiceparams - 4: Heather, Female (US)",
+    "dependencyOrder": "2",
+    "implType": "0",
+    "x": 1024,
+    "y": 688,
+    "xws": 1024,
+    "yws": 688
+   },
+   "10": {
+    "actionId": 10,
+    "libraryId": "DAEE9C00-12CE-4222-A42E-307C37D53B7F",
+    "name": "MENU",
+    "version": 1,
+    "label": "AetnaHealth Menu",
+    "dependencyOrder": "3",
+    "implType": "0",
+    "x": 2016,
+    "y": 664,
+    "xws": 2016,
+    "yws": 664
+   },
+   "12": {
+    "actionId": 12,
+    "libraryId": "93232E99-D607-4E7D-9300-17986D70DA3C",
+    "name": "RUNSCRIPT",
+    "version": 1,
+    "label": "KPMA Queue",
+    "dependencyOrder": "4",
+    "implType": "0",
+    "x": 2752,
+    "y": 1272,
+    "xws": 2752,
+    "yws": 1272
+   },
+   "15": {
+    "actionId": 15,
+    "libraryId": "DAEE9C00-12CE-4222-A42E-307C37D53B7F",
+    "name": "MENU",
+    "version": 1,
+    "label": "Aetna Greeting",
+    "dependencyOrder": "5",
+    "implType": "0",
+    "x": 1376,
+    "y": 664,
+    "xws": 1376,
+    "yws": 664
+   },
+   "16": {
+    "actionId": 16,
+    "libraryId": "9015C095-98D9-441F-BF92-E90F5C5ED8C8",
+    "name": "ASSIGN",
+    "version": 1,
+    "label": "Lang = SP",
+    "dependencyOrder": "2",
+    "implType": "0",
+    "x": 1568,
+    "y": 400,
+    "xws": 1568,
+    "yws": 400
+   },
+   "17": {
+    "actionId": 17,
+    "libraryId": "9015C095-98D9-441F-BF92-E90F5C5ED8C8",
+    "name": "ASSIGN",
+    "version": 1,
+    "label": "Lang = EN",
+    "dependencyOrder": "2",
+    "implType": "0",
+    "x": 864,
+    "y": 688,
+    "xws": 864,
+    "yws": 688
+   },
+   "21": {
+    "actionId": 21,
+    "libraryId": "B64A6796-4F66-4B1B-A9B5-3AF926AB4B7C",
+    "name": "HANGUP",
+    "version": 1,
+    "label": "Hangup",
+    "dependencyOrder": "8",
+    "implType": "0",
+    "x": 2528,
+    "y": 400,
+    "xws": 2528,
+    "yws": 400
+   },
+   "22": {
+    "actionId": 22,
+    "libraryId": "B333DA63-33C8-4297-A58A-E9546CF7F0F2",
+    "name": "SNIPPET",
+    "version": 1,
+    "label": "Skills",
+    "dependencyOrder": "9",
+    "implType": "0",
+    "x": 2304,
+    "y": 664,
+    "xws": 2304,
+    "yws": 664
+   },
+   "25": {
+    "actionId": 25,
+    "libraryId": "A10F9F27-A5DD-48BA-AE37-E206FC6E101B",
+    "name": "LOOP",
+    "version": 1,
+    "label": "Loop x3",
+    "dependencyOrder": "10",
+    "implType": "0",
+    "x": 2016,
+    "y": 400,
+    "xws": 2016,
+    "yws": 400
+   },
+   "26": {
+    "actionId": 26,
+    "libraryId": "B1B9A2DD-65B6-4626-9CF5-9CFA69CF59E2",
+    "name": "PLAY",
+    "version": 1,
+    "label": "Invalid",
+    "dependencyOrder": "11",
+    "implType": "0",
+    "x": 1792,
+    "y": 376,
+    "xws": 1792,
+    "yws": 376
+   },
+   "27": {
+    "actionId": 27,
+    "libraryId": "B1B9A2DD-65B6-4626-9CF5-9CFA69CF59E2",
+    "name": "PLAY",
+    "version": 1,
+    "label": "Invalid Final",
+    "dependencyOrder": "12",
+    "implType": "0",
+    "x": 2304,
+    "y": 376,
+    "xws": 2304,
+    "yws": 376
+   },
+   "30": {
+    "actionId": 30,
+    "libraryId": "D639CF70-9DE8-47FE-AA7E-6B39E4556D9D",
+    "name": "HOURS",
+    "version": 1,
+    "label": "Aetna Hours",
+    "dependencyOrder": "13",
+    "implType": "0",
+    "x": 1568,
+    "y": 688,
+    "xws": 1568,
+    "yws": 688
+   },
+   "31": {
+    "actionId": 31,
+    "libraryId": "B1B9A2DD-65B6-4626-9CF5-9CFA69CF59E2",
+    "name": "PLAY",
+    "version": 1,
+    "label": "After Hours Message",
+    "dependencyOrder": "14",
+    "implType": "0",
+    "x": 1792,
+    "y": 888,
+    "xws": 1792,
+    "yws": 888
+   },
+   "33": {
+    "actionId": 33,
+    "libraryId": "B1B9A2DD-65B6-4626-9CF5-9CFA69CF59E2",
+    "name": "PLAY",
+    "version": 1,
+    "label": "QA and Mask up",
+    "dependencyOrder": "15",
+    "implType": "0",
+    "x": 2528,
+    "y": 1272,
+    "xws": 2528,
+    "yws": 1272
+   },
+   "34": {
+    "actionId": 34,
+    "libraryId": "B1B9A2DD-65B6-4626-9CF5-9CFA69CF59E2",
+    "name": "PLAY",
+    "version": 1,
+    "label": "Scheduling Hours",
+    "dependencyOrder": "16",
+    "implType": "0",
+    "x": 1792,
+    "y": 664,
+    "xws": 1792,
+    "yws": 664
+   },
+   "35": {
+    "actionId": 35,
+    "libraryId": "F8B958D0-8CD3-40DF-97D3-5862930B0807",
+    "name": "RUNSUB",
+    "version": 1,
+    "label": "Check Hours",
+    "dependencyOrder": "17",
+    "implType": "0",
+    "x": 1568,
+    "y": 888,
+    "xws": 1568,
+    "yws": 888
+   },
+   "36": {
+    "actionId": 36,
+    "libraryId": "B64A6796-4F66-4B1B-A9B5-3AF926AB4B7C",
+    "name": "HANGUP",
+    "version": 1,
+    "label": "Hangup",
+    "dependencyOrder": "18",
+    "implType": "0",
+    "x": 1568,
+    "y": 1168,
+    "xws": 1568,
+    "yws": 1168
+   },
+   "37": {
+    "actionId": 37,
+    "libraryId": "D28D2B39-D4DB-499A-9B8B-F3879E4C5B25",
+    "name": "ANNOTATION",
+    "version": 1,
+    "label": "Annotation",
+    "dependencyOrder": "19",
+    "implType": "0",
+    "x": 1312,
+    "y": 1008,
+    "xws": 1312,
+    "yws": 1008
+   },
+   "39": {
+    "actionId": 39,
+    "libraryId": "A10F9F27-A5DD-48BA-AE37-E206FC6E101B",
+    "name": "LOOP",
+    "version": 1,
+    "label": "Loop x1",
+    "dependencyOrder": "20",
+    "implType": "0",
+    "x": 1792,
+    "y": 1168,
+    "xws": 1792,
+    "yws": 1168
+   },
+   "40": {
+    "actionId": 40,
+    "libraryId": "B64A6796-4F66-4B1B-A9B5-3AF926AB4B7C",
+    "name": "HANGUP",
+    "version": 1,
+    "label": "Hangup",
+    "dependencyOrder": "21",
+    "implType": "0",
+    "x": 640,
+    "y": 1104,
+    "xws": 640,
+    "yws": 1104
+   },
+   "41": {
+    "actionId": 41,
+    "libraryId": "B1B9A2DD-65B6-4626-9CF5-9CFA69CF59E2",
+    "name": "PLAY",
+    "version": 1,
+    "label": "Play Ineligible Prompt",
+    "dependencyOrder": "22",
+    "implType": "0",
+    "x": 640,
+    "y": 888,
+    "xws": 640,
+    "yws": 888
+   },
+   "42": {
+    "actionId": 42,
+    "libraryId": "6695BA9C-E1D6-4F3C-A15A-94F1400E3169",
+    "name": "IF",
+    "version": 1,
+    "label": "If BlockCall = true",
+    "dependencyOrder": "23",
+    "implType": "0",
+    "x": 640,
+    "y": 688,
+    "xws": 640,
+    "yws": 688
+   },
+   "43": {
+    "actionId": 43,
+    "libraryId": "F8B958D0-8CD3-40DF-97D3-5862930B0807",
+    "name": "RUNSUB",
+    "version": 1,
+    "label": "CallBlocker",
+    "dependencyOrder": "24",
+    "implType": "0",
+    "x": 448,
+    "y": 664,
+    "xws": 448,
+    "yws": 664
+   },
+   "44": {
+    "actionId": 44,
+    "libraryId": "F40B8113-DEE5-405E-8A11-BCF3954047D9",
+    "name": "BLINDXFER",
+    "version": 1,
+    "label": "To PolyAI",
+    "dependencyOrder": "25",
+    "implType": "0",
+    "x": 4352,
+    "y": 1232,
+    "xws": 4352,
+    "yws": 1232
+   },
+   "45": {
+    "actionId": 45,
+    "libraryId": "D583A89D-145C-44AC-B476-A15045180000",
+    "name": "SIPXFERPUTHD",
+    "version": 1,
+    "label": "SIPXFERPUTHD",
+    "dependencyOrder": "38",
+    "implType": "0",
+    "x": 4352,
+    "y": 1040,
+    "xws": 4352,
+    "yws": 1040
+   },
+   "47": {
+    "actionId": 47,
+    "libraryId": "9015C095-98D9-441F-BF92-E90F5C5ED8C8",
+    "name": "ASSIGN",
+    "version": 1,
+    "label": "Assign Res",
+    "dependencyOrder": "26",
+    "implType": "0",
+    "x": 2016,
+    "y": 1296,
+    "xws": 2016,
+    "yws": 1296
+   },
+   "48": {
+    "actionId": 48,
+    "libraryId": "6695BA9C-E1D6-4F3C-A15A-94F1400E3169",
+    "name": "IF",
+    "version": 1,
+    "label": "Lang",
+    "dependencyOrder": "27",
+    "implType": "0",
+    "x": 2016,
+    "y": 976,
+    "xws": 2016,
+    "yws": 976
+   },
+   "49": {
+    "actionId": 49,
+    "libraryId": "9015C095-98D9-441F-BF92-E90F5C5ED8C8",
+    "name": "ASSIGN",
+    "version": 1,
+    "label": "Assign Res",
+    "dependencyOrder": "28",
+    "implType": "0",
+    "x": 2304,
+    "y": 976,
+    "xws": 2304,
+    "yws": 976
+   },
+   "50": {
+    "actionId": 50,
+    "libraryId": "6695BA9C-E1D6-4F3C-A15A-94F1400E3169",
+    "name": "IF",
+    "version": 1,
+    "label": "Lang",
+    "dependencyOrder": "29",
+    "implType": "0",
+    "x": 2752,
+    "y": 688,
+    "xws": 2752,
+    "yws": 688
+   },
+   "51": {
+    "actionId": 51,
+    "libraryId": "DAEE9C00-12CE-4222-A42E-307C37D53B7F",
+    "name": "MENU",
+    "version": 1,
+    "label": "Skill Menu",
+    "dependencyOrder": "30",
+    "implType": "0",
+    "x": 2464,
+    "y": 472,
+    "xws": 2464,
+    "yws": 472
+   },
+   "52": {
+    "actionId": 52,
+    "libraryId": "B333DA63-33C8-4297-A58A-E9546CF7F0F2",
+    "name": "SNIPPET",
+    "version": 1,
+    "label": "IVR to SMS Foundation",
+    "dependencyOrder": "31",
+    "implType": "0",
+    "x": 2752,
+    "y": 472,
+    "xws": 2752,
+    "yws": 472
+   },
+   "53": {
+    "actionId": 53,
+    "libraryId": "9015C095-98D9-441F-BF92-E90F5C5ED8C8",
+    "name": "ASSIGN",
+    "version": 1,
+    "label": "Assign MemberApp",
+    "dependencyOrder": "32",
+    "implType": "0",
+    "x": 2528,
+    "y": 976,
+    "xws": 2528,
+    "yws": 976
+   },
+   "54": {
+    "actionId": 54,
+    "libraryId": "E86250D4-8659-4DF0-937E-1F50E64E180E",
+    "name": "SPAWN",
+    "version": 1,
+    "label": "Spawn",
+    "dependencyOrder": "37",
+    "implType": "0",
+    "x": 3040,
+    "y": 664,
+    "xws": 3040,
+    "yws": 664
+   },
+   "55": {
+    "actionId": 55,
+    "libraryId": "DE09A7DE-6654-4642-A86A-87FFBE75C7D7",
+    "name": "ONSIGNAL",
+    "version": 1,
+    "label": "Onsignal",
+    "dependencyOrder": "33",
+    "implType": "0",
+    "x": 3080,
+    "y": 904,
+    "xws": 3080,
+    "yws": 904
+   },
+   "56": {
+    "actionId": 56,
+    "libraryId": "B1B9A2DD-65B6-4626-9CF5-9CFA69CF59E2",
+    "name": "PLAY",
+    "version": 1,
+    "label": "Play",
+    "dependencyOrder": "34",
+    "implType": "0",
+    "x": 3296,
+    "y": 888,
+    "xws": 3296,
+    "yws": 888
+   },
+   "57": {
+    "actionId": 57,
+    "libraryId": "9015C095-98D9-441F-BF92-E90F5C5ED8C8",
+    "name": "ASSIGN",
+    "version": 1,
+    "label": "Assign PolyReason",
+    "dependencyOrder": "36",
+    "implType": "0",
+    "x": 3488,
+    "y": 912,
+    "xws": 3488,
+    "yws": 912
+   },
+   "58": {
+    "actionId": 58,
+    "libraryId": "9015C095-98D9-441F-BF92-E90F5C5ED8C8",
+    "name": "ASSIGN",
+    "version": 1,
+    "label": "Assign PolyNote",
+    "dependencyOrder": "39",
+    "implType": "0",
+    "x": 3680,
+    "y": 912,
+    "xws": 3680,
+    "yws": 912
+   },
+   "59": {
+    "actionId": 59,
+    "libraryId": "689A4A1B-FA0D-47B3-9A02-CBEB4735F08F",
+    "name": "REQAGENT",
+    "version": 1,
+    "label": "Reqagent",
+    "dependencyOrder": "35",
+    "implType": "0",
+    "x": 4000,
+    "y": 912,
+    "xws": 4000,
+    "yws": 912
+   }
+  },
+  "properties": {
+   "1": {
+    "0": {
+     "name": "RootFolder",
+     "value": ""
+    },
+    "1": {
+     "name": "Application",
+     "value": ""
+    },
+    "2": {
+     "name": "ParamCount",
+     "value": ""
+    },
+    "3": {
+     "name": "Parameters",
+     "value": []
+    }
+   },
+   "4": {
+    "0": {
+     "name": "ScriptName",
+     "value": "CheckPorts"
+    },
+    "1": {
+     "name": "ParamCount",
+     "value": ""
+    },
+    "2": {
+     "name": "ReturnVariable",
+     "value": "RTN"
+    },
+    "3": {
+     "name": "Parameters",
+     "value": []
+    }
+   },
+   "5": {
+    "0": {
+     "name": "TTSVolume",
+     "value": "70"
+    },
+    "1": {
+     "name": "TTSRate",
+     "value": "0"
+    },
+    "2": {
+     "name": "TTSVoice",
+     "value": "4: Heather, Female (US)"
+    },
+    "3": {
+     "name": "unused1073743309",
+     "value": ""
+    },
+    "4": {
+     "name": "ASRTuningEnabled",
+     "value": "NoChange"
+    },
+    "5": {
+     "name": "ASRUniversalsEnabled",
+     "value": "NoChange"
+    },
+    "6": {
+     "name": "ASRUniversalContentType",
+     "value": "PhraseList"
+    },
+    "7": {
+     "name": "ASRUniversalPhraseList",
+     "value": ""
+    },
+    "8": {
+     "name": "ASRUniversalGrammarFile",
+     "value": ""
+    },
+    "9": {
+     "name": "ASRUniversalVarName",
+     "value": "_ASRUniversal"
+    },
+    "10": {
+     "name": "ASRLanguageLocale",
+     "value": "NoChange"
+    }
+   },
+   "10": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\KPMAMenu_{Lang}.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "EN - Please listen carefully to the following options.\n\nIf you are calling to schedule a new trip, or to confirm or make changes to an existing trip, press 1.\n\nIf you are calling for “Where’s My Ride,” press 2.\n\nIf you are a new member, press 3.\n\nSP - Por favor, escuche atentamente las siguientes opciones.\n\nSi llama para programar un viaje nuevo, o para confirmar o hacer cambios a un viaje existente, oprima uno.\n\nSi llama por “¿Dónde está mi viaje?”, oprima dos.\n\nSi es un miembro nuevo, oprima tres."
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "MaxDigits",
+     "value": "1"
+    },
+    "4": {
+     "name": "Terminator",
+     "value": "#-"
+    },
+    "5": {
+     "name": "Timeout",
+     "value": "5"
+    },
+    "6": {
+     "name": "InterDigitTimeout",
+     "value": "5"
+    },
+    "7": {
+     "name": "Variable",
+     "value": "AHPMenu_RES"
+    }
+   },
+   "12": {
+    "0": {
+     "name": "ScriptName",
+     "value": "Queue_KPMA"
+    }
+   },
+   "15": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\GreetingMenu_Aetna_EN.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "EN: Thank you for calling Aetna Health Transportation provided by Saferide Health.\nIf this is a medical emergency, please hang up and dial 911.\nFor English, please press 1.\n\nSP: Para espanol, presione 2."
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "MaxDigits",
+     "value": "1"
+    },
+    "4": {
+     "name": "Terminator",
+     "value": "#-"
+    },
+    "5": {
+     "name": "Timeout",
+     "value": "5"
+    },
+    "6": {
+     "name": "InterDigitTimeout",
+     "value": "5"
+    },
+    "7": {
+     "name": "Variable",
+     "value": "MRES"
+    }
+   },
+   "16": {
+    "0": {
+     "name": "Variable",
+     "value": "Lang"
+    },
+    "1": {
+     "name": "Value",
+     "value": "SP"
+    },
+    "2": {
+     "name": "Type",
+     "value": "String"
+    },
+    "3": {
+     "name": "Publish",
+     "value": ""
+    },
+    "4": {
+     "name": "ScreenPop",
+     "value": "False"
+    },
+    "5": {
+     "name": "SaveToDB",
+     "value": "False"
+    },
+    "6": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   },
+   "17": {
+    "0": {
+     "name": "Variable",
+     "value": "Lang"
+    },
+    "1": {
+     "name": "Value",
+     "value": "EN"
+    },
+    "2": {
+     "name": "Type",
+     "value": "String"
+    },
+    "3": {
+     "name": "Publish",
+     "value": ""
+    },
+    "4": {
+     "name": "ScreenPop",
+     "value": "False"
+    },
+    "5": {
+     "name": "SaveToDB",
+     "value": "False"
+    },
+    "6": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   },
+   "21": {},
+   "22": {
+    "0": {
+     "name": "Data",
+     "value": "SWITCH AHPMenu_RES\r\n{\r\n\tCASE 1\r\n\t{ \r\n\t\tIF Lang = \"SP\"\r\n\t\t{\r\n\t\t\tASSIGN QueueSkill = 18556372\r\n\t\t\tASSIGN SkillWhisper = \"Aetna-Health-Reservations-Spanish\"\r\n\t\t}\r\n\t\tELSE\r\n\t\t{\r\n\t\t\tASSIGN QueueSkill = 18556371\r\n\t\t\tASSIGN SkillWhisper = \"Aetna-Health-Reservations-English\"\r\n\t\t}\r\n\t} \r\n\tCASE 2\r\n\t{ \r\n\t\tIF Lang = \"SP\"\r\n\t\t{\r\n\t\t\tASSIGN QueueSkill = 18556374 \r\n\t\t\tASSIGN SkillWhisper = \"Aetna-Health-W-M-R-Spanish\"\r\n\t\t}\r\n\t\tELSE\r\n\t\t{\r\n\t\t\tASSIGN QueueSkill = 18556373 \r\n\t\t\tASSIGN SkillWhisper = \"Aetna-Health-W-M-R-English\"\r\n\t\t}\r\n\t}\r\n\tCASE 3\r\n\t{ \r\n\t\tIF Lang = \"SP\"\r\n\t\t{\r\n\t\t\tASSIGN QueueSkill = 18556372 \r\n\t\t\tASSIGN SkillWhisper = \"Aetna-Health-Reservations-Spanish\"\r\n\t\t}\r\n\t\tELSE\r\n\t\t{\r\n\t\t\tASSIGN QueueSkill = 18556371 \r\n\t\t\tASSIGN SkillWhisper = \"Aetna-Health-Reservations-English\"\r\n\t\t}\r\n\t} \r\n\r\n}"
+    },
+    "1": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   },
+   "25": {
+    "0": {
+     "name": "Repeat",
+     "value": "3"
+    },
+    "1": {
+     "name": "CounterName",
+     "value": "MenuLoop"
+    }
+   },
+   "26": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\Driscoll_Invalid_{Lang}.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "EN - I’m sorry, that was an invalid option. Please try again.\n\nSP - Lo sentimos, esa opción no es válida. Por favor, intente de nuevo."
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "DetectDTMF",
+     "value": "True"
+    },
+    "4": {
+     "name": "SuppressSilence",
+     "value": ""
+    },
+    "5": {
+     "name": "TTSVolume",
+     "value": ""
+    },
+    "6": {
+     "name": "TTSRate",
+     "value": ""
+    },
+    "7": {
+     "name": "TTSVoice",
+     "value": ""
+    }
+   },
+   "27": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\Driscoll_InvalidFinal_{Lang}.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "EN - No option has been selected. Goodbye.\n\nSP - No se seleccionó ninguna opción. Adiós."
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "DetectDTMF",
+     "value": "True"
+    },
+    "4": {
+     "name": "SuppressSilence",
+     "value": ""
+    },
+    "5": {
+     "name": "TTSVolume",
+     "value": ""
+    },
+    "6": {
+     "name": "TTSRate",
+     "value": ""
+    },
+    "7": {
+     "name": "TTSVoice",
+     "value": ""
+    }
+   },
+   "30": {
+    "0": {
+     "name": "Profile",
+     "value": "2028"
+    }
+   },
+   "31": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\Closed_Aetna_{LANG}.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "EN - \"Thank you for calling Aetna  Health Transportation Managed by SafeRide, our offices are currently closed. Please call back during regular business hours 6:00a - 6:00ap PST, Monday thru Saturday.\"\n\nSP - \"Gracias por llamar a Aetna  Health Transportation Managed by SafeRide, nuestras oficinas están actualmente cerradas. Vuelva a llamar durante el horario comercial habitual de 6:00a - 6:00ap PST de lunes a sábado.\""
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "DetectDTMF",
+     "value": "True"
+    },
+    "4": {
+     "name": "SuppressSilence",
+     "value": ""
+    },
+    "5": {
+     "name": "TTSVolume",
+     "value": ""
+    },
+    "6": {
+     "name": "TTSRate",
+     "value": ""
+    },
+    "7": {
+     "name": "TTSVoice",
+     "value": ""
+    }
+   },
+   "33": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\CallsRecorded_{Lang}.wav\" \"Prompts\\MaskUp_{Lang}.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "EN - This call may be recorded for quality and training purposes.  To protect you and your drivers, please wear a mask at all times in transport.\n\nSP - Esta llamada se esta garbando por motivois de calidad y propositos de entrenamiento.  Para protejerlo a usted y a su conductor use se mascara en todo momento durante su transporte."
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "DetectDTMF",
+     "value": "True"
+    },
+    "4": {
+     "name": "SuppressSilence",
+     "value": ""
+    },
+    "5": {
+     "name": "TTSVolume",
+     "value": ""
+    },
+    "6": {
+     "name": "TTSRate",
+     "value": ""
+    },
+    "7": {
+     "name": "TTSVoice",
+     "value": ""
+    }
+   },
+   "34": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\2023\\Aetna\\Hours_Aetna_{LANG}.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "EN - \"We are open to schedule Monday - Saturday from 6:00a - 6:00ap CST, Closed Sunday.\"\n\nSP - \"Nuestro horario normal de operaciones es de Lunes a Sabado de 6:00a - 6:00ap CST. Cerrado Domingo.\""
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "DetectDTMF",
+     "value": "True"
+    },
+    "4": {
+     "name": "SuppressSilence",
+     "value": ""
+    },
+    "5": {
+     "name": "TTSVolume",
+     "value": ""
+    },
+    "6": {
+     "name": "TTSRate",
+     "value": ""
+    },
+    "7": {
+     "name": "TTSVoice",
+     "value": ""
+    }
+   },
+   "35": {
+    "0": {
+     "name": "ScriptName",
+     "value": "CheckHours"
+    },
+    "1": {
+     "name": "ParamCount",
+     "value": ""
+    },
+    "2": {
+     "name": "ReturnVariable",
+     "value": "isOpen"
+    },
+    "3": {
+     "name": "Parameters",
+     "value": [
+      "1942"
+     ]
+    }
+   },
+   "36": {},
+   "37": {
+    "0": {
+     "name": "Comments",
+     "value": "Handles Overrides"
+    },
+    "1": {
+     "name": "Width",
+     "value": "84"
+    },
+    "2": {
+     "name": "Height",
+     "value": "70"
+    }
+   },
+   "39": {
+    "0": {
+     "name": "Repeat",
+     "value": "1"
+    },
+    "1": {
+     "name": "CounterName",
+     "value": "AHLoop"
+    }
+   },
+   "40": {},
+   "41": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\Block_Number_EN.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "Thank you for calling SafeRide Health. The account associated with this phone number is not eligible for a transportation benefit at this time. Goodbye."
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "DetectDTMF",
+     "value": "True"
+    },
+    "4": {
+     "name": "SuppressSilence",
+     "value": ""
+    },
+    "5": {
+     "name": "TTSVolume",
+     "value": ""
+    },
+    "6": {
+     "name": "TTSRate",
+     "value": ""
+    },
+    "7": {
+     "name": "TTSVoice",
+     "value": ""
+    }
+   },
+   "42": {
+    "0": {
+     "name": "Expression",
+     "value": "BlockCall = 1"
+    }
+   },
+   "43": {
+    "0": {
+     "name": "ScriptName",
+     "value": "CallBlocker"
+    },
+    "1": {
+     "name": "ParamCount",
+     "value": ""
+    },
+    "2": {
+     "name": "ReturnVariable",
+     "value": "BlockCall"
+    },
+    "3": {
+     "name": "Parameters",
+     "value": [
+      "{ANI}"
+     ]
+    }
+   },
+   "44": {
+    "0": {
+     "name": "Destination",
+     "value": "9993230010"
+    }
+   },
+   "45": {
+    "0": {
+     "name": "headerName",
+     "value": "X-SkillId"
+    },
+    "1": {
+     "name": "headerValue",
+     "value": "{QueueSkill}"
+    }
+   },
+   "47": {
+    "0": {
+     "name": "Variable",
+     "value": "QueueSkill"
+    },
+    "1": {
+     "name": "Value",
+     "value": "18556371"
+    },
+    "2": {
+     "name": "Type",
+     "value": "String"
+    },
+    "3": {
+     "name": "Publish",
+     "value": ""
+    },
+    "4": {
+     "name": "ScreenPop",
+     "value": "False"
+    },
+    "5": {
+     "name": "SaveToDB",
+     "value": "False"
+    },
+    "6": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   },
+   "48": {
+    "0": {
+     "name": "Expression",
+     "value": "Lang = \"EN\""
+    }
+   },
+   "49": {
+    "0": {
+     "name": "Variable",
+     "value": "QueueSkill"
+    },
+    "1": {
+     "name": "Value",
+     "value": "18556372"
+    },
+    "2": {
+     "name": "Type",
+     "value": "String"
+    },
+    "3": {
+     "name": "Publish",
+     "value": ""
+    },
+    "4": {
+     "name": "ScreenPop",
+     "value": "False"
+    },
+    "5": {
+     "name": "SaveToDB",
+     "value": "False"
+    },
+    "6": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   },
+   "50": {
+    "0": {
+     "name": "Expression",
+     "value": "Lang = \"EN\""
+    }
+   },
+   "51": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\SafeRide_Link_to_Member_Portal_En.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "Want to book and manage rides even more quickly and privately using your phone? Press 1 to receive a text message with a link to open your member portal"
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "MaxDigits",
+     "value": "1"
+    },
+    "4": {
+     "name": "Terminator",
+     "value": "#-"
+    },
+    "5": {
+     "name": "Timeout",
+     "value": "6"
+    },
+    "6": {
+     "name": "InterDigitTimeout",
+     "value": "5"
+    },
+    "7": {
+     "name": "Variable",
+     "value": "skillRES"
+    }
+   },
+   "52": {
+    "0": {
+     "name": "Data",
+     "value": "TextelAPIBaseURL = \"https://foundation.textel.net\"\r\nTextelApiKey = \"eXmSm1jXpGt3aQBviq2yyu3GUiAAi99W\" //API key here\r\n//Message to send here\r\nTextelMsgToSend = \"Welcome! Click the link to quickly book and manage your rides in the member portal: https://aetna.member.saferidehealth.com/login?src=campaign_ivrsys Your transportation is just a few taps away!\"\r\n//Destination Number\r\nTextelMobilePhoneNumber = \"+1{global:ANI}\"\r\n//Caller ID\r\nTextelLinePhoneNumber = \"+18886170438\" //phone number here\r\n\r\n\r\nASSIGN TextelSendMessageURL=\"{TextelAPIBaseURL}/clientapi/v1/nice/send-message\"\r\n\r\nTextel_Send_Message_Proxy = GetRESTProxy()\r\nTextel_Send_Message_Proxy.AddHeader(\"Authorization\",\"Bearer {TextelApiKey}\")\r\nTextel_Send_Message_Proxy.ContentType = \"application/json\"\r\nTextel_Send_Message_Proxy.ProxyTimeoutSeconds = 60\r\n\r\n//Request Body\r\nDYNAMIC TextelSendMessageRequestBody\r\nTextelSendMessageRequestBody.to=\"{TextelMobilePhoneNumber}\"\r\nTextelSendMessageRequestBody.from=\"{TextelLinePhoneNumber}\"\r\nTextelSendMessageRequestBody.body=\"{TextelMsgToSend}\"\r\nTextelSendMessageRequestBody.continueChat=\"true\"\r\nTextelSendMessageRequestBody.contactId=\"{ContactID}\"\r\nASSIGN TextelSendMessageJSONPayload = \"{TextelSendMessageRequestBody.asjson()}\"\r\n\r\nTextelSendMessageJSONPayload = TextelSendMessageJSONPayload.replace($\"\\\"true\\\"\",\"true\")\r\n\r\n//Make REST Request \r\nTextel_Send_Message_Proxy.MakeRestRequest(TextelSendMessageURL,TextelSendMessageJSONPayload,0,\"POST\")"
+    },
+    "1": {
+     "name": "MaxStringSize",
+     "value": "Limit32K"
+    }
+   },
+   "53": {
+    "0": {
+     "name": "Variable",
+     "value": "QueueSkill"
+    },
+    "1": {
+     "name": "Value",
+     "value": "27191801"
+    },
+    "2": {
+     "name": "Type",
+     "value": "String"
+    },
+    "3": {
+     "name": "Publish",
+     "value": ""
+    },
+    "4": {
+     "name": "ScreenPop",
+     "value": "False"
+    },
+    "5": {
+     "name": "SaveToDB",
+     "value": "False"
+    },
+    "6": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   },
+   "54": {
+    "0": {
+     "name": "ScriptName",
+     "value": "ForwardToPolyNoAuth"
+    },
+    "1": {
+     "name": "SpawnIDVar",
+     "value": "SPAWNID"
+    },
+    "2": {
+     "name": "Skill",
+     "value": ""
+    },
+    "3": {
+     "name": "ParamCount",
+     "value": ""
+    },
+    "4": {
+     "name": "StartDate",
+     "value": ""
+    },
+    "5": {
+     "name": "Parameters",
+     "value": [
+      "{DNIS}",
+      "{ANI}",
+      "{QueueSkill}"
+     ]
+    }
+   },
+   "55": {
+    "0": {
+     "name": "SrcContactIDVar",
+     "value": "S1"
+    },
+    "1": {
+     "name": "ParamCount",
+     "value": ""
+    },
+    "2": {
+     "name": "Parameters",
+     "value": []
+    }
+   },
+   "56": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"%Call has been returned to C X One . Transferring to Agent Now\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": ""
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "DetectDTMF",
+     "value": "True"
+    },
+    "4": {
+     "name": "SuppressSilence",
+     "value": ""
+    },
+    "5": {
+     "name": "TTSVolume",
+     "value": ""
+    },
+    "6": {
+     "name": "TTSRate",
+     "value": ""
+    },
+    "7": {
+     "name": "TTSVoice",
+     "value": ""
+    }
+   },
+   "57": {
+    "0": {
+     "name": "Variable",
+     "value": "PolyReason"
+    },
+    "1": {
+     "name": "Value",
+     "value": "{SP2}"
+    },
+    "2": {
+     "name": "Type",
+     "value": "String"
+    },
+    "3": {
+     "name": "Publish",
+     "value": ""
+    },
+    "4": {
+     "name": "ScreenPop",
+     "value": "True"
+    },
+    "5": {
+     "name": "SaveToDB",
+     "value": "False"
+    },
+    "6": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   },
+   "58": {
+    "0": {
+     "name": "Variable",
+     "value": "PolyNote"
+    },
+    "1": {
+     "name": "Value",
+     "value": "{SP3}"
+    },
+    "2": {
+     "name": "Type",
+     "value": "String"
+    },
+    "3": {
+     "name": "Publish",
+     "value": ""
+    },
+    "4": {
+     "name": "ScreenPop",
+     "value": "True"
+    },
+    "5": {
+     "name": "SaveToDB",
+     "value": "False"
+    },
+    "6": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   },
+   "59": {
+    "0": {
+     "name": "Skill",
+     "value": "21036274"
+    },
+    "1": {
+     "name": "TargetAgent",
+     "value": ""
+    },
+    "2": {
+     "name": "PriorityManagement",
+     "value": "DefaultfromSkill"
+    },
+    "3": {
+     "name": "InitialPriority",
+     "value": "0"
+    },
+    "4": {
+     "name": "Acceleration",
+     "value": "1"
+    },
+    "5": {
+     "name": "Function",
+     "value": ""
+    },
+    "6": {
+     "name": "MaxPriority",
+     "value": "1000"
+    },
+    "7": {
+     "name": "Sequence",
+     "value": ""
+    },
+    "8": {
+     "name": "ZipTone",
+     "value": "AfterSequence"
+    },
+    "9": {
+     "name": "ScreenPopSource",
+     "value": "DefaultFromSkill"
+    },
+    "10": {
+     "name": "ScreenPopURL",
+     "value": ""
+    },
+    "11": {
+     "name": "HighProficiency",
+     "value": "1"
+    },
+    "12": {
+     "name": "LowProficiency",
+     "value": "20"
+    },
+    "13": {
+     "name": "RoutingAttribute",
+     "value": "NotApplicable"
+    }
+   }
+  },
+  "branches": {
+   "1": [
+    {
+     "to": 43,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "4": [
+    {
+     "to": 15,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "5": [
+    {
+     "to": 4,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "10": [
+    {
+     "to": 25,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    },
+    {
+     "to": 22,
+     "label": "1",
+     "type": "custom",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    },
+    {
+     "to": 22,
+     "label": "2",
+     "type": "custom",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "curved",
+     "elbows": [
+      [
+       2208,
+       640
+      ]
+     ]
+    },
+    {
+     "to": 48,
+     "label": "3",
+     "type": "custom",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "15": [
+    {
+     "to": 30,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    },
+    {
+     "to": 30,
+     "label": "1",
+     "type": "custom",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "curved",
+     "elbows": [
+      [
+       1494,
+       642
+      ]
+     ]
+    },
+    {
+     "to": 16,
+     "label": "2",
+     "type": "custom",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "16": [
+    {
+     "to": 30,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "17": [
+    {
+     "to": 5,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "22": [
+    {
+     "to": 50,
+     "label": "",
+     "type": "default",
+     "index": 0,
+     "ports": "r,l",
+     "lineType": "straight"
+    }
+   ],
+   "25": [
+    {
+     "to": 27,
+     "label": "Finished",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    },
+    {
+     "to": 26,
+     "label": "Repeat",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 1,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "26": [
+    {
+     "to": 10,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "27": [
+    {
+     "to": 21,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "30": [
+    {
+     "to": 35,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    },
+    {
+     "to": 34,
+     "label": "Open",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    },
+    {
+     "to": 31,
+     "label": "Closed",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 1,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "31": [
+    {
+     "to": 39,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "33": [
+    {
+     "to": 12,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "34": [
+    {
+     "to": 10,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "35": [
+    {
+     "to": 36,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "37": [
+    {
+     "to": 35,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "39": [
+    {
+     "to": 36,
+     "label": "Finished",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    },
+    {
+     "to": 31,
+     "label": "Repeat",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 1,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "41": [
+    {
+     "to": 40,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "42": [
+    {
+     "to": 41,
+     "label": "True",
+     "type": "branch",
+     "labelDistance": 0.5,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    },
+    {
+     "to": 17,
+     "label": "False",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 1,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "43": [
+    {
+     "to": 42,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "45": [
+    {
+     "to": 44,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "47": [
+    {
+     "to": 33,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "48": [
+    {
+     "to": 47,
+     "label": "True",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    },
+    {
+     "to": 49,
+     "label": "False",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 1,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "49": [
+    {
+     "to": 33,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "50": [
+    {
+     "to": 54,
+     "label": "True",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    },
+    {
+     "to": 12,
+     "label": "False",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 1,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "51": [
+    {
+     "to": 50,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    },
+    {
+     "to": 52,
+     "label": "1",
+     "type": "custom",
+     "labelDistance": 0.5,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "curved",
+     "elbows": [
+      [
+       2592,
+       512
+      ]
+     ]
+    }
+   ],
+   "52": [
+    {
+     "to": 50,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "53": [
+    {
+     "to": 33,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "55": [
+    {
+     "to": 56,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "56": [
+    {
+     "to": 57,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "57": [
+    {
+     "to": 58,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "58": [
+    {
+     "to": 59,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ]
+  },
+  "isDataLoaded": true,
+  "isDataLoading": false,
+  "isDataSaving": false,
+  "isNewScript": false,
+  "isViewOnlyMode": false,
+  "isLockOverride": false,
+  "isVersionHistoryMode": false,
+  "dataLoadingProgress": {
+   "key": "reset"
+  },
+  "error": null,
+  "issues": {
+   "totalErrors": "0",
+   "totalWarnings": "2",
+   "actions": {
+    "54": {
+     "actionType": "SPAWN",
+     "errors": [],
+     "warnings": [
+      {
+       "key": "Warning! The Default branch for Spawn is not wired up!",
+       "localizationKey": "default-branch-is-not-wired-up",
+       "interpolationValues": [
+        "Spawn"
+       ]
+      }
+     ]
+    },
+    "59": {
+     "actionType": "REQAGENT",
+     "errors": [],
+     "warnings": [
+      {
+       "key": "Warning! The Default branch for Reqagent is not wired up!",
+       "localizationKey": "default-branch-is-not-wired-up",
+       "interpolationValues": [
+        "Reqagent"
+       ]
+      }
+     ]
+    }
+   },
+   "script": {}
+  },
+  "startTraceOptions": {
+   "skill": "",
+   "skillDescription": "",
+   "simulateInboundCall": false,
+   "phone": "",
+   "dnis": "",
+   "ani": "",
+   "simulateDateTime": false,
+   "dateTime": null,
+   "timezone": "(Business Unit Default)",
+   "parameters": []
+  },
+  "versionHistory": null,
+  "scriptVersions": {},
+  "lastVersionEdited": null,
+  "traceWindowCount": 0,
+  "variables": {
+   "ahpmenu_res": [
+    {
+     "name": "Menu",
+     "label": "AetnaHealth Menu",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#num-list"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 10
+    },
+    {
+     "name": "Snippet",
+     "label": "Skills",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 22
+    }
+   ],
+   "contactid": [
+    {
+     "name": "Snippet",
+     "label": "IVR to SMS Foundation",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 52
+    }
+   ],
+   "lang": [
+    {
+     "name": "Menu",
+     "label": "AetnaHealth Menu",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#num-list"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 10
+    },
+    {
+     "name": "Assign",
+     "label": "Lang = SP",
+     "shape": {
+      "type": "rectangle",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#brackets-x"
+      },
+      "width": 128,
+      "height": 32
+     },
+     "actionId": 16
+    },
+    {
+     "name": "Assign",
+     "label": "Lang = EN",
+     "shape": {
+      "type": "rectangle",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#brackets-x"
+      },
+      "width": 128,
+      "height": 32
+     },
+     "actionId": 17
+    },
+    {
+     "name": "Play",
+     "label": "Invalid",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#play"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 26
+    },
+    {
+     "name": "Play",
+     "label": "Invalid Final",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#play"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 27
+    },
+    {
+     "name": "Play",
+     "label": "After Hours Message",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#play"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 31
+    },
+    {
+     "name": "Play",
+     "label": "QA and Mask up",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#play"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 33
+    },
+    {
+     "name": "Play",
+     "label": "Scheduling Hours",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#play"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 34
+    }
+   ],
+   "mres": [
+    {
+     "name": "Menu",
+     "label": "Aetna Greeting",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#num-list"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 15
+    }
+   ],
+   "polynote": [
+    {
+     "name": "Assign",
+     "label": "Assign PolyNote",
+     "shape": {
+      "type": "rectangle",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#brackets-x"
+      },
+      "width": 128,
+      "height": 32
+     },
+     "actionId": 58
+    }
+   ],
+   "polyreason": [
+    {
+     "name": "Assign",
+     "label": "Assign PolyReason",
+     "shape": {
+      "type": "rectangle",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#brackets-x"
+      },
+      "width": 128,
+      "height": 32
+     },
+     "actionId": 57
+    }
+   ],
+   "queueskill": [
+    {
+     "name": "Snippet",
+     "label": "Skills",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 22
+    },
+    {
+     "name": "SIPXFERPUTHD",
+     "label": "",
+     "shape": {
+      "type": "rectangle",
+      "icon": {
+       "color": "#EA1462",
+       "url": "#sip-phone"
+      },
+      "subTitle": {
+       "text": "{{HeaderName}}"
+      },
+      "width": 128,
+      "height": 32
+     },
+     "actionId": 45
+    },
+    {
+     "name": "Assign",
+     "label": "Assign Res",
+     "shape": {
+      "type": "rectangle",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#brackets-x"
+      },
+      "width": 128,
+      "height": 32
+     },
+     "actionId": 47
+    },
+    {
+     "name": "Assign",
+     "label": "Assign Res",
+     "shape": {
+      "type": "rectangle",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#brackets-x"
+      },
+      "width": 128,
+      "height": 32
+     },
+     "actionId": 49
+    },
+    {
+     "name": "Assign",
+     "label": "Assign MemberApp",
+     "shape": {
+      "type": "rectangle",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#brackets-x"
+      },
+      "width": 128,
+      "height": 32
+     },
+     "actionId": 53
+    }
+   ],
+   "skillres": [
+    {
+     "name": "Menu",
+     "label": "Skill Menu",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#num-list"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 51
+    }
+   ],
+   "skillwhisper": [
+    {
+     "name": "Snippet",
+     "label": "Skills",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 22
+    }
+   ],
+   "sp2": [
+    {
+     "name": "Assign",
+     "label": "Assign PolyReason",
+     "shape": {
+      "type": "rectangle",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#brackets-x"
+      },
+      "width": 128,
+      "height": 32
+     },
+     "actionId": 57
+    }
+   ],
+   "sp3": [
+    {
+     "name": "Assign",
+     "label": "Assign PolyNote",
+     "shape": {
+      "type": "rectangle",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#brackets-x"
+      },
+      "width": 128,
+      "height": 32
+     },
+     "actionId": 58
+    }
+   ],
+   "textel_send_message_proxy": [
+    {
+     "name": "Snippet",
+     "label": "IVR to SMS Foundation",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 52
+    }
+   ],
+   "textel_send_message_proxy.contenttype": [
+    {
+     "name": "Snippet",
+     "label": "IVR to SMS Foundation",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 52
+    }
+   ],
+   "textel_send_message_proxy.proxytimeoutseconds": [
+    {
+     "name": "Snippet",
+     "label": "IVR to SMS Foundation",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 52
+    }
+   ],
+   "textelapibaseurl": [
+    {
+     "name": "Snippet",
+     "label": "IVR to SMS Foundation",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 52
+    }
+   ],
+   "textelapikey": [
+    {
+     "name": "Snippet",
+     "label": "IVR to SMS Foundation",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 52
+    }
+   ],
+   "textellinephonenumber": [
+    {
+     "name": "Snippet",
+     "label": "IVR to SMS Foundation",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 52
+    }
+   ],
+   "textelmobilephonenumber": [
+    {
+     "name": "Snippet",
+     "label": "IVR to SMS Foundation",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 52
+    }
+   ],
+   "textelmsgtosend": [
+    {
+     "name": "Snippet",
+     "label": "IVR to SMS Foundation",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 52
+    }
+   ],
+   "textelsendmessagejsonpayload": [
+    {
+     "name": "Snippet",
+     "label": "IVR to SMS Foundation",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 52
+    }
+   ],
+   "textelsendmessagerequestbody": [
+    {
+     "name": "Snippet",
+     "label": "IVR to SMS Foundation",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 52
+    }
+   ],
+   "textelsendmessagerequestbody.body": [
+    {
+     "name": "Snippet",
+     "label": "IVR to SMS Foundation",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 52
+    }
+   ],
+   "textelsendmessagerequestbody.continuechat": [
+    {
+     "name": "Snippet",
+     "label": "IVR to SMS Foundation",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 52
+    }
+   ],
+   "textelsendmessagerequestbody.from": [
+    {
+     "name": "Snippet",
+     "label": "IVR to SMS Foundation",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 52
+    }
+   ],
+   "textelsendmessagerequestbody.to": [
+    {
+     "name": "Snippet",
+     "label": "IVR to SMS Foundation",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 52
+    }
+   ],
+   "textelsendmessageurl": [
+    {
+     "name": "Snippet",
+     "label": "IVR to SMS Foundation",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 52
+    }
+   ]
+  },
+  "compareScript": {},
+  "customConnectorIdentifier": null,
+  "schemaVersion": "1.0.0"
+ }
+}

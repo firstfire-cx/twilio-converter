@@ -1,0 +1,2907 @@
+{
+ "scriptContent": {
+  "header": {
+   "scriptName": "Landing_SenderoHealth_SL",
+   "busNo": 4601541,
+   "mediaType": 4,
+   "mediaTypeName": "call",
+   "purposeType": "General",
+   "variableRedaction": "",
+   "nextActionId": 78,
+   "status": "Active",
+   "lastSavedIn": "cxs",
+   "wasLayoutAlgorithmRun": true
+  },
+  "actions": {
+   "1": {
+    "actionId": 1,
+    "libraryId": "B2F794C5-0232-40E7-9830-76D573BF57D7",
+    "name": "BEGIN",
+    "version": 1,
+    "label": "SenderoHealth Landing",
+    "dependencyOrder": "0",
+    "implType": "0",
+    "x": 168,
+    "y": 680,
+    "xws": 168,
+    "yws": 680
+   },
+   "4": {
+    "actionId": 4,
+    "libraryId": "F8B958D0-8CD3-40DF-97D3-5862930B0807",
+    "name": "RUNSUB",
+    "version": 1,
+    "label": "Check Ports",
+    "dependencyOrder": "1",
+    "implType": "0",
+    "x": 1984,
+    "y": 664,
+    "xws": 1984,
+    "yws": 664
+   },
+   "5": {
+    "actionId": 5,
+    "libraryId": "7D5D3B99-DF55-4CCC-A78A-981B3F99F5BE",
+    "name": "VOICEPARAMS",
+    "version": 1,
+    "label": "Voiceparams",
+    "dependencyOrder": "2",
+    "implType": "0",
+    "x": 1600,
+    "y": 688,
+    "xws": 1600,
+    "yws": 688
+   },
+   "15": {
+    "actionId": 15,
+    "libraryId": "DAEE9C00-12CE-4222-A42E-307C37D53B7F",
+    "name": "MENU",
+    "version": 1,
+    "label": "Offer Spanish",
+    "dependencyOrder": "3",
+    "implType": "0",
+    "x": 2208,
+    "y": 664,
+    "xws": 2208,
+    "yws": 664
+   },
+   "16": {
+    "actionId": 16,
+    "libraryId": "9015C095-98D9-441F-BF92-E90F5C5ED8C8",
+    "name": "ASSIGN",
+    "version": 1,
+    "label": "Lang = SP",
+    "dependencyOrder": "4",
+    "implType": "0",
+    "x": 2208,
+    "y": 400,
+    "xws": 2208,
+    "yws": 400
+   },
+   "17": {
+    "actionId": 17,
+    "libraryId": "9015C095-98D9-441F-BF92-E90F5C5ED8C8",
+    "name": "ASSIGN",
+    "version": 1,
+    "label": "Lang = EN",
+    "dependencyOrder": "4",
+    "implType": "0",
+    "x": 1280,
+    "y": 688,
+    "xws": 1280,
+    "yws": 688
+   },
+   "22": {
+    "actionId": 22,
+    "libraryId": "B333DA63-33C8-4297-A58A-E9546CF7F0F2",
+    "name": "SNIPPET",
+    "version": 1,
+    "label": "Skills",
+    "dependencyOrder": "6",
+    "implType": "0",
+    "x": 5216,
+    "y": 664,
+    "xws": 5216,
+    "yws": 664
+   },
+   "30": {
+    "actionId": 30,
+    "libraryId": "D639CF70-9DE8-47FE-AA7E-6B39E4556D9D",
+    "name": "HOURS",
+    "version": 1,
+    "label": "Hours",
+    "dependencyOrder": "7",
+    "implType": "0",
+    "x": 3168,
+    "y": 688,
+    "xws": 3168,
+    "yws": 688
+   },
+   "33": {
+    "actionId": 33,
+    "libraryId": "B1B9A2DD-65B6-4626-9CF5-9CFA69CF59E2",
+    "name": "PLAY",
+    "version": 1,
+    "label": "QA and Mask up",
+    "dependencyOrder": "8",
+    "implType": "0",
+    "x": 5632,
+    "y": 1368,
+    "xws": 5632,
+    "yws": 1368
+   },
+   "34": {
+    "actionId": 34,
+    "libraryId": "B1B9A2DD-65B6-4626-9CF5-9CFA69CF59E2",
+    "name": "PLAY",
+    "version": 1,
+    "label": "Normal Business Hours",
+    "dependencyOrder": "9",
+    "implType": "0",
+    "x": 2688,
+    "y": 664,
+    "xws": 2688,
+    "yws": 664
+   },
+   "35": {
+    "actionId": 35,
+    "libraryId": "F8B958D0-8CD3-40DF-97D3-5862930B0807",
+    "name": "RUNSUB",
+    "version": 1,
+    "label": "Check Hours",
+    "dependencyOrder": "10",
+    "implType": "0",
+    "x": 3168,
+    "y": 856,
+    "xws": 3168,
+    "yws": 856
+   },
+   "36": {
+    "actionId": 36,
+    "libraryId": "B64A6796-4F66-4B1B-A9B5-3AF926AB4B7C",
+    "name": "HANGUP",
+    "version": 1,
+    "label": "Hangup",
+    "dependencyOrder": "11",
+    "implType": "0",
+    "x": 2752,
+    "y": 1360,
+    "xws": 2752,
+    "yws": 1360
+   },
+   "37": {
+    "actionId": 37,
+    "libraryId": "D28D2B39-D4DB-499A-9B8B-F3879E4C5B25",
+    "name": "ANNOTATION",
+    "version": 1,
+    "label": "Annotation",
+    "dependencyOrder": "12",
+    "implType": "0",
+    "x": 2368,
+    "y": 848,
+    "xws": 2368,
+    "yws": 848
+   },
+   "38": {
+    "actionId": 38,
+    "libraryId": "B1B9A2DD-65B6-4626-9CF5-9CFA69CF59E2",
+    "name": "PLAY",
+    "version": 1,
+    "label": "Sendero Health Plan Greeting SP",
+    "dependencyOrder": "13",
+    "implType": "0",
+    "x": 2688,
+    "y": 376,
+    "xws": 2688,
+    "yws": 376
+   },
+   "39": {
+    "actionId": 39,
+    "libraryId": "B1B9A2DD-65B6-4626-9CF5-9CFA69CF59E2",
+    "name": "PLAY",
+    "version": 1,
+    "label": "Closed Message",
+    "dependencyOrder": "14",
+    "implType": "0",
+    "x": 3168,
+    "y": 1336,
+    "xws": 3168,
+    "yws": 1336
+   },
+   "40": {
+    "actionId": 40,
+    "libraryId": "DAEE9C00-12CE-4222-A42E-307C37D53B7F",
+    "name": "MENU",
+    "version": 1,
+    "label": "Main Menu",
+    "dependencyOrder": "5",
+    "implType": "0",
+    "x": 4448,
+    "y": 664,
+    "xws": 4448,
+    "yws": 664
+   },
+   "41": {
+    "actionId": 41,
+    "libraryId": "5BF67B1C-9736-434D-9B6F-0D856AEA8F16",
+    "name": "WAIT",
+    "version": 1,
+    "label": "Wait 0.5 Seconds",
+    "dependencyOrder": "16",
+    "implType": "0",
+    "x": 3936,
+    "y": 368,
+    "xws": 3936,
+    "yws": 368
+   },
+   "42": {
+    "actionId": 42,
+    "libraryId": "A10F9F27-A5DD-48BA-AE37-E206FC6E101B",
+    "name": "LOOP",
+    "version": 1,
+    "label": "Loop x3",
+    "dependencyOrder": "17",
+    "implType": "0",
+    "x": 4448,
+    "y": 368,
+    "xws": 4448,
+    "yws": 368
+   },
+   "43": {
+    "actionId": 43,
+    "libraryId": "B1B9A2DD-65B6-4626-9CF5-9CFA69CF59E2",
+    "name": "PLAY",
+    "version": 1,
+    "label": "Invalid",
+    "dependencyOrder": "18",
+    "implType": "0",
+    "x": 4992,
+    "y": 352,
+    "xws": 4992,
+    "yws": 352
+   },
+   "44": {
+    "actionId": 44,
+    "libraryId": "B64A6796-4F66-4B1B-A9B5-3AF926AB4B7C",
+    "name": "HANGUP",
+    "version": 1,
+    "label": "Hangup",
+    "dependencyOrder": "19",
+    "implType": "0",
+    "x": 5408,
+    "y": 368,
+    "xws": 5408,
+    "yws": 368
+   },
+   "45": {
+    "actionId": 45,
+    "libraryId": "93232E99-D607-4E7D-9300-17986D70DA3C",
+    "name": "RUNSCRIPT",
+    "version": 1,
+    "label": "KPMA Queue",
+    "dependencyOrder": "20",
+    "implType": "0",
+    "x": 6048,
+    "y": 1368,
+    "xws": 6048,
+    "yws": 1368
+   },
+   "46": {
+    "actionId": 46,
+    "libraryId": "B64A6796-4F66-4B1B-A9B5-3AF926AB4B7C",
+    "name": "HANGUP",
+    "version": 1,
+    "label": "Hangup",
+    "dependencyOrder": "21",
+    "implType": "0",
+    "x": 896,
+    "y": 1104,
+    "xws": 896,
+    "yws": 1104
+   },
+   "47": {
+    "actionId": 47,
+    "libraryId": "B1B9A2DD-65B6-4626-9CF5-9CFA69CF59E2",
+    "name": "PLAY",
+    "version": 1,
+    "label": "Play Ineligible Prompt",
+    "dependencyOrder": "22",
+    "implType": "0",
+    "x": 896,
+    "y": 888,
+    "xws": 896,
+    "yws": 888
+   },
+   "48": {
+    "actionId": 48,
+    "libraryId": "6695BA9C-E1D6-4F3C-A15A-94F1400E3169",
+    "name": "IF",
+    "version": 1,
+    "label": "If BlockCall = true",
+    "dependencyOrder": "23",
+    "implType": "0",
+    "x": 896,
+    "y": 688,
+    "xws": 896,
+    "yws": 688
+   },
+   "49": {
+    "actionId": 49,
+    "libraryId": "F8B958D0-8CD3-40DF-97D3-5862930B0807",
+    "name": "RUNSUB",
+    "version": 1,
+    "label": "CallBlocker",
+    "dependencyOrder": "24",
+    "implType": "0",
+    "x": 512,
+    "y": 664,
+    "xws": 512,
+    "yws": 664
+   },
+   "50": {
+    "actionId": 50,
+    "libraryId": "F40B8113-DEE5-405E-8A11-BCF3954047D9",
+    "name": "BLINDXFER",
+    "version": 1,
+    "label": "To PolyAI",
+    "dependencyOrder": "25",
+    "implType": "0",
+    "x": 7648,
+    "y": 880,
+    "xws": 7648,
+    "yws": 880
+   },
+   "51": {
+    "actionId": 51,
+    "libraryId": "D583A89D-145C-44AC-B476-A15045180000",
+    "name": "SIPXFERPUTHD",
+    "version": 1,
+    "label": "SIPXFERPUTHD",
+    "dependencyOrder": "46",
+    "implType": "0",
+    "x": 7648,
+    "y": 1040,
+    "xws": 7648,
+    "yws": 1040
+   },
+   "53": {
+    "actionId": 53,
+    "libraryId": "B1B9A2DD-65B6-4626-9CF5-9CFA69CF59E2",
+    "name": "PLAY",
+    "version": 1,
+    "label": "After Hours Line",
+    "dependencyOrder": "26",
+    "implType": "0",
+    "x": 3584,
+    "y": 952,
+    "xws": 3584,
+    "yws": 952
+   },
+   "54": {
+    "actionId": 54,
+    "libraryId": "A10F9F27-A5DD-48BA-AE37-E206FC6E101B",
+    "name": "LOOP",
+    "version": 1,
+    "label": "Loop x1",
+    "dependencyOrder": "27",
+    "implType": "0",
+    "x": 3584,
+    "y": 1360,
+    "xws": 3584,
+    "yws": 1360
+   },
+   "55": {
+    "actionId": 55,
+    "libraryId": "B333DA63-33C8-4297-A58A-E9546CF7F0F2",
+    "name": "SNIPPET",
+    "version": 1,
+    "label": "Skills",
+    "dependencyOrder": "28",
+    "implType": "0",
+    "x": 4128,
+    "y": 952,
+    "xws": 4128,
+    "yws": 952
+   },
+   "56": {
+    "actionId": 56,
+    "libraryId": "93232E99-D607-4E7D-9300-17986D70DA3C",
+    "name": "RUNSCRIPT",
+    "version": 1,
+    "label": "KPMA Queue",
+    "dependencyOrder": "29",
+    "implType": "0",
+    "x": 4128,
+    "y": 1336,
+    "xws": 4128,
+    "yws": 1336
+   },
+   "57": {
+    "actionId": 57,
+    "libraryId": "6695BA9C-E1D6-4F3C-A15A-94F1400E3169",
+    "name": "IF",
+    "version": 1,
+    "label": "Lang",
+    "dependencyOrder": "30",
+    "implType": "0",
+    "x": 5632,
+    "y": 976,
+    "xws": 5632,
+    "yws": 976
+   },
+   "58": {
+    "actionId": 58,
+    "libraryId": "9015C095-98D9-441F-BF92-E90F5C5ED8C8",
+    "name": "ASSIGN",
+    "version": 1,
+    "label": "Assign Res",
+    "dependencyOrder": "31",
+    "implType": "0",
+    "x": 4448,
+    "y": 1392,
+    "xws": 4448,
+    "yws": 1392
+   },
+   "59": {
+    "actionId": 59,
+    "libraryId": "6695BA9C-E1D6-4F3C-A15A-94F1400E3169",
+    "name": "IF",
+    "version": 1,
+    "label": "Lang",
+    "dependencyOrder": "32",
+    "implType": "0",
+    "x": 4448,
+    "y": 976,
+    "xws": 4448,
+    "yws": 976
+   },
+   "60": {
+    "actionId": 60,
+    "libraryId": "9015C095-98D9-441F-BF92-E90F5C5ED8C8",
+    "name": "ASSIGN",
+    "version": 1,
+    "label": "Assign Res",
+    "dependencyOrder": "33",
+    "implType": "0",
+    "x": 4928,
+    "y": 976,
+    "xws": 4928,
+    "yws": 976
+   },
+   "61": {
+    "actionId": 61,
+    "libraryId": "DAEE9C00-12CE-4222-A42E-307C37D53B7F",
+    "name": "MENU",
+    "version": 1,
+    "label": "Sendero or ACHP",
+    "dependencyOrder": "5",
+    "implType": "0",
+    "x": 3584,
+    "y": 664,
+    "xws": 3584,
+    "yws": 664
+   },
+   "64": {
+    "actionId": 64,
+    "libraryId": "9015C095-98D9-441F-BF92-E90F5C5ED8C8",
+    "name": "ASSIGN",
+    "version": 1,
+    "label": "Hp_Flag",
+    "dependencyOrder": "35",
+    "implType": "0",
+    "x": 3936,
+    "y": 816,
+    "xws": 3936,
+    "yws": 816
+   },
+   "67": {
+    "actionId": 67,
+    "libraryId": "B333DA63-33C8-4297-A58A-E9546CF7F0F2",
+    "name": "SNIPPET",
+    "version": 1,
+    "label": "ACHP Reservation En",
+    "dependencyOrder": "36",
+    "implType": "0",
+    "x": 6048,
+    "y": 664,
+    "xws": 6048,
+    "yws": 664
+   },
+   "68": {
+    "actionId": 68,
+    "libraryId": "B333DA63-33C8-4297-A58A-E9546CF7F0F2",
+    "name": "SNIPPET",
+    "version": 1,
+    "label": "ACHP WMR Sp",
+    "dependencyOrder": "37",
+    "implType": "0",
+    "x": 6464,
+    "y": 952,
+    "xws": 6464,
+    "yws": 952
+   },
+   "69": {
+    "actionId": 69,
+    "libraryId": "B333DA63-33C8-4297-A58A-E9546CF7F0F2",
+    "name": "SNIPPET",
+    "version": 1,
+    "label": "ACHP WMR En",
+    "dependencyOrder": "38",
+    "implType": "0",
+    "x": 6272,
+    "y": 664,
+    "xws": 6272,
+    "yws": 664
+   },
+   "70": {
+    "actionId": 70,
+    "libraryId": "B333DA63-33C8-4297-A58A-E9546CF7F0F2",
+    "name": "SNIPPET",
+    "version": 1,
+    "label": "ACHP Reservation Sp",
+    "dependencyOrder": "39",
+    "implType": "0",
+    "x": 6464,
+    "y": 664,
+    "xws": 6464,
+    "yws": 664
+   },
+   "71": {
+    "actionId": 71,
+    "libraryId": "6695BA9C-E1D6-4F3C-A15A-94F1400E3169",
+    "name": "IF",
+    "version": 1,
+    "label": "ACHP",
+    "dependencyOrder": "40",
+    "implType": "0",
+    "x": 5632,
+    "y": 688,
+    "xws": 5632,
+    "yws": 688
+   },
+   "72": {
+    "actionId": 72,
+    "libraryId": "DE09A7DE-6654-4642-A86A-87FFBE75C7D7",
+    "name": "ONSIGNAL",
+    "version": 1,
+    "label": "Onsignal",
+    "dependencyOrder": "41",
+    "implType": "0",
+    "x": 6504,
+    "y": 1512,
+    "xws": 6504,
+    "yws": 1512
+   },
+   "73": {
+    "actionId": 73,
+    "libraryId": "B1B9A2DD-65B6-4626-9CF5-9CFA69CF59E2",
+    "name": "PLAY",
+    "version": 1,
+    "label": "Play",
+    "dependencyOrder": "42",
+    "implType": "0",
+    "x": 6720,
+    "y": 1496,
+    "xws": 6720,
+    "yws": 1496
+   },
+   "74": {
+    "actionId": 74,
+    "libraryId": "689A4A1B-FA0D-47B3-9A02-CBEB4735F08F",
+    "name": "REQAGENT",
+    "version": 1,
+    "label": "Reqagent",
+    "dependencyOrder": "44",
+    "implType": "0",
+    "x": 7424,
+    "y": 1520,
+    "xws": 7424,
+    "yws": 1520
+   },
+   "75": {
+    "actionId": 75,
+    "libraryId": "9015C095-98D9-441F-BF92-E90F5C5ED8C8",
+    "name": "ASSIGN",
+    "version": 1,
+    "label": "Assign PolyReason",
+    "dependencyOrder": "43",
+    "implType": "0",
+    "x": 6912,
+    "y": 1520,
+    "xws": 6912,
+    "yws": 1520
+   },
+   "76": {
+    "actionId": 76,
+    "libraryId": "E86250D4-8659-4DF0-937E-1F50E64E180E",
+    "name": "SPAWN",
+    "version": 1,
+    "label": "Spawn",
+    "dependencyOrder": "47",
+    "implType": "0",
+    "x": 5408,
+    "y": 952,
+    "xws": 5408,
+    "yws": 952
+   },
+   "77": {
+    "actionId": 77,
+    "libraryId": "9015C095-98D9-441F-BF92-E90F5C5ED8C8",
+    "name": "ASSIGN",
+    "version": 1,
+    "label": "Assign PolyNote",
+    "dependencyOrder": "45",
+    "implType": "0",
+    "x": 7104,
+    "y": 1520,
+    "xws": 7104,
+    "yws": 1520
+   }
+  },
+  "properties": {
+   "1": {
+    "0": {
+     "name": "RootFolder",
+     "value": ""
+    },
+    "1": {
+     "name": "Application",
+     "value": ""
+    },
+    "2": {
+     "name": "ParamCount",
+     "value": ""
+    },
+    "3": {
+     "name": "Parameters",
+     "value": []
+    }
+   },
+   "4": {
+    "0": {
+     "name": "ScriptName",
+     "value": "CheckPorts"
+    },
+    "1": {
+     "name": "ParamCount",
+     "value": ""
+    },
+    "2": {
+     "name": "ReturnVariable",
+     "value": "RTN"
+    },
+    "3": {
+     "name": "Parameters",
+     "value": []
+    }
+   },
+   "5": {
+    "0": {
+     "name": "TTSVolume",
+     "value": "70"
+    },
+    "1": {
+     "name": "TTSRate",
+     "value": "0"
+    },
+    "2": {
+     "name": "TTSVoice",
+     "value": "4: Heather, Female (US)"
+    },
+    "3": {
+     "name": "unused1073743309",
+     "value": ""
+    },
+    "4": {
+     "name": "ASRTuningEnabled",
+     "value": "NoChange"
+    },
+    "5": {
+     "name": "ASRUniversalsEnabled",
+     "value": "NoChange"
+    },
+    "6": {
+     "name": "ASRUniversalContentType",
+     "value": "PhraseList"
+    },
+    "7": {
+     "name": "ASRUniversalPhraseList",
+     "value": ""
+    },
+    "8": {
+     "name": "ASRUniversalGrammarFile",
+     "value": ""
+    },
+    "9": {
+     "name": "ASRUniversalVarName",
+     "value": "_ASRUniversal"
+    },
+    "10": {
+     "name": "ASRLanguageLocale",
+     "value": "NoChange"
+    }
+   },
+   "15": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\SenderoGreeting.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "EN: Thank you for calling Sendero Health plan, provided by SafeRide Health.\n\nIf this is a medical Emergency, please hang up and dial 911.\n\nFor English, please press 1.\n\nSP: Para español, oprima dos. "
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "MaxDigits",
+     "value": "1"
+    },
+    "4": {
+     "name": "Terminator",
+     "value": "#-"
+    },
+    "5": {
+     "name": "Timeout",
+     "value": "5"
+    },
+    "6": {
+     "name": "InterDigitTimeout",
+     "value": "5"
+    },
+    "7": {
+     "name": "Variable",
+     "value": "MRES"
+    }
+   },
+   "16": {
+    "0": {
+     "name": "Variable",
+     "value": "Lang"
+    },
+    "1": {
+     "name": "Value",
+     "value": "SP"
+    },
+    "2": {
+     "name": "Type",
+     "value": "String"
+    },
+    "3": {
+     "name": "Publish",
+     "value": ""
+    },
+    "4": {
+     "name": "ScreenPop",
+     "value": "False"
+    },
+    "5": {
+     "name": "SaveToDB",
+     "value": "False"
+    },
+    "6": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   },
+   "17": {
+    "0": {
+     "name": "Variable",
+     "value": "Lang"
+    },
+    "1": {
+     "name": "Value",
+     "value": "EN"
+    },
+    "2": {
+     "name": "Type",
+     "value": "String"
+    },
+    "3": {
+     "name": "Publish",
+     "value": ""
+    },
+    "4": {
+     "name": "ScreenPop",
+     "value": "False"
+    },
+    "5": {
+     "name": "SaveToDB",
+     "value": "False"
+    },
+    "6": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   },
+   "22": {
+    "0": {
+     "name": "Data",
+     "value": "SWITCH IHMenu_RES\r\n{\r\n\tCASE 1 //Sendero Health Plan Reservations\r\n\t{ \r\n\t\tIF Lang = \"SP\"\r\n\t\t{\r\n\t\t\tASSIGN QueueSkill = 16472171\r\n\t\t\tASSIGN SkillWhisper = \"Sendero-Health-Reservations-Spanish\"\r\n\t\t}\r\n\t\tELSE\r\n\t\t{\r\n\t\t\tASSIGN QueueSkill = 16472169\r\n\t\t\tASSIGN SkillWhisper = \"Sendero-Health-Reservations-English\"\r\n\t\t}\r\n\t} \r\n\tCASE 2 //Sendero Health WMR\r\n\t{ \r\n\t\tIF Lang = \"SP\"\r\n\t\t{\r\n\t\t\t\r\n\t\t\tASSIGN QueueSkill = 16472669 \r\n\t\t\tASSIGN SkillWhisper = \"Sendero-Health-Wheres-my-ride-Spanish\"\r\n\t\t}\r\n\t\tELSE\r\n\t\t{\r\n\t\t\tASSIGN QueueSkill = 16472170 \r\n\t\t\tASSIGN SkillWhisper = \"Sendero-Health-Wheres-my-ride-English\"\r\n\t\t}\r\n\t} \r\n}"
+    },
+    "1": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   },
+   "30": {
+    "0": {
+     "name": "Profile",
+     "value": "1934"
+    }
+   },
+   "33": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\CallsRecorded_{Lang}.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "EN - This call may be recorded for quality and training purposes.  \n\nSP - Esta llamada se esta garbando por motivois de calidad y propositos de entrenamiento"
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "DetectDTMF",
+     "value": "True"
+    },
+    "4": {
+     "name": "SuppressSilence",
+     "value": ""
+    },
+    "5": {
+     "name": "TTSVolume",
+     "value": ""
+    },
+    "6": {
+     "name": "TTSRate",
+     "value": ""
+    },
+    "7": {
+     "name": "TTSVoice",
+     "value": ""
+    }
+   },
+   "34": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\SenderoNormalHours_{Lang}.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "We are open to schedule from Monday through Saturday 6:00am to 6:00pm central standard time, closed on Sunday."
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "DetectDTMF",
+     "value": "True"
+    },
+    "4": {
+     "name": "SuppressSilence",
+     "value": ""
+    },
+    "5": {
+     "name": "TTSVolume",
+     "value": ""
+    },
+    "6": {
+     "name": "TTSRate",
+     "value": ""
+    },
+    "7": {
+     "name": "TTSVoice",
+     "value": ""
+    }
+   },
+   "35": {
+    "0": {
+     "name": "ScriptName",
+     "value": "CheckHours"
+    },
+    "1": {
+     "name": "ParamCount",
+     "value": ""
+    },
+    "2": {
+     "name": "ReturnVariable",
+     "value": "isOpen"
+    },
+    "3": {
+     "name": "Parameters",
+     "value": [
+      "1594"
+     ]
+    }
+   },
+   "36": {},
+   "37": {
+    "0": {
+     "name": "Comments",
+     "value": "Handles Overrides"
+    },
+    "1": {
+     "name": "Width",
+     "value": "84"
+    },
+    "2": {
+     "name": "Height",
+     "value": "70"
+    }
+   },
+   "38": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\SenderoNormalHours_SP.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "Estamos abiertos de lunes a sábado, de 6:00 a.m. a 6:00 p.m., hora estándar del Centro, y cerramos los domingos."
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "DetectDTMF",
+     "value": "True"
+    },
+    "4": {
+     "name": "SuppressSilence",
+     "value": ""
+    },
+    "5": {
+     "name": "TTSVolume",
+     "value": ""
+    },
+    "6": {
+     "name": "TTSRate",
+     "value": ""
+    },
+    "7": {
+     "name": "TTSVoice",
+     "value": ""
+    }
+   },
+   "39": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\SenderoClosed_{Lang}.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "EN - Our offices are currently closed. Please call back during regular business hours, 6:00 a.m. to 6:00 p.m. Central Standard Time.\n\nSP - Nuestras oficinas se encuentran cerradas en este momento. Por favor, vuelva a llamar durante nuestro horario regular de atención, de 6:00 a.m. a 6:00 p.m., hora estándar del Centro."
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "DetectDTMF",
+     "value": "True"
+    },
+    "4": {
+     "name": "SuppressSilence",
+     "value": ""
+    },
+    "5": {
+     "name": "TTSVolume",
+     "value": ""
+    },
+    "6": {
+     "name": "TTSRate",
+     "value": ""
+    },
+    "7": {
+     "name": "TTSVoice",
+     "value": ""
+    }
+   },
+   "40": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\KPMAMenu_{Lang}.wav\" \"Prompts\\Sendero-Member-Services-{Lang}.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "EN - Please listen carefully to the following options.\n\nIf you are calling to schedule a new trip, or to confirm or make changes to an existing trip, press 1.\n\nIf you are calling for “Where’s My Ride,” press 2.\n\nIf you are a new member, press 3.\n\nSP - Por favor, escuche atentamente las siguientes opciones.\n\nSi llama para programar un viaje nuevo, o para confirmar o hacer cambios a un viaje existente, oprima uno.\n\nSi llama por “¿Dónde está mi viaje?”, oprima dos.\n\nSi es un miembro nuevo, oprima tres."
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "MaxDigits",
+     "value": "1"
+    },
+    "4": {
+     "name": "Terminator",
+     "value": "#-"
+    },
+    "5": {
+     "name": "Timeout",
+     "value": "5"
+    },
+    "6": {
+     "name": "InterDigitTimeout",
+     "value": "5"
+    },
+    "7": {
+     "name": "Variable",
+     "value": "IHMenu_RES"
+    }
+   },
+   "41": {
+    "0": {
+     "name": "Seconds",
+     "value": ".5"
+    }
+   },
+   "42": {
+    "0": {
+     "name": "Repeat",
+     "value": "3"
+    },
+    "1": {
+     "name": "CounterName",
+     "value": "MenuLoop"
+    }
+   },
+   "43": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\No_Option_{Lang}.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "EN - No option has been selected. Goodbye.\n\nSP - No se seleccionó ninguna opción. Adiós."
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "DetectDTMF",
+     "value": "True"
+    },
+    "4": {
+     "name": "SuppressSilence",
+     "value": ""
+    },
+    "5": {
+     "name": "TTSVolume",
+     "value": ""
+    },
+    "6": {
+     "name": "TTSRate",
+     "value": ""
+    },
+    "7": {
+     "name": "TTSVoice",
+     "value": ""
+    }
+   },
+   "44": {},
+   "45": {
+    "0": {
+     "name": "ScriptName",
+     "value": "Queue_KPMA"
+    }
+   },
+   "46": {},
+   "47": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\Block_Number_EN.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "Thank you for calling SafeRide Health. The account associated with this phone number is not eligible for a transportation benefit at this time. Goodbye."
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "DetectDTMF",
+     "value": "True"
+    },
+    "4": {
+     "name": "SuppressSilence",
+     "value": ""
+    },
+    "5": {
+     "name": "TTSVolume",
+     "value": ""
+    },
+    "6": {
+     "name": "TTSRate",
+     "value": ""
+    },
+    "7": {
+     "name": "TTSVoice",
+     "value": ""
+    }
+   },
+   "48": {
+    "0": {
+     "name": "Expression",
+     "value": "BlockCall = 1"
+    }
+   },
+   "49": {
+    "0": {
+     "name": "ScriptName",
+     "value": "CallBlocker"
+    },
+    "1": {
+     "name": "ParamCount",
+     "value": ""
+    },
+    "2": {
+     "name": "ReturnVariable",
+     "value": "BlockCall"
+    },
+    "3": {
+     "name": "Parameters",
+     "value": [
+      "{ANI}"
+     ]
+    }
+   },
+   "50": {
+    "0": {
+     "name": "Destination",
+     "value": "9993230010"
+    }
+   },
+   "51": {
+    "0": {
+     "name": "headerName",
+     "value": "X-SkillId"
+    },
+    "1": {
+     "name": "headerValue",
+     "value": "{QueueSkill}"
+    }
+   },
+   "53": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\2023\\AfterHours_SCAN_{LANG}.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "EN - You have reached the after-hours line. Please hold for the next representative to assist you.\n\nSP - Está contactando a nuestra línea fuera del horario regular. Por favor, espere al siguiente representante para que le pueda asistir."
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "DetectDTMF",
+     "value": "True"
+    },
+    "4": {
+     "name": "SuppressSilence",
+     "value": ""
+    },
+    "5": {
+     "name": "TTSVolume",
+     "value": ""
+    },
+    "6": {
+     "name": "TTSRate",
+     "value": ""
+    },
+    "7": {
+     "name": "TTSVoice",
+     "value": ""
+    }
+   },
+   "54": {
+    "0": {
+     "name": "Repeat",
+     "value": "1"
+    },
+    "1": {
+     "name": "CounterName",
+     "value": "AHLoop"
+    }
+   },
+   "55": {
+    "0": {
+     "name": "Data",
+     "value": "IF Lang = \"SP\"\r\n{\r\n\t\t\t\r\n\t\tASSIGN QueueSkill = \"23067453\" \r\n\t\tASSIGN SkillWhisper = \"Sendero-Health-Afterhours-SP\"\r\n\t}\r\n\tELSE\r\n\t{\r\n\t\tASSIGN QueueSkill = \"23067456\" \r\n\t\tASSIGN SkillWhisper = \"Sendero-Health-Afterhours-EN\"\r\n\t}"
+    },
+    "1": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   },
+   "56": {
+    "0": {
+     "name": "ScriptName",
+     "value": "Queue_KPMA"
+    }
+   },
+   "57": {
+    "0": {
+     "name": "Expression",
+     "value": "Lang = \"EN\""
+    }
+   },
+   "58": {
+    "0": {
+     "name": "Variable",
+     "value": "QueueSkill"
+    },
+    "1": {
+     "name": "Value",
+     "value": "16472169"
+    },
+    "2": {
+     "name": "Type",
+     "value": "String"
+    },
+    "3": {
+     "name": "Publish",
+     "value": ""
+    },
+    "4": {
+     "name": "ScreenPop",
+     "value": "False"
+    },
+    "5": {
+     "name": "SaveToDB",
+     "value": "False"
+    },
+    "6": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   },
+   "59": {
+    "0": {
+     "name": "Expression",
+     "value": "Lang = \"EN\""
+    }
+   },
+   "60": {
+    "0": {
+     "name": "Variable",
+     "value": "QueueSkill"
+    },
+    "1": {
+     "name": "Value",
+     "value": "16472171"
+    },
+    "2": {
+     "name": "Type",
+     "value": "String"
+    },
+    "3": {
+     "name": "Publish",
+     "value": ""
+    },
+    "4": {
+     "name": "ScreenPop",
+     "value": "False"
+    },
+    "5": {
+     "name": "SaveToDB",
+     "value": "False"
+    },
+    "6": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   },
+   "61": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\Sendero_ACHP_Choice_{Lang}.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "EN - Please Press 1 for Sendero or 2 for ACHP.\n\nSP - Para Sendero, oprima uno. Para ACHP, oprima dos."
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "MaxDigits",
+     "value": "1"
+    },
+    "4": {
+     "name": "Terminator",
+     "value": "#-"
+    },
+    "5": {
+     "name": "Timeout",
+     "value": "5"
+    },
+    "6": {
+     "name": "InterDigitTimeout",
+     "value": "5"
+    },
+    "7": {
+     "name": "Variable",
+     "value": "IHMenu_RES"
+    }
+   },
+   "64": {
+    "0": {
+     "name": "Variable",
+     "value": "ACHP"
+    },
+    "1": {
+     "name": "Value",
+     "value": "1"
+    },
+    "2": {
+     "name": "Type",
+     "value": "String"
+    },
+    "3": {
+     "name": "Publish",
+     "value": ""
+    },
+    "4": {
+     "name": "ScreenPop",
+     "value": "False"
+    },
+    "5": {
+     "name": "SaveToDB",
+     "value": "False"
+    },
+    "6": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   },
+   "67": {
+    "0": {
+     "name": "Data",
+     "value": "IF ACHP = 1 & QueueSkill = 16472169\r\n\t\t{\r\n\t\t\tASSIGN QueueSkill = 31292313 \r\n\t\t\tASSIGN SkillWhisper = \"ACHP-Health-Reservations-English\"\r\n\t\t}"
+    },
+    "1": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   },
+   "68": {
+    "0": {
+     "name": "Data",
+     "value": "IF ACHP = 1 & QueueSkill = 16472669\r\n\t\t{\r\n\t\t\tASSIGN QueueSkill = 31292315 \r\n\t\t\tASSIGN SkillWhisper = \"ACHP-Health-Wheres-my-ride-Spanish\"\r\n\t\t}"
+    },
+    "1": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   },
+   "69": {
+    "0": {
+     "name": "Data",
+     "value": "IF ACHP = 1 & QueueSkill = 16472170\r\n\t\t{\r\n\t\t\tASSIGN QueueSkill = 31292316 \r\n\t\t\tASSIGN SkillWhisper = \"ACHP-Health-Wheres-my-ride-English\"\r\n\t\t}"
+    },
+    "1": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   },
+   "70": {
+    "0": {
+     "name": "Data",
+     "value": "IF ACHP = 1 & QueueSkill = 16472171\r\n\t\t{\r\n\t\t\tASSIGN QueueSkill = 31292314\r\n\t\t\tASSIGN SkillWhisper = \"ACHP-Health-Reservation-Spanish\"\r\n\t\t}"
+    },
+    "1": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   },
+   "71": {
+    "0": {
+     "name": "Expression",
+     "value": "ACHP = 1"
+    }
+   },
+   "72": {
+    "0": {
+     "name": "SrcContactIDVar",
+     "value": "S1"
+    },
+    "1": {
+     "name": "ParamCount",
+     "value": ""
+    },
+    "2": {
+     "name": "Parameters",
+     "value": []
+    }
+   },
+   "73": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"%Call has been returned to C X One . Transferring to Agent Now\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": ""
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "DetectDTMF",
+     "value": "True"
+    },
+    "4": {
+     "name": "SuppressSilence",
+     "value": ""
+    },
+    "5": {
+     "name": "TTSVolume",
+     "value": ""
+    },
+    "6": {
+     "name": "TTSRate",
+     "value": ""
+    },
+    "7": {
+     "name": "TTSVoice",
+     "value": ""
+    }
+   },
+   "74": {
+    "0": {
+     "name": "Skill",
+     "value": "21036274"
+    },
+    "1": {
+     "name": "TargetAgent",
+     "value": ""
+    },
+    "2": {
+     "name": "PriorityManagement",
+     "value": "DefaultfromSkill"
+    },
+    "3": {
+     "name": "InitialPriority",
+     "value": "0"
+    },
+    "4": {
+     "name": "Acceleration",
+     "value": "1"
+    },
+    "5": {
+     "name": "Function",
+     "value": ""
+    },
+    "6": {
+     "name": "MaxPriority",
+     "value": "1000"
+    },
+    "7": {
+     "name": "Sequence",
+     "value": ""
+    },
+    "8": {
+     "name": "ZipTone",
+     "value": "AfterSequence"
+    },
+    "9": {
+     "name": "ScreenPopSource",
+     "value": "DefaultFromSkill"
+    },
+    "10": {
+     "name": "ScreenPopURL",
+     "value": ""
+    },
+    "11": {
+     "name": "HighProficiency",
+     "value": "1"
+    },
+    "12": {
+     "name": "LowProficiency",
+     "value": "20"
+    },
+    "13": {
+     "name": "RoutingAttribute",
+     "value": "NotApplicable"
+    }
+   },
+   "75": {
+    "0": {
+     "name": "Variable",
+     "value": "PolyReason"
+    },
+    "1": {
+     "name": "Value",
+     "value": "{SP2}"
+    },
+    "2": {
+     "name": "Type",
+     "value": "String"
+    },
+    "3": {
+     "name": "Publish",
+     "value": ""
+    },
+    "4": {
+     "name": "ScreenPop",
+     "value": "True"
+    },
+    "5": {
+     "name": "SaveToDB",
+     "value": "False"
+    },
+    "6": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   },
+   "76": {
+    "0": {
+     "name": "ScriptName",
+     "value": "ForwardToPolyNoAuth"
+    },
+    "1": {
+     "name": "SpawnIDVar",
+     "value": "SPAWNID"
+    },
+    "2": {
+     "name": "Skill",
+     "value": ""
+    },
+    "3": {
+     "name": "ParamCount",
+     "value": ""
+    },
+    "4": {
+     "name": "StartDate",
+     "value": ""
+    },
+    "5": {
+     "name": "Parameters",
+     "value": [
+      "{DNIS}",
+      "{ANI}",
+      "{QueueSkill}"
+     ]
+    }
+   },
+   "77": {
+    "0": {
+     "name": "Variable",
+     "value": "PolyNote"
+    },
+    "1": {
+     "name": "Value",
+     "value": "{SP3}"
+    },
+    "2": {
+     "name": "Type",
+     "value": "String"
+    },
+    "3": {
+     "name": "Publish",
+     "value": ""
+    },
+    "4": {
+     "name": "ScreenPop",
+     "value": "True"
+    },
+    "5": {
+     "name": "SaveToDB",
+     "value": "False"
+    },
+    "6": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   }
+  },
+  "branches": {
+   "1": [
+    {
+     "to": 49,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "r,l",
+     "lineType": "orthogonal",
+     "elbows": []
+    }
+   ],
+   "4": [
+    {
+     "to": 15,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "r,l",
+     "lineType": "orthogonal",
+     "elbows": []
+    }
+   ],
+   "5": [
+    {
+     "to": 4,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "t,t",
+     "lineType": "orthogonal",
+     "elbows": []
+    }
+   ],
+   "15": [
+    {
+     "to": 34,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "r,l",
+     "lineType": "orthogonal",
+     "elbows": []
+    },
+    {
+     "to": 34,
+     "label": "1",
+     "type": "custom",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "r,l",
+     "lineType": "orthogonal",
+     "elbows": []
+    },
+    {
+     "to": 16,
+     "label": "2",
+     "type": "custom",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "t,b",
+     "lineType": "orthogonal",
+     "elbows": []
+    }
+   ],
+   "16": [
+    {
+     "to": 38,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "r,l",
+     "lineType": "orthogonal",
+     "elbows": []
+    }
+   ],
+   "17": [
+    {
+     "to": 5,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "t,t",
+     "lineType": "orthogonal",
+     "elbows": []
+    }
+   ],
+   "22": [
+    {
+     "to": 71,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "orthogonal",
+     "elbows": []
+    }
+   ],
+   "30": [
+    {
+     "to": 35,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "b,t",
+     "lineType": "orthogonal",
+     "elbows": []
+    },
+    {
+     "to": 61,
+     "label": "Open",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "orthogonal",
+     "elbows": []
+    },
+    {
+     "to": 53,
+     "label": "Closed",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 1,
+     "ports": "r,l",
+     "lineType": "orthogonal",
+     "elbows": []
+    }
+   ],
+   "33": [
+    {
+     "to": 45,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "r,l",
+     "lineType": "orthogonal",
+     "elbows": []
+    }
+   ],
+   "34": [
+    {
+     "to": 30,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "r,l",
+     "lineType": "orthogonal",
+     "elbows": []
+    }
+   ],
+   "35": [
+    {
+     "to": 39,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "r,r",
+     "lineType": "orthogonal",
+     "elbows": []
+    }
+   ],
+   "37": [
+    {
+     "to": 35,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "r,l",
+     "lineType": "orthogonal",
+     "elbows": []
+    }
+   ],
+   "38": [
+    {
+     "to": 30,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "r,l",
+     "lineType": "orthogonal",
+     "elbows": []
+    }
+   ],
+   "39": [
+    {
+     "to": 36,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "l,r",
+     "lineType": "orthogonal",
+     "elbows": []
+    }
+   ],
+   "40": [
+    {
+     "to": 42,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "t,b",
+     "lineType": "orthogonal",
+     "elbows": []
+    },
+    {
+     "to": 22,
+     "label": "1",
+     "type": "custom",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "r,l",
+     "lineType": "orthogonal",
+     "elbows": []
+    },
+    {
+     "to": 22,
+     "label": "2",
+     "type": "custom",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "r,l",
+     "lineType": "orthogonal",
+     "elbows": []
+    },
+    {
+     "to": 59,
+     "label": "3",
+     "type": "custom",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "r,r",
+     "lineType": "orthogonal",
+     "elbows": []
+    }
+   ],
+   "41": [
+    {
+     "to": 40,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "r,l",
+     "lineType": "orthogonal",
+     "elbows": []
+    }
+   ],
+   "42": [
+    {
+     "to": 43,
+     "label": "Finished",
+     "type": "branch",
+     "labelDistance": 0.5,
+     "index": 0,
+     "ports": "r,l",
+     "lineType": "orthogonal",
+     "elbows": []
+    },
+    {
+     "to": 41,
+     "label": "Repeat",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 1,
+     "ports": "l,r",
+     "lineType": "orthogonal",
+     "elbows": []
+    }
+   ],
+   "43": [
+    {
+     "to": 44,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "t,t",
+     "lineType": "orthogonal",
+     "elbows": []
+    }
+   ],
+   "47": [
+    {
+     "to": 46,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "b,b",
+     "lineType": "orthogonal",
+     "elbows": []
+    }
+   ],
+   "48": [
+    {
+     "to": 47,
+     "label": "True",
+     "type": "branch",
+     "labelDistance": 0.5,
+     "index": 0,
+     "ports": "b,t",
+     "lineType": "orthogonal",
+     "elbows": []
+    },
+    {
+     "to": 17,
+     "label": "False",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 1,
+     "ports": "r,l",
+     "lineType": "orthogonal",
+     "elbows": []
+    }
+   ],
+   "49": [
+    {
+     "to": 48,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "r,l",
+     "lineType": "orthogonal",
+     "elbows": []
+    }
+   ],
+   "51": [
+    {
+     "to": 50,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "b,t",
+     "lineType": "orthogonal",
+     "elbows": []
+    }
+   ],
+   "53": [
+    {
+     "to": 55,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "r,l",
+     "lineType": "orthogonal",
+     "elbows": []
+    }
+   ],
+   "54": [
+    {
+     "to": 39,
+     "label": "Finished",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "l,r",
+     "lineType": "orthogonal",
+     "elbows": []
+    },
+    {
+     "to": 53,
+     "label": "Repeat",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 1,
+     "ports": "r,r",
+     "lineType": "orthogonal",
+     "elbows": []
+    }
+   ],
+   "55": [
+    {
+     "to": 56,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "l,l",
+     "lineType": "orthogonal",
+     "elbows": []
+    }
+   ],
+   "57": [
+    {
+     "to": 76,
+     "label": "True",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "orthogonal",
+     "elbows": []
+    },
+    {
+     "to": 33,
+     "label": "False",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 1,
+     "ports": "b,t",
+     "lineType": "orthogonal",
+     "elbows": []
+    }
+   ],
+   "58": [
+    {
+     "to": 33,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "r,l",
+     "lineType": "orthogonal",
+     "elbows": []
+    }
+   ],
+   "59": [
+    {
+     "to": 58,
+     "label": "True",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "b,t",
+     "lineType": "orthogonal",
+     "elbows": []
+    },
+    {
+     "to": 60,
+     "label": "False",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 1,
+     "ports": "r,l",
+     "lineType": "orthogonal",
+     "elbows": []
+    }
+   ],
+   "60": [
+    {
+     "to": 33,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "r,l",
+     "lineType": "orthogonal",
+     "elbows": []
+    }
+   ],
+   "61": [
+    {
+     "to": 40,
+     "label": "1",
+     "type": "custom",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "orthogonal",
+     "elbows": []
+    },
+    {
+     "to": 64,
+     "label": "2",
+     "type": "custom",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "orthogonal",
+     "elbows": []
+    }
+   ],
+   "64": [
+    {
+     "to": 40,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "orthogonal",
+     "elbows": []
+    }
+   ],
+   "67": [
+    {
+     "to": 69,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "orthogonal",
+     "elbows": []
+    }
+   ],
+   "68": [
+    {
+     "to": 57,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "orthogonal",
+     "elbows": []
+    }
+   ],
+   "69": [
+    {
+     "to": 70,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "orthogonal",
+     "elbows": []
+    }
+   ],
+   "70": [
+    {
+     "to": 68,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "orthogonal",
+     "elbows": []
+    }
+   ],
+   "71": [
+    {
+     "to": 67,
+     "label": "True",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "orthogonal",
+     "elbows": []
+    },
+    {
+     "to": 57,
+     "label": "False",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 1,
+     "ports": "c,c",
+     "lineType": "orthogonal",
+     "elbows": []
+    }
+   ],
+   "72": [
+    {
+     "to": 73,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "orthogonal",
+     "elbows": []
+    }
+   ],
+   "73": [
+    {
+     "to": 75,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "orthogonal",
+     "elbows": []
+    }
+   ],
+   "75": [
+    {
+     "to": 77,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "orthogonal",
+     "elbows": []
+    }
+   ],
+   "77": [
+    {
+     "to": 74,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "orthogonal",
+     "elbows": []
+    }
+   ]
+  },
+  "isDataLoaded": true,
+  "isDataLoading": false,
+  "isDataSaving": false,
+  "isNewScript": false,
+  "isViewOnlyMode": false,
+  "isLockOverride": false,
+  "isVersionHistoryMode": false,
+  "dataLoadingProgress": {
+   "key": "reset"
+  },
+  "error": null,
+  "issues": {
+   "totalErrors": "0",
+   "totalWarnings": "3",
+   "actions": {
+    "61": {
+     "actionType": "MENU",
+     "errors": [],
+     "warnings": [
+      {
+       "key": "Warning! The Default branch for Sendero or ACHP is not wired up!",
+       "localizationKey": "default-branch-is-not-wired-up",
+       "interpolationValues": [
+        "Sendero or ACHP"
+       ]
+      }
+     ]
+    },
+    "74": {
+     "actionType": "REQAGENT",
+     "errors": [],
+     "warnings": [
+      {
+       "key": "Warning! The Default branch for Reqagent is not wired up!",
+       "localizationKey": "default-branch-is-not-wired-up",
+       "interpolationValues": [
+        "Reqagent"
+       ]
+      }
+     ]
+    },
+    "76": {
+     "actionType": "SPAWN",
+     "errors": [],
+     "warnings": [
+      {
+       "key": "Warning! The Default branch for Spawn is not wired up!",
+       "localizationKey": "default-branch-is-not-wired-up",
+       "interpolationValues": [
+        "Spawn"
+       ]
+      }
+     ]
+    }
+   },
+   "script": {}
+  },
+  "startTraceOptions": {
+   "skill": "",
+   "skillDescription": "",
+   "simulateInboundCall": false,
+   "phone": "",
+   "dnis": "",
+   "ani": "",
+   "simulateDateTime": false,
+   "dateTime": null,
+   "timezone": "(Business Unit Default)",
+   "parameters": []
+  },
+  "versionHistory": null,
+  "scriptVersions": {},
+  "lastVersionEdited": null,
+  "traceWindowCount": 0,
+  "variables": {
+   "achp": [
+    {
+     "name": "Assign",
+     "label": "Hp_Flag",
+     "shape": {
+      "type": "rectangle",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#brackets-x"
+      },
+      "width": 128,
+      "height": 32
+     },
+     "actionId": 64
+    }
+   ],
+   "ihmenu_res": [
+    {
+     "name": "Snippet",
+     "label": "Skills",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 22
+    },
+    {
+     "name": "Menu",
+     "label": "Main Menu",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#num-list"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 40
+    },
+    {
+     "name": "Menu",
+     "label": "Sendero or ACHP",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#num-list"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 61
+    }
+   ],
+   "lang": [
+    {
+     "name": "Assign",
+     "label": "Lang = SP",
+     "shape": {
+      "type": "rectangle",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#brackets-x"
+      },
+      "width": 128,
+      "height": 32
+     },
+     "actionId": 16
+    },
+    {
+     "name": "Assign",
+     "label": "Lang = EN",
+     "shape": {
+      "type": "rectangle",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#brackets-x"
+      },
+      "width": 128,
+      "height": 32
+     },
+     "actionId": 17
+    },
+    {
+     "name": "Play",
+     "label": "QA and Mask up",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#play"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 33
+    },
+    {
+     "name": "Play",
+     "label": "Normal Business Hours",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#play"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 34
+    },
+    {
+     "name": "Play",
+     "label": "Closed Message",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#play"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 39
+    },
+    {
+     "name": "Menu",
+     "label": "Main Menu",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#num-list"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 40
+    },
+    {
+     "name": "Play",
+     "label": "Invalid",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#play"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 43
+    },
+    {
+     "name": "Play",
+     "label": "After Hours Line",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#play"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 53
+    },
+    {
+     "name": "Menu",
+     "label": "Sendero or ACHP",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#num-list"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 61
+    }
+   ],
+   "mres": [
+    {
+     "name": "Menu",
+     "label": "Offer Spanish",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#num-list"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 15
+    }
+   ],
+   "polynote": [
+    {
+     "name": "Assign",
+     "label": "Assign PolyNote",
+     "shape": {
+      "type": "rectangle",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#brackets-x"
+      },
+      "width": 128,
+      "height": 32
+     },
+     "actionId": 77
+    }
+   ],
+   "polyreason": [
+    {
+     "name": "Assign",
+     "label": "Assign PolyReason",
+     "shape": {
+      "type": "rectangle",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#brackets-x"
+      },
+      "width": 128,
+      "height": 32
+     },
+     "actionId": 75
+    }
+   ],
+   "queueskill": [
+    {
+     "name": "Snippet",
+     "label": "Skills",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 22
+    },
+    {
+     "name": "SIPXFERPUTHD",
+     "label": "",
+     "shape": {
+      "type": "rectangle",
+      "icon": {
+       "color": "#EA1462",
+       "url": "#sip-phone"
+      },
+      "subTitle": {
+       "text": "{{HeaderName}}"
+      },
+      "width": 128,
+      "height": 32
+     },
+     "actionId": 51
+    },
+    {
+     "name": "Snippet",
+     "label": "Skills",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 55
+    },
+    {
+     "name": "Assign",
+     "label": "Assign Res",
+     "shape": {
+      "type": "rectangle",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#brackets-x"
+      },
+      "width": 128,
+      "height": 32
+     },
+     "actionId": 58
+    },
+    {
+     "name": "Assign",
+     "label": "Assign Res",
+     "shape": {
+      "type": "rectangle",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#brackets-x"
+      },
+      "width": 128,
+      "height": 32
+     },
+     "actionId": 60
+    },
+    {
+     "name": "Snippet",
+     "label": "ACHP Reservation En",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 67
+    },
+    {
+     "name": "Snippet",
+     "label": "ACHP WMR Sp",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 68
+    },
+    {
+     "name": "Snippet",
+     "label": "ACHP WMR En",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 69
+    },
+    {
+     "name": "Snippet",
+     "label": "ACHP Reservation Sp",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 70
+    }
+   ],
+   "skillwhisper": [
+    {
+     "name": "Snippet",
+     "label": "Skills",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 22
+    },
+    {
+     "name": "Snippet",
+     "label": "Skills",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 55
+    },
+    {
+     "name": "Snippet",
+     "label": "ACHP Reservation En",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 67
+    },
+    {
+     "name": "Snippet",
+     "label": "ACHP WMR Sp",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 68
+    },
+    {
+     "name": "Snippet",
+     "label": "ACHP WMR En",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 69
+    },
+    {
+     "name": "Snippet",
+     "label": "ACHP Reservation Sp",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 70
+    }
+   ],
+   "sp2": [
+    {
+     "name": "Assign",
+     "label": "Assign PolyReason",
+     "shape": {
+      "type": "rectangle",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#brackets-x"
+      },
+      "width": 128,
+      "height": 32
+     },
+     "actionId": 75
+    }
+   ],
+   "sp3": [
+    {
+     "name": "Assign",
+     "label": "Assign PolyNote",
+     "shape": {
+      "type": "rectangle",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#brackets-x"
+      },
+      "width": 128,
+      "height": 32
+     },
+     "actionId": 77
+    }
+   ]
+  },
+  "compareScript": {},
+  "customConnectorIdentifier": null,
+  "schemaVersion": "1.0.0"
+ }
+}

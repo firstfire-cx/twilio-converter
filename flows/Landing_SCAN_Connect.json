@@ -1,0 +1,2522 @@
+{
+ "scriptContent": {
+  "header": {
+   "scriptName": "Landing_SCAN_Connect",
+   "busNo": 4601541,
+   "mediaType": 4,
+   "mediaTypeName": "call",
+   "purposeType": "General",
+   "variableRedaction": "",
+   "nextActionId": 46,
+   "status": "Active",
+   "lastSavedIn": "cxs",
+   "wasLayoutAlgorithmRun": true
+  },
+  "actions": {
+   "1": {
+    "actionId": 1,
+    "libraryId": "B2F794C5-0232-40E7-9830-76D573BF57D7",
+    "name": "BEGIN",
+    "version": 1,
+    "label": "SCAN Landing",
+    "dependencyOrder": "0",
+    "implType": "0",
+    "x": 296,
+    "y": 680,
+    "xws": 296,
+    "yws": 680
+   },
+   "2": {
+    "actionId": 2,
+    "libraryId": "F8B958D0-8CD3-40DF-97D3-5862930B0807",
+    "name": "RUNSUB",
+    "version": 1,
+    "label": "Check Ports",
+    "dependencyOrder": "1",
+    "implType": "0",
+    "x": 1184,
+    "y": 664,
+    "xws": 1184,
+    "yws": 664
+   },
+   "3": {
+    "actionId": 3,
+    "libraryId": "7D5D3B99-DF55-4CCC-A78A-981B3F99F5BE",
+    "name": "VOICEPARAMS",
+    "version": 1,
+    "label": "Voiceparams - 4: Heather, Female (US)",
+    "dependencyOrder": "2",
+    "implType": "0",
+    "x": 1024,
+    "y": 688,
+    "xws": 1024,
+    "yws": 688
+   },
+   "4": {
+    "actionId": 4,
+    "libraryId": "DAEE9C00-12CE-4222-A42E-307C37D53B7F",
+    "name": "MENU",
+    "version": 1,
+    "label": "SCAN Menu",
+    "dependencyOrder": "3",
+    "implType": "0",
+    "x": 2016,
+    "y": 664,
+    "xws": 2016,
+    "yws": 664
+   },
+   "5": {
+    "actionId": 5,
+    "libraryId": "93232E99-D607-4E7D-9300-17986D70DA3C",
+    "name": "RUNSCRIPT",
+    "version": 1,
+    "label": "KPMA Queue",
+    "dependencyOrder": "4",
+    "implType": "0",
+    "x": 2720,
+    "y": 1368,
+    "xws": 2720,
+    "yws": 1368
+   },
+   "6": {
+    "actionId": 6,
+    "libraryId": "9015C095-98D9-441F-BF92-E90F5C5ED8C8",
+    "name": "ASSIGN",
+    "version": 1,
+    "label": "Lang = SP",
+    "dependencyOrder": "2",
+    "implType": "0",
+    "x": 1568,
+    "y": 400,
+    "xws": 1568,
+    "yws": 400
+   },
+   "7": {
+    "actionId": 7,
+    "libraryId": "9015C095-98D9-441F-BF92-E90F5C5ED8C8",
+    "name": "ASSIGN",
+    "version": 1,
+    "label": "Lang = EN",
+    "dependencyOrder": "2",
+    "implType": "0",
+    "x": 864,
+    "y": 688,
+    "xws": 864,
+    "yws": 688
+   },
+   "8": {
+    "actionId": 8,
+    "libraryId": "B64A6796-4F66-4B1B-A9B5-3AF926AB4B7C",
+    "name": "HANGUP",
+    "version": 1,
+    "label": "Hangup",
+    "dependencyOrder": "7",
+    "implType": "0",
+    "x": 2528,
+    "y": 400,
+    "xws": 2528,
+    "yws": 400
+   },
+   "9": {
+    "actionId": 9,
+    "libraryId": "B333DA63-33C8-4297-A58A-E9546CF7F0F2",
+    "name": "SNIPPET",
+    "version": 1,
+    "label": "Skills",
+    "dependencyOrder": "8",
+    "implType": "0",
+    "x": 2304,
+    "y": 664,
+    "xws": 2304,
+    "yws": 664
+   },
+   "10": {
+    "actionId": 10,
+    "libraryId": "A10F9F27-A5DD-48BA-AE37-E206FC6E101B",
+    "name": "LOOP",
+    "version": 1,
+    "label": "Loop x3",
+    "dependencyOrder": "9",
+    "implType": "0",
+    "x": 2016,
+    "y": 400,
+    "xws": 2016,
+    "yws": 400
+   },
+   "11": {
+    "actionId": 11,
+    "libraryId": "B1B9A2DD-65B6-4626-9CF5-9CFA69CF59E2",
+    "name": "PLAY",
+    "version": 1,
+    "label": "Invalid",
+    "dependencyOrder": "10",
+    "implType": "0",
+    "x": 1792,
+    "y": 376,
+    "xws": 1792,
+    "yws": 376
+   },
+   "12": {
+    "actionId": 12,
+    "libraryId": "B1B9A2DD-65B6-4626-9CF5-9CFA69CF59E2",
+    "name": "PLAY",
+    "version": 1,
+    "label": "Invalid Final",
+    "dependencyOrder": "11",
+    "implType": "0",
+    "x": 2304,
+    "y": 376,
+    "xws": 2304,
+    "yws": 376
+   },
+   "13": {
+    "actionId": 13,
+    "libraryId": "D639CF70-9DE8-47FE-AA7E-6B39E4556D9D",
+    "name": "HOURS",
+    "version": 1,
+    "label": "SCAN Hours",
+    "dependencyOrder": "12",
+    "implType": "0",
+    "x": 1568,
+    "y": 688,
+    "xws": 1568,
+    "yws": 688
+   },
+   "14": {
+    "actionId": 14,
+    "libraryId": "B1B9A2DD-65B6-4626-9CF5-9CFA69CF59E2",
+    "name": "PLAY",
+    "version": 1,
+    "label": "After Hours Line",
+    "dependencyOrder": "13",
+    "implType": "0",
+    "x": 1792,
+    "y": 1368,
+    "xws": 1792,
+    "yws": 1368
+   },
+   "15": {
+    "actionId": 15,
+    "libraryId": "B1B9A2DD-65B6-4626-9CF5-9CFA69CF59E2",
+    "name": "PLAY",
+    "version": 1,
+    "label": "QA and Mask up",
+    "dependencyOrder": "14",
+    "implType": "0",
+    "x": 2496,
+    "y": 1368,
+    "xws": 2496,
+    "yws": 1368
+   },
+   "16": {
+    "actionId": 16,
+    "libraryId": "B1B9A2DD-65B6-4626-9CF5-9CFA69CF59E2",
+    "name": "PLAY",
+    "version": 1,
+    "label": "Scheduling Hours",
+    "dependencyOrder": "15",
+    "implType": "0",
+    "x": 1792,
+    "y": 664,
+    "xws": 1792,
+    "yws": 664
+   },
+   "17": {
+    "actionId": 17,
+    "libraryId": "F8B958D0-8CD3-40DF-97D3-5862930B0807",
+    "name": "RUNSUB",
+    "version": 1,
+    "label": "Check Hours",
+    "dependencyOrder": "16",
+    "implType": "0",
+    "x": 1568,
+    "y": 888,
+    "xws": 1568,
+    "yws": 888
+   },
+   "18": {
+    "actionId": 18,
+    "libraryId": "B64A6796-4F66-4B1B-A9B5-3AF926AB4B7C",
+    "name": "HANGUP",
+    "version": 1,
+    "label": "Hangup",
+    "dependencyOrder": "17",
+    "implType": "0",
+    "x": 1568,
+    "y": 1168,
+    "xws": 1568,
+    "yws": 1168
+   },
+   "19": {
+    "actionId": 19,
+    "libraryId": "D28D2B39-D4DB-499A-9B8B-F3879E4C5B25",
+    "name": "ANNOTATION",
+    "version": 1,
+    "label": "Annotation",
+    "dependencyOrder": "18",
+    "implType": "0",
+    "x": 1312,
+    "y": 1008,
+    "xws": 1312,
+    "yws": 1008
+   },
+   "21": {
+    "actionId": 21,
+    "libraryId": "B64A6796-4F66-4B1B-A9B5-3AF926AB4B7C",
+    "name": "HANGUP",
+    "version": 1,
+    "label": "Hangup",
+    "dependencyOrder": "19",
+    "implType": "0",
+    "x": 640,
+    "y": 1104,
+    "xws": 640,
+    "yws": 1104
+   },
+   "22": {
+    "actionId": 22,
+    "libraryId": "B1B9A2DD-65B6-4626-9CF5-9CFA69CF59E2",
+    "name": "PLAY",
+    "version": 1,
+    "label": "Play Ineligible Prompt",
+    "dependencyOrder": "20",
+    "implType": "0",
+    "x": 640,
+    "y": 888,
+    "xws": 640,
+    "yws": 888
+   },
+   "23": {
+    "actionId": 23,
+    "libraryId": "6695BA9C-E1D6-4F3C-A15A-94F1400E3169",
+    "name": "IF",
+    "version": 1,
+    "label": "If BlockCall = true",
+    "dependencyOrder": "21",
+    "implType": "0",
+    "x": 640,
+    "y": 688,
+    "xws": 640,
+    "yws": 688
+   },
+   "24": {
+    "actionId": 24,
+    "libraryId": "F8B958D0-8CD3-40DF-97D3-5862930B0807",
+    "name": "RUNSUB",
+    "version": 1,
+    "label": "CallBlocker",
+    "dependencyOrder": "22",
+    "implType": "0",
+    "x": 448,
+    "y": 664,
+    "xws": 448,
+    "yws": 664
+   },
+   "25": {
+    "actionId": 25,
+    "libraryId": "DAEE9C00-12CE-4222-A42E-307C37D53B7F",
+    "name": "MENU",
+    "version": 1,
+    "label": "SCAN Greeting",
+    "dependencyOrder": "23",
+    "implType": "0",
+    "x": 1376,
+    "y": 664,
+    "xws": 1376,
+    "yws": 664
+   },
+   "26": {
+    "actionId": 26,
+    "libraryId": "B333DA63-33C8-4297-A58A-E9546CF7F0F2",
+    "name": "SNIPPET",
+    "version": 1,
+    "label": "Skills",
+    "dependencyOrder": "24",
+    "implType": "0",
+    "x": 2112,
+    "y": 1368,
+    "xws": 2112,
+    "yws": 1368
+   },
+   "28": {
+    "actionId": 28,
+    "libraryId": "F40B8113-DEE5-405E-8A11-BCF3954047D9",
+    "name": "BLINDXFER",
+    "version": 1,
+    "label": "To PolyAI",
+    "dependencyOrder": "25",
+    "implType": "0",
+    "x": 4160,
+    "y": 880,
+    "xws": 4160,
+    "yws": 880
+   },
+   "29": {
+    "actionId": 29,
+    "libraryId": "D583A89D-145C-44AC-B476-A15045180000",
+    "name": "SIPXFERPUTHD",
+    "version": 1,
+    "label": "SIPXFERPUTHD",
+    "dependencyOrder": "38",
+    "implType": "0",
+    "x": 4160,
+    "y": 688,
+    "xws": 4160,
+    "yws": 688
+   },
+   "31": {
+    "actionId": 31,
+    "libraryId": "9015C095-98D9-441F-BF92-E90F5C5ED8C8",
+    "name": "ASSIGN",
+    "version": 1,
+    "label": "Assign Res",
+    "dependencyOrder": "26",
+    "implType": "0",
+    "x": 2016,
+    "y": 1168,
+    "xws": 2016,
+    "yws": 1168
+   },
+   "32": {
+    "actionId": 32,
+    "libraryId": "6695BA9C-E1D6-4F3C-A15A-94F1400E3169",
+    "name": "IF",
+    "version": 1,
+    "label": "Lang",
+    "dependencyOrder": "27",
+    "implType": "0",
+    "x": 2016,
+    "y": 944,
+    "xws": 2016,
+    "yws": 944
+   },
+   "34": {
+    "actionId": 34,
+    "libraryId": "9015C095-98D9-441F-BF92-E90F5C5ED8C8",
+    "name": "ASSIGN",
+    "version": 1,
+    "label": "Assign Res",
+    "dependencyOrder": "28",
+    "implType": "0",
+    "x": 2304,
+    "y": 944,
+    "xws": 2304,
+    "yws": 944
+   },
+   "35": {
+    "actionId": 35,
+    "libraryId": "9015C095-98D9-441F-BF92-E90F5C5ED8C8",
+    "name": "ASSIGN",
+    "version": 1,
+    "label": "Assign Res",
+    "dependencyOrder": "29",
+    "implType": "0",
+    "x": 2304,
+    "y": 1168,
+    "xws": 2304,
+    "yws": 1168
+   },
+   "36": {
+    "actionId": 36,
+    "libraryId": "6695BA9C-E1D6-4F3C-A15A-94F1400E3169",
+    "name": "IF",
+    "version": 1,
+    "label": "Lang",
+    "dependencyOrder": "30",
+    "implType": "0",
+    "x": 2496,
+    "y": 688,
+    "xws": 2496,
+    "yws": 688
+   },
+   "37": {
+    "actionId": 37,
+    "libraryId": "B1B9A2DD-65B6-4626-9CF5-9CFA69CF59E2",
+    "name": "PLAY",
+    "version": 1,
+    "label": "GMR Marketing",
+    "dependencyOrder": "31",
+    "implType": "0",
+    "x": 2976,
+    "y": 376,
+    "xws": 2976,
+    "yws": 376
+   },
+   "38": {
+    "actionId": 38,
+    "libraryId": "6695BA9C-E1D6-4F3C-A15A-94F1400E3169",
+    "name": "IF",
+    "version": 1,
+    "label": "Res",
+    "dependencyOrder": "40",
+    "implType": "0",
+    "x": 2688,
+    "y": 688,
+    "xws": 2688,
+    "yws": 688
+   },
+   "39": {
+    "actionId": 39,
+    "libraryId": "6695BA9C-E1D6-4F3C-A15A-94F1400E3169",
+    "name": "IF",
+    "version": 1,
+    "label": "WMR",
+    "dependencyOrder": "32",
+    "implType": "0",
+    "x": 2688,
+    "y": 880,
+    "xws": 2688,
+    "yws": 880
+   },
+   "40": {
+    "actionId": 40,
+    "libraryId": "DE09A7DE-6654-4642-A86A-87FFBE75C7D7",
+    "name": "ONSIGNAL",
+    "version": 1,
+    "label": "Onsignal",
+    "dependencyOrder": "37",
+    "implType": "0",
+    "x": 2984,
+    "y": 1192,
+    "xws": 2984,
+    "yws": 1192
+   },
+   "41": {
+    "actionId": 41,
+    "libraryId": "B1B9A2DD-65B6-4626-9CF5-9CFA69CF59E2",
+    "name": "PLAY",
+    "version": 1,
+    "label": "Play",
+    "dependencyOrder": "33",
+    "implType": "0",
+    "x": 3200,
+    "y": 1176,
+    "xws": 3200,
+    "yws": 1176
+   },
+   "42": {
+    "actionId": 42,
+    "libraryId": "9015C095-98D9-441F-BF92-E90F5C5ED8C8",
+    "name": "ASSIGN",
+    "version": 1,
+    "label": "Assign PolyReason",
+    "dependencyOrder": "34",
+    "implType": "0",
+    "x": 3392,
+    "y": 1200,
+    "xws": 3392,
+    "yws": 1200
+   },
+   "43": {
+    "actionId": 43,
+    "libraryId": "9015C095-98D9-441F-BF92-E90F5C5ED8C8",
+    "name": "ASSIGN",
+    "version": 1,
+    "label": "Assign PolyNote",
+    "dependencyOrder": "35",
+    "implType": "0",
+    "x": 3584,
+    "y": 1200,
+    "xws": 3584,
+    "yws": 1200
+   },
+   "44": {
+    "actionId": 44,
+    "libraryId": "689A4A1B-FA0D-47B3-9A02-CBEB4735F08F",
+    "name": "REQAGENT",
+    "version": 1,
+    "label": "Reqagent",
+    "dependencyOrder": "36",
+    "implType": "0",
+    "x": 3904,
+    "y": 1200,
+    "xws": 3904,
+    "yws": 1200
+   },
+   "45": {
+    "actionId": 45,
+    "libraryId": "E86250D4-8659-4DF0-937E-1F50E64E180E",
+    "name": "SPAWN",
+    "version": 1,
+    "label": "Spawn",
+    "dependencyOrder": "39",
+    "implType": "0",
+    "x": 2976,
+    "y": 664,
+    "xws": 2976,
+    "yws": 664
+   }
+  },
+  "properties": {
+   "1": {
+    "0": {
+     "name": "RootFolder",
+     "value": ""
+    },
+    "1": {
+     "name": "Application",
+     "value": ""
+    },
+    "2": {
+     "name": "ParamCount",
+     "value": ""
+    },
+    "3": {
+     "name": "Parameters",
+     "value": []
+    }
+   },
+   "2": {
+    "0": {
+     "name": "ScriptName",
+     "value": "CheckPorts"
+    },
+    "1": {
+     "name": "ParamCount",
+     "value": ""
+    },
+    "2": {
+     "name": "ReturnVariable",
+     "value": "RTN"
+    },
+    "3": {
+     "name": "Parameters",
+     "value": []
+    }
+   },
+   "3": {
+    "0": {
+     "name": "TTSVolume",
+     "value": "70"
+    },
+    "1": {
+     "name": "TTSRate",
+     "value": "0"
+    },
+    "2": {
+     "name": "TTSVoice",
+     "value": "4: Heather, Female (US)"
+    },
+    "3": {
+     "name": "unused1073743309",
+     "value": ""
+    },
+    "4": {
+     "name": "ASRTuningEnabled",
+     "value": "NoChange"
+    },
+    "5": {
+     "name": "ASRUniversalsEnabled",
+     "value": "NoChange"
+    },
+    "6": {
+     "name": "ASRUniversalContentType",
+     "value": "PhraseList"
+    },
+    "7": {
+     "name": "ASRUniversalPhraseList",
+     "value": ""
+    },
+    "8": {
+     "name": "ASRUniversalGrammarFile",
+     "value": ""
+    },
+    "9": {
+     "name": "ASRUniversalVarName",
+     "value": "_ASRUniversal"
+    },
+    "10": {
+     "name": "ASRLanguageLocale",
+     "value": "NoChange"
+    }
+   },
+   "4": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\Scan_GMR_Menu_{Lang}.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "EN: Please listen carefully to the following options.\n\nIf you are calling to book a new ride, including Mileage Reimbursement rides offered to SCAN Connections members only, or to cancel or change an existing ride, press 1.\n\nIf you are calling to check on a ride in progress or to ask, “Where’s My Ride?”, press 2.\n\nFor SCAN Connections members only: To register as a Mileage Reimbursement driver, press 3.\n\nFor SCAN Connections members only: For questions about Mileage Reimbursement claims, press 4.\n\nSP - Por favor, escuche atentamente las siguientes opciones.\n\nSi llama para reservar un viaje nuevo, incluidos los viajes de reembolso de millaje para miembros de SCAN Connections únicamente, o para cancelar o hacer cambios a un viaje existente, oprima uno.\n\nSi llama para verificar un viaje en curso o para preguntar, “¿Dónde está mi viaje?”, oprima dos.\n\nSolo para miembros de SCAN Connections: Para registrarse como conductor de reembolso de millaje, oprima tres.\n\nSolo para miembros de SCAN Connections: Para preguntas sobre reclamaciones de reembolso de millaje, oprima cuatro.\n"
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "MaxDigits",
+     "value": "1"
+    },
+    "4": {
+     "name": "Terminator",
+     "value": "#-"
+    },
+    "5": {
+     "name": "Timeout",
+     "value": "5"
+    },
+    "6": {
+     "name": "InterDigitTimeout",
+     "value": "5"
+    },
+    "7": {
+     "name": "Variable",
+     "value": "AHPMenu_RES"
+    }
+   },
+   "5": {
+    "0": {
+     "name": "ScriptName",
+     "value": "Queue_KPMA"
+    }
+   },
+   "6": {
+    "0": {
+     "name": "Variable",
+     "value": "Lang"
+    },
+    "1": {
+     "name": "Value",
+     "value": "SP"
+    },
+    "2": {
+     "name": "Type",
+     "value": "String"
+    },
+    "3": {
+     "name": "Publish",
+     "value": ""
+    },
+    "4": {
+     "name": "ScreenPop",
+     "value": "False"
+    },
+    "5": {
+     "name": "SaveToDB",
+     "value": "False"
+    },
+    "6": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   },
+   "7": {
+    "0": {
+     "name": "Variable",
+     "value": "Lang"
+    },
+    "1": {
+     "name": "Value",
+     "value": "EN"
+    },
+    "2": {
+     "name": "Type",
+     "value": "String"
+    },
+    "3": {
+     "name": "Publish",
+     "value": ""
+    },
+    "4": {
+     "name": "ScreenPop",
+     "value": "False"
+    },
+    "5": {
+     "name": "SaveToDB",
+     "value": "False"
+    },
+    "6": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   },
+   "8": {},
+   "9": {
+    "0": {
+     "name": "Data",
+     "value": "SWITCH AHPMenu_RES\r\n{\r\n\tCASE 1\r\n\t{ \r\n\t\tIF Lang = \"SP\"\r\n\t\t{\r\n\t\t\tASSIGN QueueSkill = 18556550 //SCAN Reservations  SP\r\n\t\t\tASSIGN SkillWhisper = \"SCAN-Reservations-Spanish\"\r\n\t\t}\r\n\t\tELSE\r\n\t\t{\r\n\t\t\tASSIGN QueueSkill = 18556549 //SCAN Reservations EN\r\n\t\t\tASSIGN SkillWhisper = \"SCAN-Reservations-English\"\r\n\t\t}\r\n\t} \r\n\tCASE 2\r\n\t{ \r\n\t\tIF Lang = \"SP\"\r\n\t\t{\r\n\t\t\tASSIGN QueueSkill = 18556552 // SCAN_WMR_SP\r\n\t\t\tASSIGN SkillWhisper = \"SCAN-W-M-R-Spanish\"\r\n\t\t}\r\n\t\tELSE\r\n\t\t{\r\n\t\t\tASSIGN QueueSkill = 18556551 //SCAN_WMR_ EN\r\n\t\t\tASSIGN SkillWhisper = \"SCAN-W-M-R-English\"\r\n\t\t}\r\n\t}\r\n\tCASE 3\r\n\t{ \r\n\t\tIF Lang = \"SP\"\r\n\t\t{\r\n\t\t\tASSIGN QueueSkill = 27192004 //SCAN GMR  SP\r\n\t\t\tASSIGN SkillWhisper = \"SCAN-GMR-Spanish\"\r\n\t\t}\r\n\t\tELSE\r\n\t\t{\r\n\t\t\tASSIGN QueueSkill = 27192003 //SCAN GMR  EN\r\n\t\t\tASSIGN SkillWhisper = \"SCAN-GMR-English\"\r\n\t\t}\r\n\t} \r\n\tCASE 4\r\n\t{ \r\n\t\tIF Lang = \"SP\"\r\n\t\t{\r\n\t\t\tASSIGN QueueSkill = 27192006 //SCAN MR  SP\r\n\t\t\tASSIGN SkillWhisper = \"SCAN-MR-Spanish\"\r\n\t\t}\r\n\t\tELSE\r\n\t\t{\r\n\t\t\tASSIGN QueueSkill = 27192005 //SCAN MR EN\r\n\t\t\tASSIGN SkillWhisper = \"SCAN-MR-English\"\r\n\t\t}\r\n\t} \r\n\tCASE 5\r\n\t{ \r\n\t\tIF Lang = \"SP\"\r\n\t\t{\r\n\t\t\tASSIGN QueueSkill = 18556550 //SCAN Reservations  SP\r\n\t\t\tASSIGN SkillWhisper = \"SCAN-Reservations-Spanish\"\r\n\t\t}\r\n\t\tELSE\r\n\t\t{\r\n\t\t\tASSIGN QueueSkill = 18556549 //SCAN Reservations  EN\r\n\t\t\tASSIGN SkillWhisper = \"SCAN-Reservations-English\"\r\n\t\t}\r\n\t} \r\n}"
+    },
+    "1": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   },
+   "10": {
+    "0": {
+     "name": "Repeat",
+     "value": "3"
+    },
+    "1": {
+     "name": "CounterName",
+     "value": "MenuLoop"
+    }
+   },
+   "11": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\Driscoll_Invalid_{Lang}.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "I'm sorry, that was an invalid option. Please try again."
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "DetectDTMF",
+     "value": "True"
+    },
+    "4": {
+     "name": "SuppressSilence",
+     "value": ""
+    },
+    "5": {
+     "name": "TTSVolume",
+     "value": ""
+    },
+    "6": {
+     "name": "TTSRate",
+     "value": ""
+    },
+    "7": {
+     "name": "TTSVoice",
+     "value": ""
+    }
+   },
+   "12": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\Driscoll_InvalidFinal_{Lang}.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "EN - No option has been selected. Goodbye.\n\nSP - No se seleccionó ninguna opción. Adiós."
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "DetectDTMF",
+     "value": "True"
+    },
+    "4": {
+     "name": "SuppressSilence",
+     "value": ""
+    },
+    "5": {
+     "name": "TTSVolume",
+     "value": ""
+    },
+    "6": {
+     "name": "TTSRate",
+     "value": ""
+    },
+    "7": {
+     "name": "TTSVoice",
+     "value": ""
+    }
+   },
+   "13": {
+    "0": {
+     "name": "Profile",
+     "value": "2056"
+    }
+   },
+   "14": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\2023\\AfterHours_SCAN_{LANG}.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "EN - You have reached the afterhours line. Please hold for the next representative to assist you.\n\nSP - Esta contactando a nuestra linea fuera de horario regular. Por Favor espere al siguiente representante para que le pueda asistir."
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "DetectDTMF",
+     "value": "True"
+    },
+    "4": {
+     "name": "SuppressSilence",
+     "value": ""
+    },
+    "5": {
+     "name": "TTSVolume",
+     "value": ""
+    },
+    "6": {
+     "name": "TTSRate",
+     "value": ""
+    },
+    "7": {
+     "name": "TTSVoice",
+     "value": ""
+    }
+   },
+   "15": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\CallsRecorded_{Lang}.wav\" \"Prompts\\MaskUp_{Lang}.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "EN - This call may be recorded for quality and training purposes.  To protect you and your drivers, please wear a mask at all times in transport.\n\nSP - Esta llamada se esta garbando por motivois de calidad y propositos de entrenamiento.  Para protejerlo a usted y a su conductor use se mascara en todo momento durante su transporte."
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "DetectDTMF",
+     "value": "True"
+    },
+    "4": {
+     "name": "SuppressSilence",
+     "value": ""
+    },
+    "5": {
+     "name": "TTSVolume",
+     "value": ""
+    },
+    "6": {
+     "name": "TTSRate",
+     "value": ""
+    },
+    "7": {
+     "name": "TTSVoice",
+     "value": ""
+    }
+   },
+   "16": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\2023\\Hours_SCAN_{LANG}.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "EN - We are open to schedule Monday-Friday From 6:00a-6:00p CST, Closed Saturday and Sunday.\n\n\nSP - Nuestro horario normal de operaciones es de Lunes a Viernes de 6:00a-6:00p CST. Cerrado Sabado y Domingo."
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "DetectDTMF",
+     "value": "True"
+    },
+    "4": {
+     "name": "SuppressSilence",
+     "value": ""
+    },
+    "5": {
+     "name": "TTSVolume",
+     "value": ""
+    },
+    "6": {
+     "name": "TTSRate",
+     "value": ""
+    },
+    "7": {
+     "name": "TTSVoice",
+     "value": ""
+    }
+   },
+   "17": {
+    "0": {
+     "name": "ScriptName",
+     "value": "CheckHours"
+    },
+    "1": {
+     "name": "ParamCount",
+     "value": ""
+    },
+    "2": {
+     "name": "ReturnVariable",
+     "value": "isOpen"
+    },
+    "3": {
+     "name": "Parameters",
+     "value": [
+      "1942"
+     ]
+    }
+   },
+   "18": {},
+   "19": {
+    "0": {
+     "name": "Comments",
+     "value": "Handles Overrides"
+    },
+    "1": {
+     "name": "Width",
+     "value": "84"
+    },
+    "2": {
+     "name": "Height",
+     "value": "70"
+    }
+   },
+   "21": {},
+   "22": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\Block_Number_EN.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "Thank you for calling SafeRide Health. The account associated with this phone number is not eligible for a transportation benefit at this time. Goodbye."
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "DetectDTMF",
+     "value": "True"
+    },
+    "4": {
+     "name": "SuppressSilence",
+     "value": ""
+    },
+    "5": {
+     "name": "TTSVolume",
+     "value": ""
+    },
+    "6": {
+     "name": "TTSRate",
+     "value": ""
+    },
+    "7": {
+     "name": "TTSVoice",
+     "value": ""
+    }
+   },
+   "23": {
+    "0": {
+     "name": "Expression",
+     "value": "BlockCall = 1"
+    }
+   },
+   "24": {
+    "0": {
+     "name": "ScriptName",
+     "value": "CallBlocker"
+    },
+    "1": {
+     "name": "ParamCount",
+     "value": ""
+    },
+    "2": {
+     "name": "ReturnVariable",
+     "value": "BlockCall"
+    },
+    "3": {
+     "name": "Parameters",
+     "value": [
+      "{ANI}"
+     ]
+    }
+   },
+   "25": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\2023\\GreetingMenu_SCAN_EN.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "EN: Thank you for calling SCAN Health Transportation provided by SafeRide Health. If this is a medical emergency please hang up and dial 911. For English, please press 1. \n\nSP: Para espanol, presione 2."
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "MaxDigits",
+     "value": "1"
+    },
+    "4": {
+     "name": "Terminator",
+     "value": "#-"
+    },
+    "5": {
+     "name": "Timeout",
+     "value": "5"
+    },
+    "6": {
+     "name": "InterDigitTimeout",
+     "value": "5"
+    },
+    "7": {
+     "name": "Variable",
+     "value": "MRES"
+    }
+   },
+   "26": {
+    "0": {
+     "name": "Data",
+     "value": "IF Lang = \"SP\"\r\n{\r\n\tASSIGN QueueSkill = 18556839 //SCAN After Hours SP\r\n\tASSIGN SkillWhisper = \"SCAN-After-Hours-Spanish\"\r\n}\r\nELSE\r\n{\r\n\tASSIGN QueueSkill = 18556838 //SCAN After Hours EN\r\n\tASSIGN SkillWhisper = \"SCAN-After-Hours-English\"\r\n}"
+    },
+    "1": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   },
+   "28": {
+    "0": {
+     "name": "Destination",
+     "value": "9993230010"
+    }
+   },
+   "29": {
+    "0": {
+     "name": "headerName",
+     "value": "X-SkillId"
+    },
+    "1": {
+     "name": "headerValue",
+     "value": "{QueueSkill}"
+    }
+   },
+   "31": {
+    "0": {
+     "name": "Variable",
+     "value": "QueueSkill"
+    },
+    "1": {
+     "name": "Value",
+     "value": "18556549"
+    },
+    "2": {
+     "name": "Type",
+     "value": "String"
+    },
+    "3": {
+     "name": "Publish",
+     "value": ""
+    },
+    "4": {
+     "name": "ScreenPop",
+     "value": "False"
+    },
+    "5": {
+     "name": "SaveToDB",
+     "value": "False"
+    },
+    "6": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   },
+   "32": {
+    "0": {
+     "name": "Expression",
+     "value": "Lang = \"EN\""
+    }
+   },
+   "34": {
+    "0": {
+     "name": "Variable",
+     "value": "QueueSkill"
+    },
+    "1": {
+     "name": "Value",
+     "value": "18556550"
+    },
+    "2": {
+     "name": "Type",
+     "value": "String"
+    },
+    "3": {
+     "name": "Publish",
+     "value": ""
+    },
+    "4": {
+     "name": "ScreenPop",
+     "value": "False"
+    },
+    "5": {
+     "name": "SaveToDB",
+     "value": "False"
+    },
+    "6": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   },
+   "35": {
+    "0": {
+     "name": "Variable",
+     "value": "SkillWhisper"
+    },
+    "1": {
+     "name": "Value",
+     "value": "\"Scan-New-Member\""
+    },
+    "2": {
+     "name": "Type",
+     "value": "String"
+    },
+    "3": {
+     "name": "Publish",
+     "value": ""
+    },
+    "4": {
+     "name": "ScreenPop",
+     "value": "False"
+    },
+    "5": {
+     "name": "SaveToDB",
+     "value": "False"
+    },
+    "6": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   },
+   "36": {
+    "0": {
+     "name": "Expression",
+     "value": "Lang = \"EN\""
+    }
+   },
+   "37": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\GMR_Scan_{Lang}.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "I'm sorry, but that was still an invalid option. Please try your call again later. Goodbye."
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "DetectDTMF",
+     "value": "True"
+    },
+    "4": {
+     "name": "SuppressSilence",
+     "value": ""
+    },
+    "5": {
+     "name": "TTSVolume",
+     "value": ""
+    },
+    "6": {
+     "name": "TTSRate",
+     "value": ""
+    },
+    "7": {
+     "name": "TTSVoice",
+     "value": ""
+    }
+   },
+   "38": {
+    "0": {
+     "name": "Expression",
+     "value": "QueueSkill = \"18556549\" "
+    }
+   },
+   "39": {
+    "0": {
+     "name": "Expression",
+     "value": "QueueSkill = \"18556551\" "
+    }
+   },
+   "40": {
+    "0": {
+     "name": "SrcContactIDVar",
+     "value": "S1"
+    },
+    "1": {
+     "name": "ParamCount",
+     "value": ""
+    },
+    "2": {
+     "name": "Parameters",
+     "value": []
+    }
+   },
+   "41": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"%Call has been returned to C X One . Transferring to Agent Now\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": ""
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "DetectDTMF",
+     "value": "True"
+    },
+    "4": {
+     "name": "SuppressSilence",
+     "value": ""
+    },
+    "5": {
+     "name": "TTSVolume",
+     "value": ""
+    },
+    "6": {
+     "name": "TTSRate",
+     "value": ""
+    },
+    "7": {
+     "name": "TTSVoice",
+     "value": ""
+    }
+   },
+   "42": {
+    "0": {
+     "name": "Variable",
+     "value": "PolyReason"
+    },
+    "1": {
+     "name": "Value",
+     "value": "{SP2}"
+    },
+    "2": {
+     "name": "Type",
+     "value": "String"
+    },
+    "3": {
+     "name": "Publish",
+     "value": ""
+    },
+    "4": {
+     "name": "ScreenPop",
+     "value": "True"
+    },
+    "5": {
+     "name": "SaveToDB",
+     "value": "False"
+    },
+    "6": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   },
+   "43": {
+    "0": {
+     "name": "Variable",
+     "value": "PolyNote"
+    },
+    "1": {
+     "name": "Value",
+     "value": "{SP3}"
+    },
+    "2": {
+     "name": "Type",
+     "value": "String"
+    },
+    "3": {
+     "name": "Publish",
+     "value": ""
+    },
+    "4": {
+     "name": "ScreenPop",
+     "value": "True"
+    },
+    "5": {
+     "name": "SaveToDB",
+     "value": "False"
+    },
+    "6": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   },
+   "44": {
+    "0": {
+     "name": "Skill",
+     "value": "21036274"
+    },
+    "1": {
+     "name": "TargetAgent",
+     "value": ""
+    },
+    "2": {
+     "name": "PriorityManagement",
+     "value": "DefaultfromSkill"
+    },
+    "3": {
+     "name": "InitialPriority",
+     "value": "0"
+    },
+    "4": {
+     "name": "Acceleration",
+     "value": "1"
+    },
+    "5": {
+     "name": "Function",
+     "value": ""
+    },
+    "6": {
+     "name": "MaxPriority",
+     "value": "1000"
+    },
+    "7": {
+     "name": "Sequence",
+     "value": ""
+    },
+    "8": {
+     "name": "ZipTone",
+     "value": "AfterSequence"
+    },
+    "9": {
+     "name": "ScreenPopSource",
+     "value": "DefaultFromSkill"
+    },
+    "10": {
+     "name": "ScreenPopURL",
+     "value": ""
+    },
+    "11": {
+     "name": "HighProficiency",
+     "value": "1"
+    },
+    "12": {
+     "name": "LowProficiency",
+     "value": "20"
+    },
+    "13": {
+     "name": "RoutingAttribute",
+     "value": "NotApplicable"
+    }
+   },
+   "45": {
+    "0": {
+     "name": "ScriptName",
+     "value": "ForwardToPolyNoAuth"
+    },
+    "1": {
+     "name": "SpawnIDVar",
+     "value": "SPAWNID"
+    },
+    "2": {
+     "name": "Skill",
+     "value": ""
+    },
+    "3": {
+     "name": "ParamCount",
+     "value": ""
+    },
+    "4": {
+     "name": "StartDate",
+     "value": ""
+    },
+    "5": {
+     "name": "Parameters",
+     "value": [
+      "{DNIS}",
+      "{ANI}",
+      "{QueueSkill}"
+     ]
+    }
+   }
+  },
+  "branches": {
+   "1": [
+    {
+     "to": 24,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "2": [
+    {
+     "to": 25,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "3": [
+    {
+     "to": 2,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "4": [
+    {
+     "to": 10,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    },
+    {
+     "to": 9,
+     "label": "1",
+     "type": "custom",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "curved",
+     "elbows": [
+      [
+       2208,
+       736
+      ]
+     ]
+    },
+    {
+     "to": 9,
+     "label": "2",
+     "type": "custom",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "curved",
+     "elbows": [
+      [
+       2208,
+       608
+      ]
+     ]
+    },
+    {
+     "to": 9,
+     "label": "3",
+     "type": "custom",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "curved",
+     "elbows": [
+      [
+       2176,
+       640
+      ],
+      [
+       2240,
+       640
+      ]
+     ]
+    },
+    {
+     "to": 9,
+     "label": "4",
+     "type": "custom",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "curved",
+     "elbows": [
+      [
+       2208,
+       704
+      ]
+     ]
+    },
+    {
+     "to": 32,
+     "label": "5",
+     "type": "custom",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "6": [
+    {
+     "to": 13,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "7": [
+    {
+     "to": 3,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "9": [
+    {
+     "to": 36,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "10": [
+    {
+     "to": 12,
+     "label": "Finished",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    },
+    {
+     "to": 11,
+     "label": "Repeat",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 1,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "11": [
+    {
+     "to": 4,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "12": [
+    {
+     "to": 8,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "13": [
+    {
+     "to": 17,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    },
+    {
+     "to": 16,
+     "label": "Open",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    },
+    {
+     "to": 14,
+     "label": "Closed",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 1,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "14": [
+    {
+     "to": 26,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "15": [
+    {
+     "to": 5,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "16": [
+    {
+     "to": 4,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "17": [
+    {
+     "to": 18,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "19": [
+    {
+     "to": 17,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "22": [
+    {
+     "to": 21,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "23": [
+    {
+     "to": 22,
+     "label": "True",
+     "type": "branch",
+     "labelDistance": 0.5,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    },
+    {
+     "to": 7,
+     "label": "False",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 1,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "24": [
+    {
+     "to": 23,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "25": [
+    {
+     "to": 13,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    },
+    {
+     "to": 13,
+     "label": "1",
+     "type": "custom",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "curved",
+     "elbows": [
+      [
+       1494,
+       642
+      ]
+     ]
+    },
+    {
+     "to": 6,
+     "label": "2",
+     "type": "custom",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "26": [
+    {
+     "to": 15,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "29": [
+    {
+     "to": 28,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "31": [
+    {
+     "to": 35,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "32": [
+    {
+     "to": 31,
+     "label": "True",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    },
+    {
+     "to": 34,
+     "label": "False",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 1,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "34": [
+    {
+     "to": 35,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "35": [
+    {
+     "to": 15,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "36": [
+    {
+     "to": 38,
+     "label": "True",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    },
+    {
+     "to": 15,
+     "label": "False",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 1,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "38": [
+    {
+     "to": 45,
+     "label": "True",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    },
+    {
+     "to": 39,
+     "label": "False",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 1,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "39": [
+    {
+     "to": 45,
+     "label": "True",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    },
+    {
+     "to": 15,
+     "label": "False",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 1,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "40": [
+    {
+     "to": 41,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "41": [
+    {
+     "to": 42,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "42": [
+    {
+     "to": 43,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "43": [
+    {
+     "to": 44,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ]
+  },
+  "isDataLoaded": true,
+  "isDataLoading": false,
+  "isDataSaving": false,
+  "isNewScript": false,
+  "isViewOnlyMode": false,
+  "isLockOverride": false,
+  "isVersionHistoryMode": false,
+  "dataLoadingProgress": {
+   "key": "reset"
+  },
+  "error": null,
+  "issues": {
+   "totalErrors": "0",
+   "totalWarnings": "3",
+   "actions": {
+    "37": {
+     "actionType": "PLAY",
+     "errors": [],
+     "warnings": [
+      {
+       "key": "Warning! The Default branch for GMR Marketing is not wired up!",
+       "localizationKey": "default-branch-is-not-wired-up",
+       "interpolationValues": [
+        "GMR Marketing"
+       ]
+      }
+     ]
+    },
+    "44": {
+     "actionType": "REQAGENT",
+     "errors": [],
+     "warnings": [
+      {
+       "key": "Warning! The Default branch for Reqagent is not wired up!",
+       "localizationKey": "default-branch-is-not-wired-up",
+       "interpolationValues": [
+        "Reqagent"
+       ]
+      }
+     ]
+    },
+    "45": {
+     "actionType": "SPAWN",
+     "errors": [],
+     "warnings": [
+      {
+       "key": "Warning! The Default branch for Spawn is not wired up!",
+       "localizationKey": "default-branch-is-not-wired-up",
+       "interpolationValues": [
+        "Spawn"
+       ]
+      }
+     ]
+    }
+   },
+   "script": {}
+  },
+  "startTraceOptions": {
+   "skill": "",
+   "skillDescription": "",
+   "simulateInboundCall": false,
+   "phone": "",
+   "dnis": "",
+   "ani": "",
+   "simulateDateTime": false,
+   "dateTime": null,
+   "timezone": "(Business Unit Default)",
+   "parameters": []
+  },
+  "versionHistory": null,
+  "scriptVersions": {},
+  "lastVersionEdited": null,
+  "traceWindowCount": 0,
+  "variables": {
+   "ahpmenu_res": [
+    {
+     "name": "Menu",
+     "label": "SCAN Menu",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#num-list"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 4
+    },
+    {
+     "name": "Snippet",
+     "label": "Skills",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 9
+    }
+   ],
+   "lang": [
+    {
+     "name": "Menu",
+     "label": "SCAN Menu",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#num-list"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 4
+    },
+    {
+     "name": "Assign",
+     "label": "Lang = SP",
+     "shape": {
+      "type": "rectangle",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#brackets-x"
+      },
+      "width": 128,
+      "height": 32
+     },
+     "actionId": 6
+    },
+    {
+     "name": "Assign",
+     "label": "Lang = EN",
+     "shape": {
+      "type": "rectangle",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#brackets-x"
+      },
+      "width": 128,
+      "height": 32
+     },
+     "actionId": 7
+    },
+    {
+     "name": "Play",
+     "label": "Invalid",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#play"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 11
+    },
+    {
+     "name": "Play",
+     "label": "Invalid Final",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#play"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 12
+    },
+    {
+     "name": "Play",
+     "label": "After Hours Line",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#play"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 14
+    },
+    {
+     "name": "Play",
+     "label": "QA and Mask up",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#play"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 15
+    },
+    {
+     "name": "Play",
+     "label": "Scheduling Hours",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#play"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 16
+    },
+    {
+     "name": "Play",
+     "label": "GMR Marketing",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#play"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 37
+    }
+   ],
+   "mres": [
+    {
+     "name": "Menu",
+     "label": "SCAN Greeting",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#num-list"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 25
+    }
+   ],
+   "polynote": [
+    {
+     "name": "Assign",
+     "label": "Assign PolyNote",
+     "shape": {
+      "type": "rectangle",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#brackets-x"
+      },
+      "width": 128,
+      "height": 32
+     },
+     "actionId": 43
+    }
+   ],
+   "polyreason": [
+    {
+     "name": "Assign",
+     "label": "Assign PolyReason",
+     "shape": {
+      "type": "rectangle",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#brackets-x"
+      },
+      "width": 128,
+      "height": 32
+     },
+     "actionId": 42
+    }
+   ],
+   "queueskill": [
+    {
+     "name": "Snippet",
+     "label": "Skills",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 9
+    },
+    {
+     "name": "Snippet",
+     "label": "Skills",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 26
+    },
+    {
+     "name": "SIPXFERPUTHD",
+     "label": "",
+     "shape": {
+      "type": "rectangle",
+      "icon": {
+       "color": "#EA1462",
+       "url": "#sip-phone"
+      },
+      "subTitle": {
+       "text": "{{HeaderName}}"
+      },
+      "width": 128,
+      "height": 32
+     },
+     "actionId": 29
+    },
+    {
+     "name": "Assign",
+     "label": "Assign Res",
+     "shape": {
+      "type": "rectangle",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#brackets-x"
+      },
+      "width": 128,
+      "height": 32
+     },
+     "actionId": 31
+    },
+    {
+     "name": "Assign",
+     "label": "Assign Res",
+     "shape": {
+      "type": "rectangle",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#brackets-x"
+      },
+      "width": 128,
+      "height": 32
+     },
+     "actionId": 34
+    }
+   ],
+   "skillwhisper": [
+    {
+     "name": "Snippet",
+     "label": "Skills",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 9
+    },
+    {
+     "name": "Snippet",
+     "label": "Skills",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 26
+    },
+    {
+     "name": "Assign",
+     "label": "Assign Res",
+     "shape": {
+      "type": "rectangle",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#brackets-x"
+      },
+      "width": 128,
+      "height": 32
+     },
+     "actionId": 35
+    }
+   ],
+   "sp2": [
+    {
+     "name": "Assign",
+     "label": "Assign PolyReason",
+     "shape": {
+      "type": "rectangle",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#brackets-x"
+      },
+      "width": 128,
+      "height": 32
+     },
+     "actionId": 42
+    }
+   ],
+   "sp3": [
+    {
+     "name": "Assign",
+     "label": "Assign PolyNote",
+     "shape": {
+      "type": "rectangle",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#brackets-x"
+      },
+      "width": 128,
+      "height": 32
+     },
+     "actionId": 43
+    }
+   ]
+  },
+  "compareScript": {},
+  "customConnectorIdentifier": null,
+  "schemaVersion": "1.0.0"
+ }
+}

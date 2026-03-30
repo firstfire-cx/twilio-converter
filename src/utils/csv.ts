@@ -1,5 +1,4 @@
 // src/utils/csv.ts
-// src/utils/csv.ts
 import Papa from "papaparse";
 import type { IR, IVRNode, IVRContent, SayText } from "../types";
 
@@ -106,7 +105,6 @@ export function expandMenuNode(node: IVRNode, flow_id: string): IVRNode[] {
 
   const retryText: SayText = (c.retry_text as SayText | undefined) ?? {
     eng: "I'm sorry, that was not a valid option. Please try again.",
-    spa: "Lo sentimos, esa opción no es válida. Por favor, intente de nuevo.",
   };
 
   return [
@@ -312,6 +310,87 @@ export function optimizeIR(ir: IR): Record<string, IVRNode> {
   return nodes;
 }
 
+// ─── DynamoDB JSON unmarshaller ───────────────────────────────────────────────
+
+/**
+ * Detect whether a parsed JSON object uses DynamoDB type-descriptor format.
+ * DynamoDB JSON wraps every value as { "S": "..." } | { "N": "..." } | { "M": {...} } etc.
+ * We check if the top-level object's values are all single-key objects whose key
+ * is one of the known DynamoDB type tokens.
+ */
+const DDB_TYPES = new Set([
+  "S",
+  "N",
+  "B",
+  "BOOL",
+  "NULL",
+  "M",
+  "L",
+  "SS",
+  "NS",
+  "BS",
+]);
+
+function isDynamoDBJson(obj: Record<string, any>): boolean {
+  const values = Object.values(obj);
+  if (values.length === 0) return false;
+  return values.every(
+    (v) =>
+      v !== null &&
+      typeof v === "object" &&
+      !Array.isArray(v) &&
+      Object.keys(v).length === 1 &&
+      DDB_TYPES.has(Object.keys(v)[0]),
+  );
+}
+
+/**
+ * Recursively unmarshal a DynamoDB JSON value descriptor into a plain JS value.
+ *
+ *   { "S": "hello" }        → "hello"
+ *   { "N": "42" }           → 42
+ *   { "BOOL": true }        → true
+ *   { "NULL": true }        → null
+ *   { "M": { "k": { "S": "v" } } } → { k: "v" }
+ *   { "L": [ { "S": "a" } ] }      → ["a"]
+ */
+function unmarshalDDBValue(descriptor: any): any {
+  if (descriptor === null || typeof descriptor !== "object") return descriptor;
+
+  if ("S" in descriptor) return descriptor.S;
+  if ("N" in descriptor) {
+    const n = Number(descriptor.N);
+    return isNaN(n) ? descriptor.N : n;
+  }
+  if ("BOOL" in descriptor) return descriptor.BOOL;
+  if ("NULL" in descriptor) return null;
+  if ("M" in descriptor) return unmarshalDDBMap(descriptor.M);
+  if ("L" in descriptor) return (descriptor.L as any[]).map(unmarshalDDBValue);
+  if ("SS" in descriptor) return descriptor.SS as string[];
+  if ("NS" in descriptor) return (descriptor.NS as string[]).map(Number);
+  if ("BS" in descriptor) return descriptor.BS;
+
+  // Unknown descriptor shape — return as-is
+  return descriptor;
+}
+
+function unmarshalDDBMap(map: Record<string, any>): Record<string, any> {
+  const out: Record<string, any> = {};
+  for (const [k, v] of Object.entries(map)) {
+    out[k] = unmarshalDDBValue(v);
+  }
+  return out;
+}
+
+/**
+ * Unmarshal a full DynamoDB JSON content object into a plain IVRContent object.
+ * If the object doesn't look like DynamoDB JSON, returns it unchanged.
+ */
+function unmarshalContent(raw: Record<string, any>): IVRContent {
+  if (!isDynamoDBJson(raw)) return raw as IVRContent;
+  return unmarshalDDBMap(raw) as IVRContent;
+}
+
 // ─── CSV export / import ──────────────────────────────────────────────────────
 
 export function exportCSV(ir: IR): string {
@@ -340,32 +419,103 @@ export function exportCSV(ir: IR): string {
 }
 
 export function importCSV(csv: string): IR {
-  const result = Papa.parse(csv, { header: true, skipEmptyLines: true });
+  // Trim BOM and leading/trailing whitespace that can appear in real-world CSVs
+  const cleanCsv = csv.replace(/^\uFEFF/, "").trim();
+
+  const result = Papa.parse(cleanCsv, {
+    header: true,
+    skipEmptyLines: true,
+    transformHeader: (h) => h.trim(),
+    transform: (value) => (typeof value === "string" ? value.trim() : value),
+  });
+
+  if (result.errors.length > 0) {
+    const fatal = result.errors.filter(
+      (e) => e.type === "Delimiter" || e.type === "Quotes",
+    );
+    if (fatal.length > 0) {
+      throw new Error(
+        `CSV parse error on row ${fatal[0].row ?? "?"}: ${fatal[0].message}`,
+      );
+    }
+    // Non-fatal errors (e.g. missing fields on some rows) — log and continue
+    console.warn("[importCSV] Parse warnings:", result.errors);
+  }
+
+  const rows = result.data as any[];
+  if (rows.length === 0) {
+    throw new Error("CSV is empty or has no data rows.");
+  }
+
+  // Validate expected columns are present
+  const firstRow = rows[0];
+  const required = ["step_id", "action_type"];
+  const missing = required.filter((col) => !(col in firstRow));
+  if (missing.length > 0) {
+    throw new Error(
+      `CSV is missing required columns: ${missing.join(", ")}. ` +
+        `Found columns: ${Object.keys(firstRow).join(", ")}`,
+    );
+  }
+
   const nodes: Record<string, IVRNode> = {};
+  let skipped = 0;
 
-  (result.data as any[]).forEach((row) => {
-    if (!row.step_id) return;
-
-    let content: IVRContent = {};
-    try {
-      const parsed = JSON.parse(row.content || "{}");
-      content = typeof parsed === "object" && parsed !== null ? parsed : {};
-    } catch {
-      // Leave content empty if unparseable
+  rows.forEach((row, rowIdx) => {
+    const step_id = row.step_id?.trim();
+    if (!step_id) {
+      skipped++;
+      return;
     }
 
-    nodes[row.step_id] = {
-      step_id: row.step_id,
-      action_type: row.action_type,
-      label: row.label || row.step_id,
+    const action_type = row.action_type?.trim() as IVRNode["action_type"];
+    if (!action_type) {
+      console.warn(
+        `[importCSV] Row ${rowIdx + 2}: missing action_type for step "${step_id}", skipping`,
+      );
+      skipped++;
+      return;
+    }
+
+    let content: IVRContent = {};
+    const rawContent = row.content?.trim() || "{}";
+    try {
+      const parsed = JSON.parse(rawContent);
+      const plain = typeof parsed === "object" && parsed !== null ? parsed : {};
+      content = unmarshalContent(plain);
+    } catch (e) {
+      console.warn(
+        `[importCSV] Row ${rowIdx + 2}: could not parse content JSON for "${step_id}": ${rawContent.slice(0, 80)}`,
+        e,
+      );
+      // Leave content as {} so the node is still importable
+    }
+
+    const default_next = row.default_next?.trim() || undefined;
+
+    nodes[step_id] = {
+      step_id,
+      action_type,
+      label: row.label?.trim() || step_id,
       content,
-      default_next: row.default_next || undefined,
-      flow_id: row.flow_id || undefined,
+      default_next,
+      flow_id: row.flow_id?.trim() || undefined,
     };
   });
 
-  const flow_id = (result.data as any[])[0]?.flow_id || "flow";
-  // Try to derive start_step from a START node, fall back to first row
+  if (Object.keys(nodes).length === 0) {
+    throw new Error(
+      `No valid nodes could be imported from CSV (${skipped} row(s) skipped).`,
+    );
+  }
+
+  if (skipped > 0) {
+    console.warn(`[importCSV] Skipped ${skipped} invalid row(s).`);
+  }
+
+  const flow_id = rows[0]?.flow_id?.trim() || "flow";
+
+  // Derive start_step: prefer a START node, then the first row's step_id
   const startNode = Object.values(nodes).find((n) => n.action_type === "START");
   const start_step = startNode?.step_id ?? Object.keys(nodes)[0];
 

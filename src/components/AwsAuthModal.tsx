@@ -1,19 +1,11 @@
 // src/components/AwsAuthModal.tsx
-// src/components/AwsAuthModal.tsx
 //
 // Modal that walks the user through AWS credential acquisition.
-// Supports three paths selectable via tabs:
+// Supports two paths selectable via tabs:
 //   SSO   — OIDC device flow (same as `aws sso login`)
 //   Keys  — manual access key / secret / session token entry
-//
-// Usage:
-//   const auth = useAwsCredentials();
-//   {auth.authStep !== "ready" && (
-//     <AwsAuthModal auth={auth} onClose={() => auth.setAuthStep("idle")} />
-//   )}
-
 import { useState } from "react";
-import type { UseAwsCredentialsReturn, SsoAccount } from "../hooks/useAwsCredentials";
+import type { UseAwsCredentialsReturn } from "../hooks/useAwsCredentials";
 
 interface Props {
   auth: UseAwsCredentialsReturn;
@@ -95,21 +87,31 @@ function SsoPanel({ auth }: { auth: UseAwsCredentialsReturn }) {
   }
 
   // ── Step: waiting for approval ─────────────────────────────────────────────
-  if (authStep === "sso-pending" && ssoDeviceState) {
+  if (authStep === "sso-pending") {
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <div style={INFO_BOX("var(--text-1)", "var(--bg-0)", "var(--border)")}>
           A browser tab has opened. Approve the login request, then return here.
-          If the tab didn't open,{" "}
-          <a href={ssoDeviceState.verificationUriComplete} target="_blank" rel="noopener noreferrer"
-            style={{ color: "var(--accent)" }}>click here</a>.
+          {ssoDeviceState && (
+            <>
+              {" "}If the tab didn't open,{" "}
+              <a href={ssoDeviceState.verificationUriComplete} target="_blank" rel="noopener noreferrer"
+                style={{ color: "var(--accent)" }}>click here</a>.
+            </>
+          )}
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "center", padding: "16px 0" }}>
-          <div style={{ fontSize: 10, color: "var(--text-2)", ...MONO }}>Confirmation code</div>
-          <div style={{ fontSize: 28, fontWeight: 700, letterSpacing: "0.25em", color: "var(--text-0)", ...MONO }}>
-            {ssoDeviceState.userCode}
-          </div>
+          {ssoDeviceState ? (
+            <>
+              <div style={{ fontSize: 10, color: "var(--text-2)", ...MONO }}>Confirmation code</div>
+              <div style={{ fontSize: 28, fontWeight: 700, letterSpacing: "0.25em", color: "var(--text-0)", ...MONO }}>
+                {ssoDeviceState.userCode}
+              </div>
+            </>
+          ) : (
+            <div style={{ fontSize: 11, color: "var(--text-3)", ...MONO }}>Opening browser…</div>
+          )}
           <div style={{ fontSize: 10, color: "var(--text-3)", ...MONO }}>
             Waiting for approval…
             <span style={{ display: "inline-block", marginLeft: 6, animation: "spin 1s linear infinite" }}>⟳</span>

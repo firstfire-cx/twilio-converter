@@ -1,0 +1,2373 @@
+{
+ "scriptContent": {
+  "header": {
+   "scriptName": "Landing_CareFirst_Connect",
+   "busNo": 4601541,
+   "mediaType": 4,
+   "mediaTypeName": "call",
+   "purposeType": "General",
+   "variableRedaction": "",
+   "nextActionId": 60,
+   "status": "Active",
+   "lastSavedIn": "stx",
+   "wasLayoutAlgorithmRun": true
+  },
+  "actions": {
+   "1": {
+    "actionId": 1,
+    "libraryId": "B2F794C5-0232-40E7-9830-76D573BF57D7",
+    "name": "BEGIN",
+    "version": 1,
+    "label": "CareFirst Landing",
+    "dependencyOrder": "0",
+    "implType": "0",
+    "x": 296,
+    "y": 680,
+    "xws": 296,
+    "yws": 680
+   },
+   "2": {
+    "actionId": 2,
+    "libraryId": "B1B9A2DD-65B6-4626-9CF5-9CFA69CF59E2",
+    "name": "PLAY",
+    "version": 1,
+    "label": "CareFirst Health Greeting",
+    "dependencyOrder": "1",
+    "implType": "0",
+    "x": 1344,
+    "y": 664,
+    "xws": 1344,
+    "yws": 664
+   },
+   "4": {
+    "actionId": 4,
+    "libraryId": "F8B958D0-8CD3-40DF-97D3-5862930B0807",
+    "name": "RUNSUB",
+    "version": 1,
+    "label": "Check Ports",
+    "dependencyOrder": "2",
+    "implType": "0",
+    "x": 1184,
+    "y": 664,
+    "xws": 1184,
+    "yws": 664
+   },
+   "5": {
+    "actionId": 5,
+    "libraryId": "7D5D3B99-DF55-4CCC-A78A-981B3F99F5BE",
+    "name": "VOICEPARAMS",
+    "version": 1,
+    "label": "Voiceparams",
+    "dependencyOrder": "3",
+    "implType": "0",
+    "x": 1024,
+    "y": 688,
+    "xws": 1024,
+    "yws": 688
+   },
+   "10": {
+    "actionId": 10,
+    "libraryId": "DAEE9C00-12CE-4222-A42E-307C37D53B7F",
+    "name": "MENU",
+    "version": 1,
+    "label": "CareFirst Health Menu",
+    "dependencyOrder": "4",
+    "implType": "0",
+    "x": 2368,
+    "y": 664,
+    "xws": 2368,
+    "yws": 664
+   },
+   "12": {
+    "actionId": 12,
+    "libraryId": "93232E99-D607-4E7D-9300-17986D70DA3C",
+    "name": "RUNSCRIPT",
+    "version": 1,
+    "label": "KPMA Queue",
+    "dependencyOrder": "5",
+    "implType": "0",
+    "x": 2880,
+    "y": 1368,
+    "xws": 2880,
+    "yws": 1368
+   },
+   "15": {
+    "actionId": 15,
+    "libraryId": "DAEE9C00-12CE-4222-A42E-307C37D53B7F",
+    "name": "MENU",
+    "version": 1,
+    "label": "Offer Spanish",
+    "dependencyOrder": "6",
+    "implType": "0",
+    "x": 1728,
+    "y": 664,
+    "xws": 1728,
+    "yws": 664
+   },
+   "16": {
+    "actionId": 16,
+    "libraryId": "9015C095-98D9-441F-BF92-E90F5C5ED8C8",
+    "name": "ASSIGN",
+    "version": 1,
+    "label": "Lang = SP",
+    "dependencyOrder": "3",
+    "implType": "0",
+    "x": 1920,
+    "y": 400,
+    "xws": 1920,
+    "yws": 400
+   },
+   "17": {
+    "actionId": 17,
+    "libraryId": "9015C095-98D9-441F-BF92-E90F5C5ED8C8",
+    "name": "ASSIGN",
+    "version": 1,
+    "label": "Lang = EN",
+    "dependencyOrder": "3",
+    "implType": "0",
+    "x": 864,
+    "y": 688,
+    "xws": 864,
+    "yws": 688
+   },
+   "21": {
+    "actionId": 21,
+    "libraryId": "B64A6796-4F66-4B1B-A9B5-3AF926AB4B7C",
+    "name": "HANGUP",
+    "version": 1,
+    "label": "Hangup",
+    "dependencyOrder": "9",
+    "implType": "0",
+    "x": 2880,
+    "y": 400,
+    "xws": 2880,
+    "yws": 400
+   },
+   "22": {
+    "actionId": 22,
+    "libraryId": "B333DA63-33C8-4297-A58A-E9546CF7F0F2",
+    "name": "SNIPPET",
+    "version": 1,
+    "label": "Skills",
+    "dependencyOrder": "10",
+    "implType": "0",
+    "x": 2656,
+    "y": 664,
+    "xws": 2656,
+    "yws": 664
+   },
+   "25": {
+    "actionId": 25,
+    "libraryId": "A10F9F27-A5DD-48BA-AE37-E206FC6E101B",
+    "name": "LOOP",
+    "version": 1,
+    "label": "Loop x3",
+    "dependencyOrder": "11",
+    "implType": "0",
+    "x": 2368,
+    "y": 400,
+    "xws": 2368,
+    "yws": 400
+   },
+   "26": {
+    "actionId": 26,
+    "libraryId": "B1B9A2DD-65B6-4626-9CF5-9CFA69CF59E2",
+    "name": "PLAY",
+    "version": 1,
+    "label": "Invalid",
+    "dependencyOrder": "12",
+    "implType": "0",
+    "x": 2144,
+    "y": 376,
+    "xws": 2144,
+    "yws": 376
+   },
+   "27": {
+    "actionId": 27,
+    "libraryId": "B1B9A2DD-65B6-4626-9CF5-9CFA69CF59E2",
+    "name": "PLAY",
+    "version": 1,
+    "label": "Invalid Final",
+    "dependencyOrder": "13",
+    "implType": "0",
+    "x": 2656,
+    "y": 376,
+    "xws": 2656,
+    "yws": 376
+   },
+   "30": {
+    "actionId": 30,
+    "libraryId": "D639CF70-9DE8-47FE-AA7E-6B39E4556D9D",
+    "name": "HOURS",
+    "version": 1,
+    "label": "CareFirst Hours",
+    "dependencyOrder": "14",
+    "implType": "0",
+    "x": 1920,
+    "y": 688,
+    "xws": 1920,
+    "yws": 688
+   },
+   "31": {
+    "actionId": 31,
+    "libraryId": "B1B9A2DD-65B6-4626-9CF5-9CFA69CF59E2",
+    "name": "PLAY",
+    "version": 1,
+    "label": "After Hours Line",
+    "dependencyOrder": "15",
+    "implType": "0",
+    "x": 2144,
+    "y": 888,
+    "xws": 2144,
+    "yws": 888
+   },
+   "33": {
+    "actionId": 33,
+    "libraryId": "B1B9A2DD-65B6-4626-9CF5-9CFA69CF59E2",
+    "name": "PLAY",
+    "version": 1,
+    "label": "QA and Mask up",
+    "dependencyOrder": "16",
+    "implType": "0",
+    "x": 2656,
+    "y": 1368,
+    "xws": 2656,
+    "yws": 1368
+   },
+   "34": {
+    "actionId": 34,
+    "libraryId": "B1B9A2DD-65B6-4626-9CF5-9CFA69CF59E2",
+    "name": "PLAY",
+    "version": 1,
+    "label": "Scheduling Hours",
+    "dependencyOrder": "17",
+    "implType": "0",
+    "x": 2144,
+    "y": 664,
+    "xws": 2144,
+    "yws": 664
+   },
+   "35": {
+    "actionId": 35,
+    "libraryId": "F8B958D0-8CD3-40DF-97D3-5862930B0807",
+    "name": "RUNSUB",
+    "version": 1,
+    "label": "Check Hours",
+    "dependencyOrder": "18",
+    "implType": "0",
+    "x": 1920,
+    "y": 888,
+    "xws": 1920,
+    "yws": 888
+   },
+   "36": {
+    "actionId": 36,
+    "libraryId": "B64A6796-4F66-4B1B-A9B5-3AF926AB4B7C",
+    "name": "HANGUP",
+    "version": 1,
+    "label": "Hangup",
+    "dependencyOrder": "19",
+    "implType": "0",
+    "x": 1920,
+    "y": 1168,
+    "xws": 1920,
+    "yws": 1168
+   },
+   "37": {
+    "actionId": 37,
+    "libraryId": "D28D2B39-D4DB-499A-9B8B-F3879E4C5B25",
+    "name": "ANNOTATION",
+    "version": 1,
+    "label": "Annotation",
+    "dependencyOrder": "20",
+    "implType": "0",
+    "x": 1664,
+    "y": 1008,
+    "xws": 1664,
+    "yws": 1008
+   },
+   "38": {
+    "actionId": 38,
+    "libraryId": "B1B9A2DD-65B6-4626-9CF5-9CFA69CF59E2",
+    "name": "PLAY",
+    "version": 1,
+    "label": "Medical Emergency",
+    "dependencyOrder": "21",
+    "implType": "0",
+    "x": 1536,
+    "y": 664,
+    "xws": 1536,
+    "yws": 664
+   },
+   "40": {
+    "actionId": 40,
+    "libraryId": "B64A6796-4F66-4B1B-A9B5-3AF926AB4B7C",
+    "name": "HANGUP",
+    "version": 1,
+    "label": "Hangup",
+    "dependencyOrder": "22",
+    "implType": "0",
+    "x": 640,
+    "y": 1104,
+    "xws": 640,
+    "yws": 1104
+   },
+   "41": {
+    "actionId": 41,
+    "libraryId": "B1B9A2DD-65B6-4626-9CF5-9CFA69CF59E2",
+    "name": "PLAY",
+    "version": 1,
+    "label": "Play Ineligible Prompt",
+    "dependencyOrder": "23",
+    "implType": "0",
+    "x": 640,
+    "y": 888,
+    "xws": 640,
+    "yws": 888
+   },
+   "42": {
+    "actionId": 42,
+    "libraryId": "6695BA9C-E1D6-4F3C-A15A-94F1400E3169",
+    "name": "IF",
+    "version": 1,
+    "label": "If BlockCall = true",
+    "dependencyOrder": "24",
+    "implType": "0",
+    "x": 640,
+    "y": 688,
+    "xws": 640,
+    "yws": 688
+   },
+   "43": {
+    "actionId": 43,
+    "libraryId": "F8B958D0-8CD3-40DF-97D3-5862930B0807",
+    "name": "RUNSUB",
+    "version": 1,
+    "label": "CallBlocker",
+    "dependencyOrder": "25",
+    "implType": "0",
+    "x": 448,
+    "y": 664,
+    "xws": 448,
+    "yws": 664
+   },
+   "45": {
+    "actionId": 45,
+    "libraryId": "93232E99-D607-4E7D-9300-17986D70DA3C",
+    "name": "RUNSCRIPT",
+    "version": 1,
+    "label": "To Voicemail",
+    "dependencyOrder": "26",
+    "implType": "0",
+    "x": 2144,
+    "y": 1368,
+    "xws": 2144,
+    "yws": 1368
+   },
+   "46": {
+    "actionId": 46,
+    "libraryId": "B333DA63-33C8-4297-A58A-E9546CF7F0F2",
+    "name": "SNIPPET",
+    "version": 1,
+    "label": "Set VM_SkillID",
+    "dependencyOrder": "27",
+    "implType": "0",
+    "x": 2144,
+    "y": 1112,
+    "xws": 2144,
+    "yws": 1112
+   },
+   "47": {
+    "actionId": 47,
+    "libraryId": "F40B8113-DEE5-405E-8A11-BCF3954047D9",
+    "name": "BLINDXFER",
+    "version": 1,
+    "label": "To PolyAI",
+    "dependencyOrder": "28",
+    "implType": "0",
+    "x": 3776,
+    "y": 848,
+    "xws": 3776,
+    "yws": 848
+   },
+   "48": {
+    "actionId": 48,
+    "libraryId": "D583A89D-145C-44AC-B476-A15045180000",
+    "name": "SIPXFERPUTHD",
+    "version": 1,
+    "label": "SIPXFERPUTHD",
+    "dependencyOrder": "38",
+    "implType": "0",
+    "x": 3776,
+    "y": 592,
+    "xws": 3776,
+    "yws": 592
+   },
+   "50": {
+    "actionId": 50,
+    "libraryId": "6695BA9C-E1D6-4F3C-A15A-94F1400E3169",
+    "name": "IF",
+    "version": 1,
+    "label": "Lang",
+    "dependencyOrder": "29",
+    "implType": "0",
+    "x": 2656,
+    "y": 880,
+    "xws": 2656,
+    "yws": 880
+   },
+   "51": {
+    "actionId": 51,
+    "libraryId": "9015C095-98D9-441F-BF92-E90F5C5ED8C8",
+    "name": "ASSIGN",
+    "version": 1,
+    "label": "Assign Res",
+    "dependencyOrder": "30",
+    "implType": "0",
+    "x": 2368,
+    "y": 1392,
+    "xws": 2368,
+    "yws": 1392
+   },
+   "52": {
+    "actionId": 52,
+    "libraryId": "6695BA9C-E1D6-4F3C-A15A-94F1400E3169",
+    "name": "IF",
+    "version": 1,
+    "label": "Lang",
+    "dependencyOrder": "31",
+    "implType": "0",
+    "x": 2368,
+    "y": 1008,
+    "xws": 2368,
+    "yws": 1008
+   },
+   "53": {
+    "actionId": 53,
+    "libraryId": "9015C095-98D9-441F-BF92-E90F5C5ED8C8",
+    "name": "ASSIGN",
+    "version": 1,
+    "label": "Assign Res",
+    "dependencyOrder": "32",
+    "implType": "0",
+    "x": 2496,
+    "y": 1200,
+    "xws": 2496,
+    "yws": 1200
+   },
+   "54": {
+    "actionId": 54,
+    "libraryId": "DE09A7DE-6654-4642-A86A-87FFBE75C7D7",
+    "name": "ONSIGNAL",
+    "version": 1,
+    "label": "Onsignal",
+    "dependencyOrder": "37",
+    "implType": "0",
+    "x": 3240,
+    "y": 1128,
+    "xws": 3240,
+    "yws": 1128
+   },
+   "55": {
+    "actionId": 55,
+    "libraryId": "B1B9A2DD-65B6-4626-9CF5-9CFA69CF59E2",
+    "name": "PLAY",
+    "version": 1,
+    "label": "Play",
+    "dependencyOrder": "33",
+    "implType": "0",
+    "x": 3456,
+    "y": 1112,
+    "xws": 3456,
+    "yws": 1112
+   },
+   "56": {
+    "actionId": 56,
+    "libraryId": "689A4A1B-FA0D-47B3-9A02-CBEB4735F08F",
+    "name": "REQAGENT",
+    "version": 1,
+    "label": "Reqagent",
+    "dependencyOrder": "34",
+    "implType": "0",
+    "x": 4160,
+    "y": 1136,
+    "xws": 4160,
+    "yws": 1136
+   },
+   "57": {
+    "actionId": 57,
+    "libraryId": "9015C095-98D9-441F-BF92-E90F5C5ED8C8",
+    "name": "ASSIGN",
+    "version": 1,
+    "label": "Assign PolyReason",
+    "dependencyOrder": "35",
+    "implType": "0",
+    "x": 3648,
+    "y": 1136,
+    "xws": 3648,
+    "yws": 1136
+   },
+   "58": {
+    "actionId": 58,
+    "libraryId": "E86250D4-8659-4DF0-937E-1F50E64E180E",
+    "name": "SPAWN",
+    "version": 1,
+    "label": "Spawn",
+    "dependencyOrder": "39",
+    "implType": "0",
+    "x": 2976,
+    "y": 856,
+    "xws": 2976,
+    "yws": 856
+   },
+   "59": {
+    "actionId": 59,
+    "libraryId": "9015C095-98D9-441F-BF92-E90F5C5ED8C8",
+    "name": "ASSIGN",
+    "version": 1,
+    "label": "Assign PolyNote",
+    "dependencyOrder": "36",
+    "implType": "0",
+    "x": 3840,
+    "y": 1136,
+    "xws": 3840,
+    "yws": 1136
+   }
+  },
+  "properties": {
+   "1": {
+    "0": {
+     "name": "RootFolder",
+     "value": ""
+    },
+    "1": {
+     "name": "Application",
+     "value": ""
+    },
+    "2": {
+     "name": "ParamCount",
+     "value": ""
+    },
+    "3": {
+     "name": "Parameters",
+     "value": []
+    }
+   },
+   "2": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\CareFirstHealth_Greeting.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "Thank you for calling CareFirst Health Plan Transportation provided by Saferide Health."
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "DetectDTMF",
+     "value": "True"
+    },
+    "4": {
+     "name": "SuppressSilence",
+     "value": ""
+    },
+    "5": {
+     "name": "TTSVolume",
+     "value": ""
+    },
+    "6": {
+     "name": "TTSRate",
+     "value": ""
+    },
+    "7": {
+     "name": "TTSVoice",
+     "value": ""
+    }
+   },
+   "4": {
+    "0": {
+     "name": "ScriptName",
+     "value": "CheckPorts"
+    },
+    "1": {
+     "name": "ParamCount",
+     "value": ""
+    },
+    "2": {
+     "name": "ReturnVariable",
+     "value": "RTN"
+    },
+    "3": {
+     "name": "Parameters",
+     "value": []
+    }
+   },
+   "5": {
+    "0": {
+     "name": "TTSVolume",
+     "value": "70"
+    },
+    "1": {
+     "name": "TTSRate",
+     "value": "0"
+    },
+    "2": {
+     "name": "TTSVoice",
+     "value": "4: Heather, Female (US)"
+    },
+    "3": {
+     "name": "unused1073743309",
+     "value": ""
+    },
+    "4": {
+     "name": "ASRTuningEnabled",
+     "value": "NoChange"
+    },
+    "5": {
+     "name": "ASRUniversalsEnabled",
+     "value": "NoChange"
+    },
+    "6": {
+     "name": "ASRUniversalContentType",
+     "value": "PhraseList"
+    },
+    "7": {
+     "name": "ASRUniversalPhraseList",
+     "value": ""
+    },
+    "8": {
+     "name": "ASRUniversalGrammarFile",
+     "value": ""
+    },
+    "9": {
+     "name": "ASRUniversalVarName",
+     "value": "_ASRUniversal"
+    },
+    "10": {
+     "name": "ASRLanguageLocale",
+     "value": "NoChange"
+    }
+   },
+   "10": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\KPMAMenu_{Lang}.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "EN - Please listen carefully to the following options.\n\nIf you are calling to schedule a new trip, or to confirm or make changes to an existing trip, press 1.\n\nIf you are calling for “Where’s My Ride,” press 2.\n\nIf you are a new member, press 3.\n\nSP - Por favor, escuche atentamente las siguientes opciones.\n\nSi llama para programar un viaje nuevo, o para confirmar o hacer cambios a un viaje existente, oprima uno.\n\nSi llama por “¿Dónde está mi viaje?”, oprima dos.\n\nSi es un miembro nuevo, oprima tres."
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "MaxDigits",
+     "value": "1"
+    },
+    "4": {
+     "name": "Terminator",
+     "value": "#-"
+    },
+    "5": {
+     "name": "Timeout",
+     "value": "5"
+    },
+    "6": {
+     "name": "InterDigitTimeout",
+     "value": "5"
+    },
+    "7": {
+     "name": "Variable",
+     "value": "CFHMenu_RES"
+    }
+   },
+   "12": {
+    "0": {
+     "name": "ScriptName",
+     "value": "Queue_KPMA"
+    }
+   },
+   "15": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\CareFirstHealth_Language.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "EN: For English, please press 1.\nSP: Para espanol, presione 2."
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "MaxDigits",
+     "value": "1"
+    },
+    "4": {
+     "name": "Terminator",
+     "value": "#-"
+    },
+    "5": {
+     "name": "Timeout",
+     "value": "5"
+    },
+    "6": {
+     "name": "InterDigitTimeout",
+     "value": "5"
+    },
+    "7": {
+     "name": "Variable",
+     "value": "MRES"
+    }
+   },
+   "16": {
+    "0": {
+     "name": "Variable",
+     "value": "Lang"
+    },
+    "1": {
+     "name": "Value",
+     "value": "SP"
+    },
+    "2": {
+     "name": "Type",
+     "value": "String"
+    },
+    "3": {
+     "name": "Publish",
+     "value": ""
+    },
+    "4": {
+     "name": "ScreenPop",
+     "value": "False"
+    },
+    "5": {
+     "name": "SaveToDB",
+     "value": "False"
+    },
+    "6": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   },
+   "17": {
+    "0": {
+     "name": "Variable",
+     "value": "Lang"
+    },
+    "1": {
+     "name": "Value",
+     "value": "EN"
+    },
+    "2": {
+     "name": "Type",
+     "value": "String"
+    },
+    "3": {
+     "name": "Publish",
+     "value": ""
+    },
+    "4": {
+     "name": "ScreenPop",
+     "value": "False"
+    },
+    "5": {
+     "name": "SaveToDB",
+     "value": "False"
+    },
+    "6": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   },
+   "21": {},
+   "22": {
+    "0": {
+     "name": "Data",
+     "value": "SWITCH CFHMenu_RES\r\n{\r\n\tCASE 1\r\n\t{ \r\n\t\tIF Lang = \"SP\"\r\n\t\t{\r\n\t\t\tASSIGN QueueSkill = 16472783 //CareFirst Reservations SP\r\n\t\t\tASSIGN SkillWhisper = \"Care-First-Reservations-Spanish\"\r\n\t\t}\r\n\t\tELSE\r\n\t\t{\r\n\t\t\tASSIGN QueueSkill = 16472782 //CareFirst Reservations EN\r\n\t\t\tASSIGN SkillWhisper = \"Care-First-Reservations-English\"\r\n\t\t}\r\n\t} \r\n\tCASE 2\r\n\t{ \r\n\t\tIF Lang = \"SP\"\r\n\t\t{\r\n\t\t\tASSIGN QueueSkill = 16472785 //CareFirst WMR SP\r\n\t\t\tASSIGN SkillWhisper = \"Care-First-W-M-R-Spanish\"\r\n\t\t}\r\n\t\tELSE\r\n\t\t{\r\n\t\t\tASSIGN QueueSkill = 16472784 //CareFirst WMR EN\r\n\t\t\tASSIGN SkillWhisper = \"Care-First-W-M-R-English\"\r\n\t\t}\r\n\t} \r\n\r\n}"
+    },
+    "1": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   },
+   "25": {
+    "0": {
+     "name": "Repeat",
+     "value": "3"
+    },
+    "1": {
+     "name": "CounterName",
+     "value": "MenuLoop"
+    }
+   },
+   "26": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\Driscoll_Invalid_{Lang}.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "I'm sorry, that was an invalid option. Please try again."
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "DetectDTMF",
+     "value": "True"
+    },
+    "4": {
+     "name": "SuppressSilence",
+     "value": ""
+    },
+    "5": {
+     "name": "TTSVolume",
+     "value": ""
+    },
+    "6": {
+     "name": "TTSRate",
+     "value": ""
+    },
+    "7": {
+     "name": "TTSVoice",
+     "value": ""
+    }
+   },
+   "27": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\Driscoll_InvalidFinal_{Lang}.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "EN - No option has been selected. Goodbye.\n\nSP - No se seleccionó ninguna opción. Adiós."
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "DetectDTMF",
+     "value": "True"
+    },
+    "4": {
+     "name": "SuppressSilence",
+     "value": ""
+    },
+    "5": {
+     "name": "TTSVolume",
+     "value": ""
+    },
+    "6": {
+     "name": "TTSRate",
+     "value": ""
+    },
+    "7": {
+     "name": "TTSVoice",
+     "value": ""
+    }
+   },
+   "30": {
+    "0": {
+     "name": "Profile",
+     "value": "1942"
+    }
+   },
+   "31": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\CareFirstHealth_Closed_{Lang}.wav\" \"Prompts\\2023\\Voicemail_{LANG}.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "EN - Thank you for calling CareFirst Health Plan Transportation, Managed by SafeRide. Our offices are currently closed. Please call back during regular business hours from 6:00 AM to 6:00 PM, Monday through Saturday.Or stay on the line to leave a voicemail\n\nSP - Gracias por llamar a CareFirst Health Plan Transportation, Managed by SafeRide. Nuestras oficinas estan actualmente cerradas. Vuelva a llamar durante el horario comercial habitual de 6:00 AM a 6:00 PM de lunes a sabado..O quedese en la linea para dejar un mensaje de voz"
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "DetectDTMF",
+     "value": "True"
+    },
+    "4": {
+     "name": "SuppressSilence",
+     "value": ""
+    },
+    "5": {
+     "name": "TTSVolume",
+     "value": ""
+    },
+    "6": {
+     "name": "TTSRate",
+     "value": ""
+    },
+    "7": {
+     "name": "TTSVoice",
+     "value": ""
+    }
+   },
+   "33": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\CallsRecorded_{Lang}.wav\" \"Prompts\\MaskUp_{Lang}.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "EN - This call may be recorded for quality and training purposes.  To protect you and your drivers, please wear a mask at all times in transport.\n\nSP - Esta llamada se esta garbando por motivois de calidad y propositos de entrenamiento.  Para protejerlo a usted y a su conductor use se mascara en todo momento durante su transporte."
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "DetectDTMF",
+     "value": "True"
+    },
+    "4": {
+     "name": "SuppressSilence",
+     "value": ""
+    },
+    "5": {
+     "name": "TTSVolume",
+     "value": ""
+    },
+    "6": {
+     "name": "TTSRate",
+     "value": ""
+    },
+    "7": {
+     "name": "TTSVoice",
+     "value": ""
+    }
+   },
+   "34": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\CareFirstHealth_Hours_{Lang}.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "EN - We are open to schedule Monday through Saturday from 6:00 AM to 6:00 PM, Central Standard Time. Closed on Sunday.\n\nSP - Nuestro horario normal de operaciones es de Lunes a Sabado de 6:00 AM - 6:00 PM horario central. Cerrado Sabado y Domingo."
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "DetectDTMF",
+     "value": "True"
+    },
+    "4": {
+     "name": "SuppressSilence",
+     "value": ""
+    },
+    "5": {
+     "name": "TTSVolume",
+     "value": ""
+    },
+    "6": {
+     "name": "TTSRate",
+     "value": ""
+    },
+    "7": {
+     "name": "TTSVoice",
+     "value": ""
+    }
+   },
+   "35": {
+    "0": {
+     "name": "ScriptName",
+     "value": "CheckHours"
+    },
+    "1": {
+     "name": "ParamCount",
+     "value": ""
+    },
+    "2": {
+     "name": "ReturnVariable",
+     "value": "isOpen"
+    },
+    "3": {
+     "name": "Parameters",
+     "value": [
+      "1942"
+     ]
+    }
+   },
+   "36": {},
+   "37": {
+    "0": {
+     "name": "Comments",
+     "value": "Handles Overrides"
+    },
+    "1": {
+     "name": "Width",
+     "value": "84"
+    },
+    "2": {
+     "name": "Height",
+     "value": "70"
+    }
+   },
+   "38": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\CareFirstHealth_Medical.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "If this is a medical emergency, please hang up and dial 911."
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "DetectDTMF",
+     "value": "True"
+    },
+    "4": {
+     "name": "SuppressSilence",
+     "value": ""
+    },
+    "5": {
+     "name": "TTSVolume",
+     "value": ""
+    },
+    "6": {
+     "name": "TTSRate",
+     "value": ""
+    },
+    "7": {
+     "name": "TTSVoice",
+     "value": ""
+    }
+   },
+   "40": {},
+   "41": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\Block_Number_EN.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "Thank you for calling SafeRide Health. The account associated with this phone number is not eligible for a transportation benefit at this time. Goodbye."
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "DetectDTMF",
+     "value": "True"
+    },
+    "4": {
+     "name": "SuppressSilence",
+     "value": ""
+    },
+    "5": {
+     "name": "TTSVolume",
+     "value": ""
+    },
+    "6": {
+     "name": "TTSRate",
+     "value": ""
+    },
+    "7": {
+     "name": "TTSVoice",
+     "value": ""
+    }
+   },
+   "42": {
+    "0": {
+     "name": "Expression",
+     "value": "BlockCall = 1"
+    }
+   },
+   "43": {
+    "0": {
+     "name": "ScriptName",
+     "value": "CallBlocker"
+    },
+    "1": {
+     "name": "ParamCount",
+     "value": ""
+    },
+    "2": {
+     "name": "ReturnVariable",
+     "value": "BlockCall"
+    },
+    "3": {
+     "name": "Parameters",
+     "value": [
+      "{ANI}"
+     ]
+    }
+   },
+   "45": {
+    "0": {
+     "name": "ScriptName",
+     "value": "Voicemail"
+    }
+   },
+   "46": {
+    "0": {
+     "name": "Data",
+     "value": "IF Lang = \"SP\"\r\n \t{\r\n ASSIGN VM_SkillID = \"18619132\" // Spanish CareFirst Voicemail\r\n\t\t\t\r\n\t}\r\nELSE\r\n\t{\r\n\tASSIGN VM_SkillID = \"18619131\" // English CareFirst Voicemail\r\n\t}"
+    },
+    "1": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   },
+   "47": {
+    "0": {
+     "name": "Destination",
+     "value": "9993230010"
+    }
+   },
+   "48": {
+    "0": {
+     "name": "headerName",
+     "value": "X-SkillId"
+    },
+    "1": {
+     "name": "headerValue",
+     "value": "{QueueSkill}"
+    }
+   },
+   "50": {
+    "0": {
+     "name": "Expression",
+     "value": "Lang = \"EN\""
+    }
+   },
+   "51": {
+    "0": {
+     "name": "Variable",
+     "value": "QueueSkill"
+    },
+    "1": {
+     "name": "Value",
+     "value": "16472782"
+    },
+    "2": {
+     "name": "Type",
+     "value": "String"
+    },
+    "3": {
+     "name": "Publish",
+     "value": ""
+    },
+    "4": {
+     "name": "ScreenPop",
+     "value": "False"
+    },
+    "5": {
+     "name": "SaveToDB",
+     "value": "False"
+    },
+    "6": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   },
+   "52": {
+    "0": {
+     "name": "Expression",
+     "value": "Lang = \"EN\""
+    }
+   },
+   "53": {
+    "0": {
+     "name": "Variable",
+     "value": "QueueSkill"
+    },
+    "1": {
+     "name": "Value",
+     "value": "16472783"
+    },
+    "2": {
+     "name": "Type",
+     "value": "String"
+    },
+    "3": {
+     "name": "Publish",
+     "value": ""
+    },
+    "4": {
+     "name": "ScreenPop",
+     "value": "False"
+    },
+    "5": {
+     "name": "SaveToDB",
+     "value": "False"
+    },
+    "6": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   },
+   "54": {
+    "0": {
+     "name": "SrcContactIDVar",
+     "value": "S1"
+    },
+    "1": {
+     "name": "ParamCount",
+     "value": ""
+    },
+    "2": {
+     "name": "Parameters",
+     "value": []
+    }
+   },
+   "55": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"%Call has been returned to C X One . Transferring to Agent Now\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": ""
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "DetectDTMF",
+     "value": "True"
+    },
+    "4": {
+     "name": "SuppressSilence",
+     "value": ""
+    },
+    "5": {
+     "name": "TTSVolume",
+     "value": ""
+    },
+    "6": {
+     "name": "TTSRate",
+     "value": ""
+    },
+    "7": {
+     "name": "TTSVoice",
+     "value": ""
+    }
+   },
+   "56": {
+    "0": {
+     "name": "Skill",
+     "value": "21036274"
+    },
+    "1": {
+     "name": "TargetAgent",
+     "value": ""
+    },
+    "2": {
+     "name": "PriorityManagement",
+     "value": "DefaultfromSkill"
+    },
+    "3": {
+     "name": "InitialPriority",
+     "value": "0"
+    },
+    "4": {
+     "name": "Acceleration",
+     "value": "1"
+    },
+    "5": {
+     "name": "Function",
+     "value": ""
+    },
+    "6": {
+     "name": "MaxPriority",
+     "value": "1000"
+    },
+    "7": {
+     "name": "Sequence",
+     "value": ""
+    },
+    "8": {
+     "name": "ZipTone",
+     "value": "AfterSequence"
+    },
+    "9": {
+     "name": "ScreenPopSource",
+     "value": "DefaultFromSkill"
+    },
+    "10": {
+     "name": "ScreenPopURL",
+     "value": ""
+    },
+    "11": {
+     "name": "HighProficiency",
+     "value": "1"
+    },
+    "12": {
+     "name": "LowProficiency",
+     "value": "20"
+    },
+    "13": {
+     "name": "RoutingAttribute",
+     "value": "NotApplicable"
+    }
+   },
+   "57": {
+    "0": {
+     "name": "Variable",
+     "value": "PolyReason"
+    },
+    "1": {
+     "name": "Value",
+     "value": "{SP2}"
+    },
+    "2": {
+     "name": "Type",
+     "value": "String"
+    },
+    "3": {
+     "name": "Publish",
+     "value": ""
+    },
+    "4": {
+     "name": "ScreenPop",
+     "value": "True"
+    },
+    "5": {
+     "name": "SaveToDB",
+     "value": "False"
+    },
+    "6": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   },
+   "58": {
+    "0": {
+     "name": "ScriptName",
+     "value": "ForwardToPolyNoAuth"
+    },
+    "1": {
+     "name": "SpawnIDVar",
+     "value": "SPAWNID"
+    },
+    "2": {
+     "name": "Skill",
+     "value": ""
+    },
+    "3": {
+     "name": "ParamCount",
+     "value": ""
+    },
+    "4": {
+     "name": "StartDate",
+     "value": ""
+    },
+    "5": {
+     "name": "Parameters",
+     "value": [
+      "{DNIS}",
+      "{ANI}",
+      "{QueueSkill}"
+     ]
+    }
+   },
+   "59": {
+    "0": {
+     "name": "Variable",
+     "value": "PolyNote"
+    },
+    "1": {
+     "name": "Value",
+     "value": "{SP3}"
+    },
+    "2": {
+     "name": "Type",
+     "value": "String"
+    },
+    "3": {
+     "name": "Publish",
+     "value": ""
+    },
+    "4": {
+     "name": "ScreenPop",
+     "value": "True"
+    },
+    "5": {
+     "name": "SaveToDB",
+     "value": "False"
+    },
+    "6": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   }
+  },
+  "branches": {
+   "1": [
+    {
+     "to": 43,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "2": [
+    {
+     "to": 38,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "4": [
+    {
+     "to": 2,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "5": [
+    {
+     "to": 4,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "10": [
+    {
+     "to": 25,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    },
+    {
+     "to": 22,
+     "label": "1",
+     "type": "custom",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    },
+    {
+     "to": 22,
+     "label": "2",
+     "type": "custom",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "curved",
+     "elbows": [
+      [
+       2560,
+       640
+      ]
+     ]
+    },
+    {
+     "to": 52,
+     "label": "3",
+     "type": "custom",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "15": [
+    {
+     "to": 30,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    },
+    {
+     "to": 30,
+     "label": "1",
+     "type": "custom",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "curved",
+     "elbows": [
+      [
+       1856,
+       640
+      ]
+     ]
+    },
+    {
+     "to": 16,
+     "label": "2",
+     "type": "custom",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "16": [
+    {
+     "to": 30,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "17": [
+    {
+     "to": 5,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "22": [
+    {
+     "to": 50,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "25": [
+    {
+     "to": 27,
+     "label": "Finished",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    },
+    {
+     "to": 26,
+     "label": "Repeat",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 1,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "26": [
+    {
+     "to": 10,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "27": [
+    {
+     "to": 21,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "30": [
+    {
+     "to": 35,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    },
+    {
+     "to": 34,
+     "label": "Open",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    },
+    {
+     "to": 31,
+     "label": "Closed",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 1,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "31": [
+    {
+     "to": 46,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "33": [
+    {
+     "to": 12,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "34": [
+    {
+     "to": 10,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "35": [
+    {
+     "to": 36,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "37": [
+    {
+     "to": 35,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "38": [
+    {
+     "to": 15,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "41": [
+    {
+     "to": 40,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "42": [
+    {
+     "to": 41,
+     "label": "True",
+     "type": "branch",
+     "labelDistance": 0.5,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    },
+    {
+     "to": 17,
+     "label": "False",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 1,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "43": [
+    {
+     "to": 42,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "46": [
+    {
+     "to": 45,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "48": [
+    {
+     "to": 47,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "50": [
+    {
+     "to": 58,
+     "label": "True",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    },
+    {
+     "to": 33,
+     "label": "False",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 1,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "51": [
+    {
+     "to": 33,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "52": [
+    {
+     "to": 51,
+     "label": "True",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    },
+    {
+     "to": 53,
+     "label": "False",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 1,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "53": [
+    {
+     "to": 33,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "54": [
+    {
+     "to": 55,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "55": [
+    {
+     "to": 57,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "57": [
+    {
+     "to": 59,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "59": [
+    {
+     "to": 56,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ]
+  },
+  "isDataLoaded": true,
+  "isDataLoading": false,
+  "isDataSaving": false,
+  "isNewScript": false,
+  "isViewOnlyMode": false,
+  "isLockOverride": false,
+  "isVersionHistoryMode": false,
+  "dataLoadingProgress": {
+   "key": "reset"
+  },
+  "error": null,
+  "issues": {
+   "totalErrors": "0",
+   "totalWarnings": "2",
+   "actions": {
+    "56": {
+     "actionType": "REQAGENT",
+     "errors": [],
+     "warnings": [
+      {
+       "key": "Warning! The Default branch for Reqagent is not wired up!",
+       "localizationKey": "default-branch-is-not-wired-up",
+       "interpolationValues": [
+        "Reqagent"
+       ]
+      }
+     ]
+    },
+    "58": {
+     "actionType": "SPAWN",
+     "errors": [],
+     "warnings": [
+      {
+       "key": "Warning! The Default branch for Spawn is not wired up!",
+       "localizationKey": "default-branch-is-not-wired-up",
+       "interpolationValues": [
+        "Spawn"
+       ]
+      }
+     ]
+    }
+   },
+   "script": {}
+  },
+  "startTraceOptions": {
+   "skill": "",
+   "skillDescription": "",
+   "simulateInboundCall": false,
+   "phone": "",
+   "dnis": "",
+   "ani": "",
+   "simulateDateTime": false,
+   "dateTime": null,
+   "timezone": "(Business Unit Default)",
+   "parameters": []
+  },
+  "versionHistory": null,
+  "scriptVersions": {},
+  "lastVersionEdited": null,
+  "traceWindowCount": 0,
+  "variables": {
+   "cfhmenu_res": [
+    {
+     "name": "Menu",
+     "label": "CareFirst Health Menu",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#num-list"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 10
+    },
+    {
+     "name": "Snippet",
+     "label": "Skills",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 22
+    }
+   ],
+   "lang": [
+    {
+     "name": "Menu",
+     "label": "CareFirst Health Menu",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#num-list"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 10
+    },
+    {
+     "name": "Assign",
+     "label": "Lang = SP",
+     "shape": {
+      "type": "rectangle",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#brackets-x"
+      },
+      "width": 128,
+      "height": 32
+     },
+     "actionId": 16
+    },
+    {
+     "name": "Assign",
+     "label": "Lang = EN",
+     "shape": {
+      "type": "rectangle",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#brackets-x"
+      },
+      "width": 128,
+      "height": 32
+     },
+     "actionId": 17
+    },
+    {
+     "name": "Play",
+     "label": "Invalid",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#play"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 26
+    },
+    {
+     "name": "Play",
+     "label": "Invalid Final",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#play"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 27
+    },
+    {
+     "name": "Play",
+     "label": "After Hours Line",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#play"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 31
+    },
+    {
+     "name": "Play",
+     "label": "QA and Mask up",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#play"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 33
+    },
+    {
+     "name": "Play",
+     "label": "Scheduling Hours",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#play"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 34
+    }
+   ],
+   "mres": [
+    {
+     "name": "Menu",
+     "label": "Offer Spanish",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#num-list"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 15
+    }
+   ],
+   "polynote": [
+    {
+     "name": "Assign",
+     "label": "Assign PolyNote",
+     "shape": {
+      "type": "rectangle",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#brackets-x"
+      },
+      "width": 128,
+      "height": 32
+     },
+     "actionId": 59
+    }
+   ],
+   "polyreason": [
+    {
+     "name": "Assign",
+     "label": "Assign PolyReason",
+     "shape": {
+      "type": "rectangle",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#brackets-x"
+      },
+      "width": 128,
+      "height": 32
+     },
+     "actionId": 57
+    }
+   ],
+   "queueskill": [
+    {
+     "name": "Snippet",
+     "label": "Skills",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 22
+    },
+    {
+     "name": "SIPXFERPUTHD",
+     "label": "",
+     "shape": {
+      "type": "rectangle",
+      "icon": {
+       "color": "#EA1462",
+       "url": "#sip-phone"
+      },
+      "subTitle": {
+       "text": "{{HeaderName}}"
+      },
+      "width": 128,
+      "height": 32
+     },
+     "actionId": 48
+    },
+    {
+     "name": "Assign",
+     "label": "Assign Res",
+     "shape": {
+      "type": "rectangle",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#brackets-x"
+      },
+      "width": 128,
+      "height": 32
+     },
+     "actionId": 51
+    },
+    {
+     "name": "Assign",
+     "label": "Assign Res",
+     "shape": {
+      "type": "rectangle",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#brackets-x"
+      },
+      "width": 128,
+      "height": 32
+     },
+     "actionId": 53
+    }
+   ],
+   "skillwhisper": [
+    {
+     "name": "Snippet",
+     "label": "Skills",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 22
+    }
+   ],
+   "sp2": [
+    {
+     "name": "Assign",
+     "label": "Assign PolyReason",
+     "shape": {
+      "type": "rectangle",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#brackets-x"
+      },
+      "width": 128,
+      "height": 32
+     },
+     "actionId": 57
+    }
+   ],
+   "sp3": [
+    {
+     "name": "Assign",
+     "label": "Assign PolyNote",
+     "shape": {
+      "type": "rectangle",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#brackets-x"
+      },
+      "width": 128,
+      "height": 32
+     },
+     "actionId": 59
+    }
+   ],
+   "vm_skillid": [
+    {
+     "name": "Snippet",
+     "label": "Set VM_SkillID",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 46
+    }
+   ]
+  },
+  "compareScript": {},
+  "customConnectorIdentifier": null,
+  "schemaVersion": "1.0.0"
+ }
+}

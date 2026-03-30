@@ -2,7 +2,7 @@
 /**
  * convertCXJson.ts — CXone Studio JSON → Engine IR (fully atomic)
  *
- * Fix log (v4):
+ * Fix log (v5):
  *   [1] Lang value mismatch: normalizeExpr() rewrites "EN"→"eng", "SP"/"ES"→"spa"
  *       in ALL CHECK expressions so they match set_action.py's normalized state.
  *   [2] Snippet-internal expressions now also run through normalizeExpr(), fixing
@@ -17,9 +17,48 @@
  *   [8] Deferred lang default (deferLangDefault): upfront SET Lang=eng nodes are
  *       bypassed so Lang is only set when the caller explicitly chooses a language.
  *       Lang stays unset for callers who time out → engine plays bilingual prompts.
+ *
+ * Post-processing passes (applyLandingTransforms):
+ *   [P1] BlockCall bypass: "IF BlockCall = 1" is always false in live flows.
+ *        Replace the CHECK node with a direct link to its False branch target,
+ *        and delete the True-branch subtree (ineligible message + hangup).
+ *   [P2] Lang value normalisation in SET assignments: "EN"→"eng", "SP"/"ES"→"spa".
+ *   [P3] Language menu English-first: if the lang-select CHECK has a "2" branch
+ *        for English and "1" for Spanish, swap them so 1=English, 2=Spanish.
+ *   [P4] Remove null CHECK branches where default_next covers the same target.
+ *   [P5] Merge sequential SET nodes that share no branches into one.
+ *        Also strips inline CXone comments (// …) from assignment values.
+ *   [P6] PolyAI handoff normalisation: the old PolyReason/PolyNote assign chain
+ *        after SPAWN is replaced by the correct pattern:
+ *          SET Handoff = {{DialSipHeader_X-Handoff}}
+ *          CHECK Handoff == "Yes" → True: SET HandoffReason + REQAGENT, False: HANGUP
  */
 
 import type { IR, IVRNode, SayText } from "../types";
+
+// ─── Language code map ────────────────────────────────────────────────────────
+/**
+ * Maps CXone / common short codes (upper-cased) → ISO 639-2/B codes.
+ * Used by parseBilingual, normalizeExpr, _p2_normaliseLangAssignments,
+ * and validateAndNormalizeLanguages.
+ */
+export const LANG_CODE_MAP: Record<string, string> = {
+  EN: "eng",  ENG: "eng",
+  SP: "spa",  ES:  "spa",  SPA: "spa",
+  FR: "fra",  FRA: "fra",
+  DE: "deu",  DEU: "deu",
+  IT: "ita",  ITA: "ita",
+  PT: "por",  POR: "por",
+  ZH: "zho",  ZHO: "zho",
+  JA: "jpn",  JP:  "jpn",  JPN: "jpn",
+  KO: "kor",  KOR: "kor",
+  RU: "rus",  RUS: "rus",
+  AR: "ara",  ARA: "ara",
+  HI: "hin",  HIN: "hin",
+  VI: "vie",  VIE: "vie",
+  PL: "pol",  POL: "pol",
+  NL: "nld",  NLD: "nld",
+};
 
 // ─── Expression normalizer ────────────────────────────────────────────────────
 /**
@@ -28,9 +67,11 @@ import type { IR, IVRNode, SayText } from "../types";
  * 1. Single = → ==  (CXone uses = for equality)
  *    Skips !=, <=, >=, already-doubled ==
  *
- * 2. Lang comparison values rewritten to match set_action.py normalization:
- *    set_action.py stores Lang as 'eng' or 'spa'.
- *    CXone source compares against 'EN', 'SP', 'ES' — rewrite those here.
+ * 2. Lang comparison values rewritten to match set_action.py normalization.
+ *    Any short code found in LANG_CODE_MAP is replaced with its ISO 639-2 form:
+ *    e.g.  Lang == 'EN' → Lang == 'eng'
+ *          Lang != 'SP' → Lang != 'spa'
+ *          Lang == 'FR' → Lang == 'fra'
  */
 function normalizeExpr(expr: string): string {
   if (!expr) return expr;
@@ -38,18 +79,13 @@ function normalizeExpr(expr: string): string {
   // 1. single = → ==  (negative lookbehind for ! < > =, negative lookahead for =)
   let out = expr.replace(/(?<![!<>=])=(?!=)/g, "==");
 
-  // 2. Lang value normalization — both double and single quote variants
+  // 2. Lang value normalization — map any known short code to ISO 639-2
   out = out.replace(
-    /\bLang\s*(==|!=)\s*["']EN["']/gi,
-    (_, op) => `Lang ${op} 'eng'`,
-  );
-  out = out.replace(
-    /\bLang\s*(==|!=)\s*["']SP["']/gi,
-    (_, op) => `Lang ${op} 'spa'`,
-  );
-  out = out.replace(
-    /\bLang\s*(==|!=)\s*["']ES["']/gi,
-    (_, op) => `Lang ${op} 'spa'`,
+    /\bLang\s*(==|!=)\s*["']([A-Z]{2,4})["']/gi,
+    (match, op, code) => {
+      const iso = LANG_CODE_MAP[code.toUpperCase()];
+      return iso ? `Lang ${op} '${iso}'` : match;
+    },
   );
 
   return out;
@@ -64,21 +100,60 @@ function getProps(raw: Record<string, any>): Record<string, any> {
   return out;
 }
 
-// ─── Bilingual phrase parser ──────────────────────────────────────────────────
-const EN_RE = /(?:^|\n)\s*EN[\s\-:]+(.+?)(?=\n\s*SP[\s\-:]|$)/is;
-const SP_RE = /(?:^|\n)\s*SP[\s\-:]+(.+?)$/is;
+// ─── Multi-language phrase parser ─────────────────────────────────────────────
+/**
+ * Parse a CXone phrase string that may contain multiple language sections.
+ *
+ * Supported section header formats (case-insensitive code, separator required):
+ *   EN - text     SP: text     FR-text     DE  -  text
+ *
+ * Language codes are mapped to ISO 639-2 via LANG_CODE_MAP.  Unknown codes are
+ * kept as-is (lower-cased).  Unrecognised codes already in ISO 639-2 form pass
+ * through unchanged.
+ *
+ * If no section headers are detected the whole phrase is returned as { eng }.
+ */
+
+// A line is a language header when it starts with 2–4 uppercase letters
+// followed (with optional surrounding spaces) by a dash or colon separator.
+const LANG_SECTION_RE = /^\s*([A-Z]{2,4})\s*[-:]\s*(.*)/;
 
 export function parseBilingual(phrase: string): SayText {
-  if (!phrase) return { eng: "", spa: "" };
-  const enMatch = EN_RE.exec(phrase);
-  const spMatch = SP_RE.exec(phrase);
-  if (enMatch || spMatch) {
-    return {
-      eng: enMatch ? enMatch[1].trim() : phrase.trim(),
-      spa: spMatch ? spMatch[1].trim() : "",
-    };
+  if (!phrase) return { eng: "" };
+
+  const lines = phrase.replace(/\r/g, "").split("\n");
+
+  // Fast path: no section headers → treat whole string as English
+  if (!lines.some(l => LANG_SECTION_RE.test(l))) {
+    return { eng: phrase.trim() };
   }
-  return { eng: phrase.trim(), spa: "" };
+
+  const result: Record<string, string> = {};
+  let currentCode: string | null = null;
+  let currentLines: string[] = [];
+
+  const flush = () => {
+    if (currentCode !== null) {
+      const text = currentLines.join("\n").trim();
+      if (text) result[currentCode] = text;
+    }
+  };
+
+  for (const line of lines) {
+    const m = line.match(LANG_SECTION_RE);
+    if (m) {
+      flush();
+      const rawCode = m[1].toUpperCase();
+      currentCode = LANG_CODE_MAP[rawCode] ?? rawCode.toLowerCase();
+      currentLines = [m[2]]; // remainder of the header line is the first content line
+    } else if (currentCode !== null) {
+      currentLines.push(line);
+    }
+    // lines before the first header (typically empty) are discarded
+  }
+  flush();
+
+  return Object.keys(result).length > 0 ? result : { eng: phrase.trim() };
 }
 
 // ─── Snippet parser ───────────────────────────────────────────────────────────
@@ -466,7 +541,6 @@ function expandMenu(
     // Extract retry PLAY text from the Repeat branch
     let retryText: SayText = {
       eng: "I'm sorry, that was not a valid option. Please try again.",
-      spa: "",
     };
     if (repeatBranch) {
       const retryPlayId = String(repeatBranch.to);
@@ -768,7 +842,7 @@ export function convertCxJson(raw: any): IR {
     const n = nodes[nodeId];
     const nb: Record<string, string> = {};
     for (const [k, v] of Object.entries(n.content?.branches ?? {}))
-      nb[k] = resolveSnEntry(v);
+      nb[k] = resolveSnEntry(v as string);
     nodes[nodeId] = {
       ...n,
       content: { ...n.content, branches: nb },
@@ -982,7 +1056,7 @@ export function convertCxJson(raw: any): IR {
     const n = nodes[nodeId];
     const nb: Record<string, string> = {};
     for (const [k, v] of Object.entries(n.content?.branches ?? {}))
-      nb[k] = resolveSnEntry(v);
+      nb[k] = resolveSnEntry(v as string);
     nodes[nodeId] = {
       ...n,
       content: { ...n.content, branches: nb },
@@ -998,15 +1072,480 @@ export function convertCxJson(raw: any): IR {
       .replace(/\W+/g, "_")
       .replace(/^_|_$/g, "") || "imported_flow";
 
-  // ── Post-pass: defer upfront language default ─────────────────────────────
-  // Pattern to fix: flows that SET Lang=eng before the language-selection menu,
-  // meaning English is the default even before the caller chooses.
-  // We move the SET Lang node so it's only reached when the caller presses the
-  // English option, and leave Lang unset for callers who press nothing —
-  // the engine's PLAY fallback will then serve both-language prompts.
-  deferLangDefault(nodes);
-
   return { flow_id: flowId, nodes, start_step: startStepId };
+}
+
+// ── applyLandingTransforms ────────────────────────────────────────────────────
+/**
+ * Six normalisation passes applied after the main conversion and deferLangDefault.
+ * All passes mutate `nodes` in place and are idempotent.
+ */
+function applyLandingTransforms(nodes: Record<string, IVRNode>): void {
+  _p1_removeBlockCallCheck(nodes);
+  _p2_normaliseLangAssignments(nodes);
+  _p3_swapLangMenuToEnglishFirst(nodes);
+  _p4_removeRedundantNullBranches(nodes);
+  _p5_mergeSequentialSets(nodes);
+  _p6_normalisePolyHandoff(nodes);
+}
+
+// ── Helper: rewire every inbound edge from one step to another ───────────────
+function _rewireInbound(
+  nodes: Record<string, IVRNode>,
+  fromId: string,
+  toId: string,
+): void {
+  for (const [nid, n] of Object.entries(nodes)) {
+    if (n.default_next === fromId) {
+      nodes[nid] = { ...n, default_next: toId || undefined };
+    }
+    const branches = n.content?.branches ?? {};
+    const changed = Object.entries(branches).filter(([, v]) => v === fromId);
+    if (changed.length > 0) {
+      const nb = { ...branches };
+      for (const [k] of changed) nb[k] = toId;
+      nodes[nid] = { ...n, content: { ...n.content, branches: nb } };
+    }
+  }
+}
+
+// ── Helper: collect all step IDs reachable from a given node (DFS) ───────────
+function _reachable(
+  nodes: Record<string, IVRNode>,
+  startId: string,
+): Set<string> {
+  const visited = new Set<string>();
+  const stack = [startId];
+  while (stack.length) {
+    const id = stack.pop()!;
+    if (!id || visited.has(id) || !nodes[id]) continue;
+    visited.add(id);
+    const n = nodes[id];
+    if (n.default_next) stack.push(n.default_next);
+    for (const v of Object.values(n.content?.branches ?? {})) {
+      if (v) stack.push(v as string);
+    }
+  }
+  return visited;
+}
+
+// ─── P1: Remove BlockCall check ───────────────────────────────────────────────
+/**
+ * Detects CHECK nodes whose expression is "BlockCall == 1" (always false in live
+ * flows).  Rewires all inbound edges to the False branch target and deletes the
+ * True-branch subtree (ineligible play + hangup) if it is not reachable from
+ * anywhere else.
+ */
+function _p1_removeBlockCallCheck(nodes: Record<string, IVRNode>): void {
+  for (const [id, node] of Object.entries(nodes)) {
+    if (node.action_type !== "CHECK") continue;
+    const expr = (node.content?.expression ?? "").replace(/\s+/g, " ").trim();
+    if (!/^BlockCall\s*==\s*1$/i.test(expr)) continue;
+
+    const branches = node.content?.branches ?? {};
+    const falseBranch = branches["False"] ?? node.default_next;
+    const trueBranch = branches["True"];
+    if (!falseBranch) continue;
+
+    // Rewire everyone pointing at this CHECK to the False branch
+    _rewireInbound(nodes, id, falseBranch);
+    delete nodes[id];
+
+    // Prune the True subtree if it is now unreachable
+    if (trueBranch) {
+      const reachable = _reachable({ ...nodes }, "start");
+      const trueReachable = _reachable({ ...nodes }, trueBranch);
+      for (const rid of trueReachable) {
+        if (!reachable.has(rid)) {
+          delete nodes[rid];
+        }
+      }
+    }
+    console.log(`[P1] Removed BlockCall check ${id}, wired to ${falseBranch}`);
+    return; // typically only one BlockCall check per flow
+  }
+}
+
+// ─── P2: Normalise Lang in SET assignments ────────────────────────────────────
+/**
+ * Rewrites SET node assignment values for the Lang variable:
+ *   Any short code found in LANG_CODE_MAP → its ISO 639-2 form
+ *   e.g. "EN"→"eng", "SP"/"ES"→"spa", "FR"→"fra", etc.
+ * Also strips surrounding quotes that CXone sometimes emits.
+ */
+function _p2_normaliseLangAssignments(nodes: Record<string, IVRNode>): void {
+  for (const [id, node] of Object.entries(nodes)) {
+    if (node.action_type !== "SET") continue;
+    const asgn = node.content?.assignments;
+    if (!asgn || !("Lang" in asgn)) continue;
+    const raw = String(asgn["Lang"] ?? "")
+      .replace(/^["']|["']$/g, "")
+      .trim()
+      .toUpperCase();
+    const normalised = LANG_CODE_MAP[raw] ?? asgn["Lang"];
+    if (normalised !== asgn["Lang"]) {
+      nodes[id] = {
+        ...node,
+        content: {
+          ...node.content,
+          assignments: { ...asgn, Lang: normalised },
+        },
+      };
+      console.log(
+        `[P2] Normalised Lang "${asgn["Lang"]}" → "${normalised}" in ${id}`,
+      );
+    }
+  }
+}
+
+// ─── P3: Swap lang-menu so English=1, Spanish=2 ───────────────────────────────
+/**
+ * Finds the lang-select CHECK (the one whose digit branches directly point to
+ * SET Lang nodes) and ensures key "1" maps to English and "2" to Spanish.
+ *
+ * Note: In many flows key "1" goes straight to HOURS (English default path) and
+ * key "2" goes to SET Lang=spa — that pattern is already correct and left alone.
+ * We only swap when key "1" DIRECTLY points to a SET Lang=spa node.
+ */
+function _p3_swapLangMenuToEnglishFirst(nodes: Record<string, IVRNode>): void {
+  for (const [id, node] of Object.entries(nodes)) {
+    if (node.action_type !== "CHECK") continue;
+    const branches = { ...(node.content?.branches ?? {}) };
+
+    // Search ALL branch keys for SET Lang nodes — not just "1"/"2".
+    // After P0 the English SET may have been assigned to key "3" (or higher)
+    // because key "1" was already taken by the implicit-English HOURS path.
+    let engKey: string | undefined;
+    let spaKey: string | undefined;
+
+    for (const [key, target] of Object.entries(branches)) {
+      if (!target || !nodes[target]) continue;
+      const n = nodes[target];
+      if (n.action_type !== "SET") continue;
+      const lang = String(
+        (n.content?.assignments ?? {})["Lang"] ?? "",
+      ).toLowerCase();
+      if ((lang === "eng" || lang === "en") && !engKey) engKey = key;
+      if ((lang === "spa" || lang === "sp" || lang === "es") && !spaKey)
+        spaKey = key;
+    }
+
+    if (!engKey || !spaKey) continue; // this CHECK doesn't look like a lang menu
+    if (engKey === "1" && spaKey === "2") continue; // already correct
+
+    const engTarget = branches[engKey];
+    const spaTarget = branches[spaKey];
+
+    // Remove the old lang-keyed branches
+    delete branches[engKey];
+    delete branches[spaKey];
+
+    // Remove any "1" or "2" that weren't lang branches — these are the old
+    // implicit-English paths (e.g. "1"→HOURS) that are now superseded by the
+    // explicit SET Lang=eng node added by P0.
+    if (
+      "1" in branches &&
+      branches["1"] !== engTarget &&
+      branches["1"] !== spaTarget
+    ) {
+      console.log(
+        `[P3] Dropping superseded branch "1"→${branches["1"]} in ${id}`,
+      );
+      delete branches["1"];
+    }
+    if (
+      "2" in branches &&
+      branches["2"] !== engTarget &&
+      branches["2"] !== spaTarget
+    ) {
+      console.log(
+        `[P3] Dropping superseded branch "2"→${branches["2"]} in ${id}`,
+      );
+      delete branches["2"];
+    }
+
+    // Assign canonical positions: 1=English, 2=Spanish
+    branches["1"] = engTarget;
+    branches["2"] = spaTarget;
+
+    nodes[id] = { ...node, content: { ...node.content, branches } };
+    console.log(
+      `[P3] Remapped lang branches in ${id}: "1"→English(${engTarget}), "2"→Spanish(${spaTarget})`,
+    );
+  }
+}
+
+// ─── P4: Remove redundant null branches ──────────────────────────────────────
+/**
+ * For every CHECK node:
+ *   - Removes any branch whose target is an empty string.
+ *   - If the "null" branch target equals default_next AND default_next is set,
+ *     deletes the redundant "null" branch (the engine already falls through).
+ *
+ * Intentional null branches (var-mode menus with no default_next, where null
+ * means "no input / timeout") are left untouched.
+ */
+function _p4_removeRedundantNullBranches(nodes: Record<string, IVRNode>): void {
+  for (const [id, node] of Object.entries(nodes)) {
+    if (node.action_type !== "CHECK") continue;
+    const branches = { ...(node.content?.branches ?? {}) };
+    let changed = false;
+
+    // Drop branches with empty/null targets
+    for (const [k, v] of Object.entries(branches)) {
+      if (!v) {
+        delete branches[k];
+        changed = true;
+      }
+    }
+
+    // Drop null branch when it duplicates default_next
+    if (
+      "null" in branches &&
+      branches["null"] === node.default_next &&
+      node.default_next
+    ) {
+      delete branches["null"];
+      changed = true;
+    }
+
+    if (changed) {
+      nodes[id] = { ...node, content: { ...node.content, branches } };
+    }
+  }
+}
+
+// ─── P5: Merge sequential SET nodes ──────────────────────────────────────────
+/**
+ * Collapses consecutive SET nodes with no branches into one combined SET.
+ * Also strips CXone inline comments (// …) from numeric assignment values.
+ */
+
+function _stripComment(value: string): string {
+  // Remove inline // comments that CXone snippets often include
+  // e.g. "18556550 //SCAN Reservations  SP"
+  return value.replace(/\s*\/\/.*$/, "").trim();
+}
+
+function _cleanAssignments(asgn: Record<string, any>): Record<string, any> {
+  const out: Record<string, any> = {};
+  for (const [k, v] of Object.entries(asgn)) {
+    out[k] = typeof v === "string" ? _stripComment(v) : v;
+  }
+  return out;
+}
+
+function _p5_mergeSequentialSets(nodes: Record<string, IVRNode>): void {
+  // First pass: strip comments from all existing SET assignment values
+  for (const [id, node] of Object.entries(nodes)) {
+    if (node.action_type !== "SET") continue;
+    const asgn = node.content?.assignments;
+    if (!asgn) continue;
+    const cleaned = _cleanAssignments(asgn);
+    nodes[id] = { ...node, content: { ...node.content, assignments: cleaned } };
+  }
+
+  // Build inbound-edge count so we only merge nodes with exactly one predecessor
+  const inboundCount: Record<string, number> = {};
+  for (const node of Object.values(nodes)) {
+    const targets = [
+      node.default_next,
+      ...Object.values(node.content?.branches ?? {}),
+    ].filter(Boolean) as string[];
+    for (const t of targets) {
+      inboundCount[t] = (inboundCount[t] ?? 0) + 1;
+    }
+  }
+
+  const merged = new Set<string>();
+
+  for (const [id, node] of Object.entries(nodes)) {
+    if (node.action_type !== "SET" || merged.has(id)) continue;
+    // Only merge if no labeled branches
+    if (Object.keys(node.content?.branches ?? {}).length > 0) continue;
+
+    let current = node;
+    let currentId = id;
+    const chain: Array<{ id: string; node: IVRNode }> = [{ id, node }];
+
+    while (current.default_next) {
+      const nextId = current.default_next;
+      const next = nodes[nextId];
+      if (!next) break;
+      if (next.action_type !== "SET") break;
+      if (Object.keys(next.content?.branches ?? {}).length > 0) break;
+      if (merged.has(nextId)) break;
+      // Only absorb if this next node has exactly one inbound edge (from current)
+      if ((inboundCount[nextId] ?? 0) > 1) break;
+
+      chain.push({ id: nextId, node: next });
+      current = next;
+      currentId = nextId;
+    }
+
+    if (chain.length < 2) continue;
+
+    // Merge all assignments; later ones overwrite earlier (same key wins last)
+    const mergedAsgn: Record<string, any> = {};
+    for (const { node: n } of chain) {
+      Object.assign(mergedAsgn, n.content?.assignments ?? {});
+    }
+
+    // Update the head node with the merged assignments and the tail's next
+    nodes[id] = {
+      ...node,
+      content: { ...node.content, assignments: mergedAsgn },
+      default_next: current.default_next,
+    };
+
+    // Remove the absorbed nodes
+    for (const { id: mid } of chain.slice(1)) {
+      merged.add(mid);
+      delete nodes[mid];
+    }
+
+    console.log(
+      `[P5] Merged ${chain.length} SETs into ${id}: keys=[${Object.keys(mergedAsgn).join(", ")}]`,
+    );
+  }
+}
+
+// ─── P6: Normalise PolyAI handoff pattern ────────────────────────────────────
+/**
+ * After a SIP TRANSFER (SPAWN), the old CXone flow emits:
+ *   PLAY (empty) → SET PolyReason={SP2} → SET PolyNote={SP3} → REQAGENT
+ *
+ * Replace that chain with the correct engine pattern:
+ *   SIP TRANSFER  → SET Handoff={{DialSipHeader_X-Handoff}}
+ *                 → CHECK Handoff == "Yes"
+ *                      True  → SET HandoffReason={{DialSipHeader_X-HandoffReason}} → REQAGENT
+ *                      False → HANGUP
+ *
+ * The REQAGENT node already exists in the flow; we reuse it.
+ * The empty PLAY after SPAWN (if any) is also bypassed.
+ */
+function _p6_normalisePolyHandoff(nodes: Record<string, IVRNode>): void {
+  // Find the SIP TRANSFER node(s)
+  for (const [sipId, sipNode] of Object.entries(nodes)) {
+    if (sipNode.action_type !== "TRANSFER") continue;
+    if (sipNode.content?.transferType !== "SIP") continue;
+
+    const afterSip = sipNode.default_next;
+    if (!afterSip || !nodes[afterSip]) continue;
+
+    // Walk forward from afterSip, skipping empty PLAYs, to find PolyReason SET
+    let cursor = afterSip;
+    let emptyPlayId: string | undefined;
+
+    // Skip empty PLAY nodes (no non-empty text in any language)
+    while (
+      nodes[cursor]?.action_type === "PLAY" &&
+      !Object.values(nodes[cursor].content?.text ?? {}).some(v => v)
+    ) {
+      emptyPlayId = cursor;
+      cursor = nodes[cursor].default_next ?? "";
+      if (!cursor) break;
+    }
+
+    if (!cursor || !nodes[cursor]) continue;
+
+    // Detect PolyReason / PolyNote chain
+    const polyReasonNode = nodes[cursor];
+    if (polyReasonNode.action_type !== "SET") continue;
+    const asgn = polyReasonNode.content?.assignments ?? {};
+    if (!("PolyReason" in asgn) && !("PolyNote" in asgn)) continue;
+
+    // Walk the chain collecting SET nodes until we hit REQAGENT
+    let reqagentId: string | undefined;
+    let chainCursor = cursor;
+    const chainIds: string[] = [];
+    let steps = 0;
+    while (steps++ < 10) {
+      const cn = nodes[chainCursor];
+      if (!cn) break;
+      if (
+        cn.action_type === "TRANSFER" &&
+        cn.content?.transferType === "CONNECT"
+      ) {
+        reqagentId = chainCursor;
+        break;
+      }
+      if (cn.action_type === "SET") chainIds.push(chainCursor);
+      chainCursor = cn.default_next ?? "";
+      if (!chainCursor) break;
+    }
+
+    if (!reqagentId) continue; // couldn't find REQAGENT
+
+    // ── Build the replacement nodes ──────────────────────────────────────────
+
+    const setHandoffId = `${sipId}_set_handoff`;
+    const checkHandoffId = `${sipId}_check_handoff`;
+    const setHandoffReasonId = `${sipId}_set_handoff_reason`;
+
+    // Find an existing HANGUP node or synthesize one
+    const hangupId =
+      Object.entries(nodes).find(([, n]) => n.action_type === "HANGUP")?.[0] ??
+      `${sipId}_hangup`;
+    if (!nodes[hangupId]) {
+      nodes[hangupId] = {
+        step_id: hangupId,
+        action_type: "HANGUP",
+        label: "Hangup",
+        content: { branches: {} },
+      };
+    }
+
+    // SET Handoff = {{DialSipHeader_X-Handoff}}
+    nodes[setHandoffId] = {
+      step_id: setHandoffId,
+      action_type: "SET",
+      label: "Set Handoff",
+      content: {
+        assignments: { Handoff: "{{DialSipHeader_X-Handoff}}" },
+        branches: {},
+      },
+      default_next: checkHandoffId,
+    };
+
+    // CHECK Handoff == "Yes"
+    nodes[checkHandoffId] = {
+      step_id: checkHandoffId,
+      action_type: "CHECK",
+      label: "Check Handoff",
+      content: {
+        expression: 'Handoff == "Yes"',
+        branches: {
+          True: setHandoffReasonId,
+          False: hangupId,
+        },
+      },
+    };
+
+    // SET HandoffReason = {{DialSipHeader_X-HandoffReason}}
+    nodes[setHandoffReasonId] = {
+      step_id: setHandoffReasonId,
+      action_type: "SET",
+      label: "Set HandoffReason",
+      content: {
+        assignments: { HandoffReason: "{{DialSipHeader_X-HandoffReason}}" },
+        branches: {},
+      },
+      default_next: reqagentId,
+    };
+
+    // Rewire SIP transfer's default_next to the new SET Handoff node
+    // (skipping the empty PLAY and old PolyReason chain)
+    nodes[sipId] = { ...sipNode, default_next: setHandoffId };
+
+    // Delete the old PolyReason/PolyNote chain and empty PLAY
+    for (const cid of chainIds) delete nodes[cid];
+    if (emptyPlayId) delete nodes[emptyPlayId];
+
+    console.log(
+      `[P6] Replaced PolyReason chain after ${sipId} with Handoff check pattern`,
+    );
+  }
 }
 
 // ── deferLangDefault ──────────────────────────────────────────────────────────
@@ -1102,15 +1641,9 @@ function deferLangDefault(nodes: Record<string, IVRNode>): void {
   for (const upfrontId of upfrontLangSets) {
     const upfrontNode = nodes[upfrontId];
     const rawLangVal = upfrontNode.content?.assignments?.["Lang"] ?? "";
-    const normLangVal = rawLangVal.toLowerCase();
 
-    // Normalize the stored value to match set_action.py convention
-    const normalizedVal =
-      normLangVal === "en" || normLangVal === "eng"
-        ? "eng"
-        : normLangVal === "sp" || normLangVal === "spa" || normLangVal === "es"
-          ? "spa"
-          : normLangVal;
+    // Normalize the stored value to match set_action.py convention (ISO 639-2)
+    const normalizedVal = LANG_CODE_MAP[rawLangVal.toUpperCase()] ?? rawLangVal.toLowerCase();
 
     // Update the upfront node's assignment to use the normalized value
     nodes[upfrontId] = {
@@ -1151,27 +1684,27 @@ function deferLangDefault(nodes: Record<string, IVRNode>): void {
       }
     }
 
-    // Point the upfront node's own default_next to the same downstream
-    // as its in-menu sibling set — i.e. wherever s16 goes (hours, etc.)
-    // Do NOT keep s17's original default_next, which pointed through the greeting
-    // and would loop back into the lang menu.
-    // Best proxy: the null-branch target of the lang-select CHECK (the "no choice" path).
+    // Point the upfront node's own default_next to the same downstream as its
+    // in-menu sibling — wherever any other SET Lang node continues to (e.g. HOURS).
+    // Priority: in-menu sibling's default_next > null-branch (timeout path).
     const continueTarget =
-      nodes[langSelectCheckId]?.content?.branches?.["null"] ??
       [...inMenuLangSets].map((id) => nodes[id].default_next).find(Boolean) ??
-      inMenuDownstream;
+      nodes[langSelectCheckId]?.content?.branches?.["null"] ??
+      undefined;
     nodes[upfrontId] = { ...nodes[upfrontId], default_next: continueTarget };
 
-    // Add a branch on the lang-select CHECK for this language
-    // Use the same numeric key pattern as the other branches, or "1" if eng
+    // Add a branch on the lang-select CHECK for this language.
+    // Prefer key "1" for the first / only language being added if slot is free,
+    // otherwise use the next available numeric key after existing ones.
     const existingKeys = Object.keys(
       nodes[langSelectCheckId].content?.branches ?? {},
     )
       .filter((k) => /^\d+$/.test(k))
       .map(Number)
       .sort((a, b) => a - b);
-    const nextKey = String((existingKeys[existingKeys.length - 1] ?? 1) + 1);
-    // For English (the common case), prefer key "1" if not already taken
+    const nextKey = String((existingKeys[existingKeys.length - 1] ?? 0) + 1);
+    // Slot "1" is preferred for English (most common default); any other language
+    // falls into the next sequential slot.
     const preferredKey =
       normalizedVal === "eng" && !checkBranches["1"] ? "1" : nextKey;
 
@@ -1199,7 +1732,7 @@ export function ensureSkillWhisperPairing(ir: IR): IR {
   const skillWhispers = new Set<string>(); // step_ids that have SkillWhisper
 
   // First pass: find all QueueSkill and SkillWhisper assignments
-  for (const [id, node] of Object.entries(nodes)) {
+  for (const [id, node] of Object.entries(nodes) as [string, IVRNode][]) {
     if (node.action_type !== "SET") continue;
     const assignments = node.content?.assignments ?? {};
 
@@ -1213,7 +1746,7 @@ export function ensureSkillWhisperPairing(ir: IR): IR {
 
   // Second pass: ensure pairing
   for (const [qsStepId, qsValue] of queueSkills) {
-    const node = nodes[qsStepId];
+    const node = nodes[qsStepId] as IVRNode;
     const assignments = { ...(node.content?.assignments ?? {}) };
 
     // If no SkillWhisper in this SET block, add it
@@ -1240,78 +1773,68 @@ export function ensureSkillWhisperPairing(ir: IR): IR {
 
 /**
  * Validate and normalize all language values in the IR.
- * Ensures text objects use 'eng' and 'spa' consistently.
+ * Normalizes text object keys and SET Lang= values to ISO 639-2 codes
+ * using LANG_CODE_MAP and full English language name aliases.
  */
 export function validateAndNormalizeLanguages(ir: IR): IR {
   const nodes = { ...ir.nodes };
   let fixCount = 0;
 
-  for (const [id, node] of Object.entries(nodes)) {
-    // Check PLAY/GATHER text objects
+  // Build a lookup that handles full English names and any LANG_CODE_MAP key.
+  // Keys are lower-cased; values are ISO 639-2 codes.
+  const FULL_NAME_MAP: Record<string, string> = {
+    english: "eng", spanish: "spa", french: "fra", german: "deu",
+    italian: "ita", portuguese: "por", chinese: "zho", japanese: "jpn",
+    korean: "kor", russian: "rus", arabic: "ara", hindi: "hin",
+    vietnamese: "vie", polish: "pol", dutch: "nld",
+  };
+  const normalizeKey = (key: string): string => {
+    const lower = key.toLowerCase();
+    return (
+      LANG_CODE_MAP[key.toUpperCase()] ??
+      FULL_NAME_MAP[lower] ??
+      lower // keep as-is (already ISO 639-2 or unknown)
+    );
+  };
+
+  for (const [id, node] of Object.entries(nodes) as [string, IVRNode][]) {
+    // Normalize text object keys in PLAY / GATHER nodes
     if (
       (node.action_type === "PLAY" || node.action_type === "GATHER") &&
       node.content?.text
     ) {
       const text = node.content.text;
       if (typeof text === "object") {
-        const fixed: any = {};
+        const fixed: Record<string, string> = {};
         let changed = false;
 
         for (const [key, val] of Object.entries(text)) {
-          const normKey = key.toLowerCase();
-          if (normKey === "en" || normKey === "english") {
-            fixed.eng = val;
+          const norm = normalizeKey(key);
+          if (norm !== key) {
             changed = true;
             fixCount++;
-          } else if (
-            normKey === "sp" ||
-            normKey === "es" ||
-            normKey === "spanish"
-          ) {
-            fixed.spa = val;
-            changed = true;
-            fixCount++;
-          } else if (normKey === "eng" || normKey === "spa") {
-            fixed[normKey] = val;
-          } else {
-            console.warn(`[Lang] Unknown language key "${key}" in ${id}`);
-            fixed[normKey] = val;
           }
+          // Merge: if two keys normalise to the same code, keep the first non-empty value
+          fixed[norm] = fixed[norm] || (val as string);
         }
 
         if (changed) {
-          nodes[id] = {
-            ...node,
-            content: {
-              ...node.content,
-              text: fixed,
-            },
-          };
+          nodes[id] = { ...node, content: { ...node.content, text: fixed } };
         }
       }
     }
 
-    // Check SET Lang assignments
+    // Normalize SET Lang= assignment values
     if (node.action_type === "SET" && node.content?.assignments?.Lang) {
       const langVal = String(node.content.assignments.Lang);
-      const normalized =
-        langVal.toLowerCase() === "en" || langVal === "EN"
-          ? "eng"
-          : langVal.toLowerCase() === "sp" ||
-              langVal === "SP" ||
-              langVal === "ES"
-            ? "spa"
-            : langVal;
+      const normalized = LANG_CODE_MAP[langVal.toUpperCase()] ?? langVal;
 
       if (normalized !== langVal) {
         nodes[id] = {
           ...node,
           content: {
             ...node.content,
-            assignments: {
-              ...node.content.assignments,
-              Lang: normalized,
-            },
+            assignments: { ...node.content.assignments, Lang: normalized },
           },
         };
         fixCount++;
@@ -1320,7 +1843,7 @@ export function validateAndNormalizeLanguages(ir: IR): IR {
   }
 
   if (fixCount > 0) {
-    console.log(`[Lang] Normalized ${fixCount} language value(s) to eng/spa`);
+    console.log(`[Lang] Normalized ${fixCount} language value(s) to ISO 639-2`);
   }
 
   return { ...ir, nodes };
@@ -1334,7 +1857,7 @@ export function mergeSequentialSets(ir: IR): IR {
   const nodes = { ...ir.nodes };
   const merged = new Set<string>(); // IDs that have been merged away
 
-  for (const [id, node] of Object.entries(nodes)) {
+  for (const [id, node] of Object.entries(nodes) as [string, IVRNode][]) {
     if (node.action_type !== "SET" || merged.has(id)) continue;
 
     const assignments = { ...(node.content?.assignments ?? {}) };
@@ -1356,7 +1879,7 @@ export function mergeSequentialSets(ir: IR): IR {
       if (hasBranches) break;
 
       // Check if any other node points to this next node (can't merge if so)
-      const hasInbound = Object.values(nodes).some((n) => {
+      const hasInbound = (Object.values(nodes) as IVRNode[]).some((n) => {
         if (n.step_id === id) return false; // Don't count ourselves
         if (n.default_next === nextId) return true;
         return Object.values(n.content?.branches ?? {}).includes(nextId);
@@ -1405,7 +1928,7 @@ export function mergeSequentialChecks(ir: IR): IR {
   const nodes = { ...ir.nodes };
   const merged = new Set<string>(); // IDs that have been merged away
 
-  for (const [id, node] of Object.entries(nodes)) {
+  for (const [id, node] of Object.entries(nodes) as [string, IVRNode][]) {
     if (node.action_type !== "CHECK" || merged.has(id)) continue;
     if (!node.content?.var) continue; // Only var-mode CHECKs can be merged
 
@@ -1426,7 +1949,7 @@ export function mergeSequentialChecks(ir: IR): IR {
       if (nextCheck.content?.var !== baseVar) break;
 
       // Check if any other node points to this next check (can't merge if so)
-      const hasInbound = Object.values(nodes).some((n) => {
+      const hasInbound = (Object.values(nodes) as IVRNode[]).some((n) => {
         if (chain.includes(n.step_id)) return false; // Don't count chain members
         if (n.default_next === fallbackBranch) return true;
         return Object.values(n.content?.branches ?? {}).some(
@@ -1481,4 +2004,633 @@ export function mergeSequentialChecks(ir: IR): IR {
   }
 
   return { ...ir, nodes };
+}
+
+// ─── P7: Collapse expression-check chains into var-mode CHECK branches ────────
+/**
+ * When a var-mode CHECK (branching on a digit variable) has branches that all
+ * point into a sequential chain of expression CHECKs testing `variable == 'N'`,
+ * we already know the variable's value at each branch — so we can resolve each
+ * one deterministically and inline the correct True-branch target directly.
+ *
+ * Before:
+ *   CHECK var=AHPMenu_RES { "1": chain, "2": chain, "3": chain, "4": chain }
+ *   → CHECK expr="AHPMenu_RES == '1'" { True: setA, False: ... }
+ *   → CHECK expr="AHPMenu_RES == '2'" { True: setB, False: ... }
+ *   → ...
+ *
+ * After:
+ *   CHECK var=AHPMenu_RES { "1": setA, "2": setB, "3": setC, "4": setD }
+ *   (expression-check chain nodes removed if now unreachable)
+ */
+function _p7_collapseExprChains(nodes: Record<string, IVRNode>): void {
+  // Parse expressions like: VARNAME == 'VALUE' or VARNAME == "VALUE"
+  // Returns null if not this pattern.
+  const parseEqExpr = (
+    expr: string,
+  ): { varName: string; value: string } | null => {
+    const m = expr.trim().match(/^(\w+)\s*==\s*['"]([^'"]*)['"]\s*$/);
+    if (!m) return null;
+    return { varName: m[1], value: m[2] };
+  };
+
+  // Walk an expression-check chain for a known variable value.
+  // Returns the target step ID this value should route to, plus the set of
+  // expression-check node IDs visited along the way.
+  const resolveChain = (
+    startId: string,
+    varName: string,
+    knownValue: string,
+    visited = new Set<string>(),
+  ): { target: string; chainNodes: Set<string> } => {
+    const chainNodes = new Set<string>();
+    let currentId = startId;
+
+    while (currentId) {
+      if (visited.has(currentId)) break; // loop guard
+      const node = nodes[currentId];
+      if (!node || node.action_type !== "CHECK" || !node.content?.expression) {
+        // Not an expression-check — this is our resolved target
+        break;
+      }
+      const parsed = parseEqExpr(node.content.expression);
+      if (!parsed || parsed.varName !== varName) {
+        // Different variable or complex expression — stop here, don't inline
+        break;
+      }
+
+      visited.add(currentId);
+      chainNodes.add(currentId);
+
+      if (parsed.value === knownValue) {
+        // This expression matches our value — True branch is the target
+        currentId = node.content.branches?.["True"] ?? "";
+        break;
+      } else {
+        // No match — follow False branch and keep walking
+        currentId = node.content.branches?.["False"] ?? "";
+      }
+    }
+
+    return { target: currentId, chainNodes };
+  };
+
+  // Track all expression-check chain nodes that were inlined
+  const allChainNodes = new Set<string>();
+
+  for (const [id, node] of Object.entries(nodes)) {
+    if (node.action_type !== "CHECK" || !node.content?.var) continue;
+    const varName = node.content.var;
+    const branches = node.content.branches ?? {};
+
+    // Only act if at least one digit branch leads into an expression-check chain
+    // for this same variable.
+    const hasChainBranches = Object.entries(branches).some(([key, target]) => {
+      if (!target || key === "null") return false;
+      const n = nodes[target];
+      if (!n || n.action_type !== "CHECK" || !n.content?.expression)
+        return false;
+      const parsed = parseEqExpr(n.content.expression);
+      return parsed?.varName === varName;
+    });
+    if (!hasChainBranches) continue;
+
+    const newBranches: Record<string, string> = {};
+    const visitedGlobal = new Set<string>();
+    let inlined = 0;
+
+    for (const [key, target] of Object.entries(branches)) {
+      if (!target || key === "null") {
+        newBranches[key] = target;
+        continue;
+      }
+      const targetNode = nodes[target];
+      if (
+        targetNode?.action_type === "CHECK" &&
+        targetNode.content?.expression &&
+        parseEqExpr(targetNode.content.expression)?.varName === varName
+      ) {
+        // Resolve: walk the chain knowing the variable equals `key`
+        const { target: resolved, chainNodes } = resolveChain(
+          target,
+          varName,
+          key,
+          new Set(visitedGlobal),
+        );
+        newBranches[key] = resolved || target;
+        chainNodes.forEach((n) => allChainNodes.add(n));
+        if (resolved && resolved !== target) inlined++;
+      } else {
+        newBranches[key] = target;
+      }
+    }
+
+    if (inlined > 0) {
+      nodes[id] = {
+        ...node,
+        content: { ...node.content, branches: newBranches },
+      };
+      console.log(
+        `[P7] Inlined ${inlined} expression-chain branch(es) into var-CHECK ${id} (${varName})`,
+      );
+    }
+  }
+
+  // Prune expression-check chain nodes that are now unreachable.
+  // Build inbound-edge count after rewiring.
+  if (allChainNodes.size === 0) return;
+
+  const inbound: Record<string, number> = {};
+  for (const node of Object.values(nodes)) {
+    const targets = [
+      node.default_next,
+      ...Object.values(node.content?.branches ?? {}),
+    ].filter(Boolean) as string[];
+    for (const t of targets) inbound[t] = (inbound[t] ?? 0) + 1;
+  }
+
+  let pruned = 0;
+  for (const chainId of allChainNodes) {
+    if (!inbound[chainId]) {
+      delete nodes[chainId];
+      pruned++;
+    }
+  }
+
+  if (pruned > 0) {
+    console.log(
+      `[P7] Pruned ${pruned} now-unreachable expression-check node(s)`,
+    );
+  }
+}
+
+// ─── P7b: Convert standalone expression-check chains to var-mode CHECKs ──────
+/**
+ * Finds chains of consecutive expression CHECKs all testing the same variable
+ * with equality (VAR == 'val') and replaces the chain head with a single var-mode
+ * CHECK, collapsing all cases into direct branches.
+ *
+ * Before: CHECK(QS=='A'){T→setA, F→} CHECK(QS=='B'){T→setB, F→fallback}
+ * After:  CHECK var=QS { 'A': setA, 'B': setB, null: fallback }
+ */
+function _p7b_convertExprChainToVarCheck(nodes: Record<string, IVRNode>): void {
+  const parseEqExpr = (
+    expr: string,
+  ): { varName: string; value: string } | null => {
+    const m = expr.trim().match(/^(\w+)\s*==\s*['"]([^'"]*)['"]/);
+    if (!m) return null;
+    return { varName: m[1], value: m[2] };
+  };
+
+  // Identify interior nodes: pointed to by another same-var expr CHECK's False branch
+  const interiorIds = new Set<string>();
+  for (const node of Object.values(nodes)) {
+    if (node.action_type !== "CHECK" || !node.content?.expression) continue;
+    const parsed = parseEqExpr(node.content.expression);
+    if (!parsed) continue;
+    const falseTarget = node.content.branches?.["False"];
+    if (!falseTarget || !nodes[falseTarget]) continue;
+    const fn = nodes[falseTarget];
+    if (fn.action_type !== "CHECK" || !fn.content?.expression) continue;
+    const fp = parseEqExpr(fn.content.expression);
+    if (fp?.varName === parsed.varName) interiorIds.add(falseTarget);
+  }
+
+  const toDelete = new Set<string>();
+
+  for (const [headId, headNode] of Object.entries(nodes)) {
+    if (headNode.action_type !== "CHECK" || !headNode.content?.expression)
+      continue;
+    if (interiorIds.has(headId)) continue;
+    const headParsed = parseEqExpr(headNode.content.expression);
+    if (!headParsed) continue;
+
+    // Must have at least one False-chain successor on the same variable
+    const firstFalse = headNode.content.branches?.["False"];
+    if (!firstFalse || !nodes[firstFalse]) continue;
+    const ffn = nodes[firstFalse];
+    if (ffn.action_type !== "CHECK" || !ffn.content?.expression) continue;
+    const ffp = parseEqExpr(ffn.content.expression);
+    if (!ffp || ffp.varName !== headParsed.varName) continue;
+
+    // Walk the full chain
+    const varName = headParsed.varName;
+    const cases: Array<{ value: string; target: string }> = [];
+    const interiorChain: string[] = [];
+    let fallthrough: string | undefined;
+    let cur: string = headId;
+
+    while (cur) {
+      const cn = nodes[cur];
+      if (!cn || cn.action_type !== "CHECK" || !cn.content?.expression) {
+        fallthrough = cur;
+        break;
+      }
+      const cp = parseEqExpr(cn.content.expression);
+      if (!cp || cp.varName !== varName) {
+        fallthrough = cur;
+        break;
+      }
+      const trueTarget = cn.content.branches?.["True"];
+      if (trueTarget) cases.push({ value: cp.value, target: trueTarget });
+      if (cur !== headId) interiorChain.push(cur);
+      cur = cn.content.branches?.["False"] ?? "";
+      if (!cur) break;
+    }
+
+    if (cases.length < 2) continue;
+
+    const newBranches: Record<string, string> = {};
+    for (const { value, target } of cases) newBranches[value] = target;
+    if (fallthrough) newBranches["null"] = fallthrough;
+
+    const { expression: _removed, ...restContent } = headNode.content as any;
+    nodes[headId] = {
+      ...headNode,
+      content: { ...restContent, var: varName, branches: newBranches },
+    };
+    interiorChain.forEach((id) => toDelete.add(id));
+    console.log(
+      `[P7b] Converted ${cases.length}-case expr chain on "${varName}" → var-mode CHECK at ${headId}`,
+    );
+  }
+
+  // Recompute inbound and prune orphaned interiors
+  const inbound: Record<string, number> = {};
+  for (const node of Object.values(nodes)) {
+    const targets = [
+      node.default_next,
+      ...Object.values(node.content?.branches ?? {}),
+    ].filter(Boolean) as string[];
+    for (const t of targets) inbound[t] = (inbound[t] ?? 0) + 1;
+  }
+  let pruned = 0;
+  for (const id of toDelete) {
+    if (!inbound[id]) {
+      delete nodes[id];
+      pruned++;
+    }
+  }
+  if (pruned > 0)
+    console.log(`[P7b] Pruned ${pruned} now-unreachable expression node(s)`);
+}
+
+// ─── P8: Promote null branches to default_next ────────────────────────────────
+/**
+ * For every node with a "null" branch key, promotes its target to default_next
+ * (if default_next isn't already set) and removes the "null" key from branches.
+ * "null" in var-mode CHECKs means "no input / timeout" and is equivalent to the
+ * engine falling through to default_next.
+ */
+function _p8_nullBranchToDefaultNext(nodes: Record<string, IVRNode>): void {
+  let moved = 0;
+  for (const [id, node] of Object.entries(nodes)) {
+    const branches = node.content?.branches;
+    if (!branches || !("null" in branches)) continue;
+    const nullTarget = branches["null"];
+    const newBranches = { ...branches };
+    delete newBranches["null"];
+    nodes[id] = {
+      ...node,
+      content: { ...node.content, branches: newBranches },
+      default_next: node.default_next ?? nullTarget ?? undefined,
+    };
+    moved++;
+  }
+  if (moved > 0)
+    console.log(`[P8] Promoted ${moved} "null" branch(es) to default_next`);
+  else console.log("[P8] No null branches found");
+}
+
+// ─── P9: Remove unreachable nodes ─────────────────────────────────────────────
+/**
+ * DFS from start_step. Any node not reachable is deleted.
+ */
+function _p9_removeUnreachableNodes(
+  nodes: Record<string, IVRNode>,
+  startId: string | undefined,
+): void {
+  if (!startId || !nodes[startId]) {
+    console.log("[P9] No valid start node — skipping");
+    return;
+  }
+  const visited = new Set<string>();
+  const stack = [startId];
+  while (stack.length) {
+    const id = stack.pop()!;
+    if (visited.has(id) || !nodes[id]) continue;
+    visited.add(id);
+    const n = nodes[id];
+    if (n.default_next) stack.push(n.default_next);
+    for (const v of Object.values(n.content?.branches ?? {})) {
+      if (v && typeof v === "string") stack.push(v);
+    }
+  }
+  let removed = 0;
+  for (const id of Object.keys(nodes)) {
+    if (!visited.has(id)) {
+      delete nodes[id];
+      removed++;
+    }
+  }
+  if (removed > 0) console.log(`[P9] Removed ${removed} unreachable node(s)`);
+  else console.log("[P9] No unreachable nodes");
+}
+
+// ─── P10: Auto-rename nodes from content ─────────────────────────────────────
+/**
+ * Updates node labels to accurately reflect their current content.
+ * Safe to re-apply — always derives from content, never from existing label.
+ */
+function _p10_autoRenameNodes(nodes: Record<string, IVRNode>): void {
+  let renamed = 0;
+  for (const [id, node] of Object.entries(nodes)) {
+    let newLabel = node.label;
+    const c = node.content ?? {};
+    switch (node.action_type) {
+      case "SET": {
+        const keys = Object.keys(c.assignments ?? {});
+        if (keys.length === 0) {
+          newLabel = "Set (empty)";
+          break;
+        }
+        if (keys.length === 1) {
+          const val = (c.assignments as any)[keys[0]];
+          newLabel = `${keys[0]} = ${val ?? "null"}`;
+        } else if (keys.length <= 3) {
+          newLabel = `Set ${keys.join(", ")}`;
+        } else {
+          newLabel = `Set ${keys.length} vars`;
+        }
+        break;
+      }
+      case "CHECK": {
+        if (c.var) {
+          newLabel = `Switch ${c.var}`;
+        } else if (c.expression) {
+          newLabel =
+            c.expression.length > 45
+              ? c.expression.slice(0, 42) + "…"
+              : c.expression;
+        }
+        break;
+      }
+      case "GATHER":
+        newLabel = c.variable ? `Gather → ${c.variable}` : "Gather";
+        break;
+      case "PLAY": {
+        const textObj = c.text;
+        const txt =
+          typeof textObj === "string"
+            ? textObj
+            : Object.values(textObj ?? {}).find(v => v) ?? "";
+        if (txt)
+          newLabel = txt.length > 50 ? txt.slice(0, 47).trimEnd() + "…" : txt;
+        break;
+      }
+      case "TRANSFER":
+        newLabel =
+          c.transferType === "SIP"
+            ? "Transfer → SIP"
+            : `Transfer → ${c.agentSkill ?? c.digits ?? "CONNECT"}`;
+        break;
+      case "HOURS":
+        newLabel = c.hoo_arn
+          ? `Hours (…${String(c.hoo_arn).slice(-6)})`
+          : "Hours Check";
+        break;
+      case "WAIT":
+        newLabel = `Wait ${c.seconds ?? "?"}s`;
+        break;
+      case "HANGUP":
+        newLabel = "Hangup";
+        break;
+      case "START":
+        newLabel = "Flow Start";
+        break;
+    }
+    if (newLabel !== node.label) {
+      nodes[id] = { ...node, label: newLabel };
+      renamed++;
+    }
+  }
+  if (renamed > 0) console.log(`[P10] Auto-renamed ${renamed} node(s)`);
+  else console.log("[P10] Labels already accurate");
+}
+
+// ─── Public IR-level wrappers for each post-processing pass ──────────────────
+// Each function takes an IR, applies the pass, and returns a new IR.
+// They do NOT auto-run — the user triggers them manually via the UI.
+
+export function applyDeferLangDefault(ir: IR): { ir: IR; log: string[] } {
+  const nodes = { ...ir.nodes };
+  const captured: string[] = [];
+  const orig = console.log;
+  console.log = (...a) => {
+    captured.push(a.map(String).join(" "));
+    orig(...a);
+  };
+  try {
+    deferLangDefault(nodes);
+  } finally {
+    console.log = orig;
+  }
+  return { ir: { ...ir, nodes }, log: captured };
+}
+
+export function applyP1RemoveBlockCall(ir: IR): { ir: IR; log: string[] } {
+  const nodes = { ...ir.nodes };
+  const captured: string[] = [];
+  const orig = console.log;
+  console.log = (...a) => {
+    captured.push(a.map(String).join(" "));
+    orig(...a);
+  };
+  try {
+    _p1_removeBlockCallCheck(nodes);
+  } finally {
+    console.log = orig;
+  }
+  return { ir: { ...ir, nodes }, log: captured };
+}
+
+export function applyP2NormaliseLang(ir: IR): { ir: IR; log: string[] } {
+  const nodes = { ...ir.nodes };
+  const captured: string[] = [];
+  const orig = console.log;
+  console.log = (...a) => {
+    captured.push(a.map(String).join(" "));
+    orig(...a);
+  };
+  try {
+    _p2_normaliseLangAssignments(nodes);
+  } finally {
+    console.log = orig;
+  }
+  return { ir: { ...ir, nodes }, log: captured };
+}
+
+export function applyP3SwapLangMenu(ir: IR): { ir: IR; log: string[] } {
+  const nodes = { ...ir.nodes };
+  const captured: string[] = [];
+  const orig = console.log;
+  console.log = (...a) => {
+    captured.push(a.map(String).join(" "));
+    orig(...a);
+  };
+  try {
+    _p3_swapLangMenuToEnglishFirst(nodes);
+  } finally {
+    console.log = orig;
+  }
+  return { ir: { ...ir, nodes }, log: captured };
+}
+
+export function applyP4RemoveRedundantNull(ir: IR): { ir: IR; log: string[] } {
+  const nodes = { ...ir.nodes };
+  const captured: string[] = [];
+  const orig = console.log;
+  console.log = (...a) => {
+    captured.push(a.map(String).join(" "));
+    orig(...a);
+  };
+  try {
+    _p4_removeRedundantNullBranches(nodes);
+  } finally {
+    console.log = orig;
+  }
+  return { ir: { ...ir, nodes }, log: captured };
+}
+
+export function applyP5MergeSequentialSets(ir: IR): { ir: IR; log: string[] } {
+  const nodes = { ...ir.nodes };
+  const captured: string[] = [];
+  const orig = console.log;
+  console.log = (...a) => {
+    captured.push(a.map(String).join(" "));
+    orig(...a);
+  };
+  try {
+    _p5_mergeSequentialSets(nodes);
+  } finally {
+    console.log = orig;
+  }
+  return { ir: { ...ir, nodes }, log: captured };
+}
+
+export function applyP6NormalisePolyHandoff(ir: IR): { ir: IR; log: string[] } {
+  const nodes = { ...ir.nodes };
+  const captured: string[] = [];
+  const orig = console.log;
+  console.log = (...a) => {
+    captured.push(a.map(String).join(" "));
+    orig(...a);
+  };
+  try {
+    _p6_normalisePolyHandoff(nodes);
+  } finally {
+    console.log = orig;
+  }
+  return { ir: { ...ir, nodes }, log: captured };
+}
+
+export function applyP7CollapseExprChains(ir: IR): { ir: IR; log: string[] } {
+  const nodes = { ...ir.nodes };
+  const captured: string[] = [];
+  const orig = console.log;
+  console.log = (...a) => {
+    captured.push(a.map(String).join(" "));
+    orig(...a);
+  };
+  try {
+    _p7_collapseExprChains(nodes);
+  } finally {
+    console.log = orig;
+  }
+  return { ir: { ...ir, nodes }, log: captured };
+}
+
+export function applyP7bConvertExprChains(ir: IR): { ir: IR; log: string[] } {
+  const nodes = { ...ir.nodes };
+  const captured: string[] = [];
+  const orig = console.log;
+  console.log = (...a) => {
+    captured.push(a.map(String).join(" "));
+    orig(...a);
+  };
+  try {
+    _p7b_convertExprChainToVarCheck(nodes);
+  } finally {
+    console.log = orig;
+  }
+  return { ir: { ...ir, nodes }, log: captured };
+}
+
+export function applyP8NullToDefaultNext(ir: IR): { ir: IR; log: string[] } {
+  const nodes = { ...ir.nodes };
+  const captured: string[] = [];
+  const orig = console.log;
+  console.log = (...a) => {
+    captured.push(a.map(String).join(" "));
+    orig(...a);
+  };
+  try {
+    _p8_nullBranchToDefaultNext(nodes);
+  } finally {
+    console.log = orig;
+  }
+  return { ir: { ...ir, nodes }, log: captured };
+}
+
+export function applyP9RemoveUnreachable(ir: IR): { ir: IR; log: string[] } {
+  const nodes = { ...ir.nodes };
+  const captured: string[] = [];
+  const orig = console.log;
+  console.log = (...a) => {
+    captured.push(a.map(String).join(" "));
+    orig(...a);
+  };
+  try {
+    _p9_removeUnreachableNodes(nodes, ir.start_step);
+  } finally {
+    console.log = orig;
+  }
+  return { ir: { ...ir, nodes }, log: captured };
+}
+
+export function applyP10AutoRename(ir: IR): { ir: IR; log: string[] } {
+  const nodes = { ...ir.nodes };
+  const captured: string[] = [];
+  const orig = console.log;
+  console.log = (...a) => {
+    captured.push(a.map(String).join(" "));
+    orig(...a);
+  };
+  try {
+    _p10_autoRenameNodes(nodes);
+  } finally {
+    console.log = orig;
+  }
+  return { ir: { ...ir, nodes }, log: captured };
+}
+
+export function applyAllPostProcessing(ir: IR): { ir: IR; log: string[] } {
+  const nodes = { ...ir.nodes };
+  const captured: string[] = [];
+  const orig = console.log;
+  console.log = (...a) => {
+    captured.push(a.map(String).join(" "));
+    orig(...a);
+  };
+  try {
+    deferLangDefault(nodes);
+    applyLandingTransforms(nodes);
+    _p7_collapseExprChains(nodes);
+    _p7b_convertExprChainToVarCheck(nodes);
+    _p8_nullBranchToDefaultNext(nodes);
+    _p9_removeUnreachableNodes(nodes, ir.start_step);
+  } finally {
+    console.log = orig;
+  }
+  return { ir: { ...ir, nodes }, log: captured };
 }

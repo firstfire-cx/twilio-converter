@@ -1,35 +1,10 @@
 // src/hooks/useAwsCredentials.ts
-//
-// Manages AWS credential acquisition for the IVR editor.
-// Three modes, tried in order:
-//   1. SSO (OIDC device flow) — same protocol as `aws sso login`
-//   2. Manual key entry        — access key / secret / session token
-//
-// Resolved credentials are cached in sessionStorage so the user does not
-// have to re-authenticate on every upload within the same browser session.
-//
-// Required packages (add once):
-//   npm install @aws-sdk/client-sso-oidc @aws-sdk/client-sso \
-//               @aws-sdk/client-dynamodb @aws-sdk/lib-dynamodb
-
 import { useState, useCallback } from "react";
 import {
-  SSOOIDCClient,
-  RegisterClientCommand,
-  StartDeviceAuthorizationCommand,
-  CreateTokenCommand,
-  type CreateTokenCommandOutput,
-} from "@aws-sdk/client-sso-oidc";
-import {
-  SSOClient,
-  GetRoleCredentialsCommand,
-  ListAccountRolesCommand,
-  ListAccountsCommand,
-} from "@aws-sdk/client-sso";
-
-// ---------------------------------------------------------------------------
-// Credential shape
-// ---------------------------------------------------------------------------
+  ConnectClient,
+  ListInstancesCommand,
+  type InstanceSummary,
+} from "@aws-sdk/client-connect";
 
 export interface AwsCredentials {
   accessKeyId: string;
@@ -37,13 +12,19 @@ export interface AwsCredentials {
   sessionToken?: string;
   expiration?: Date;
   region: string;
-  endpoint?: string; // for LocalStack / DynamoDB local
+  endpoint?: string;
   source: "sso" | "manual";
-  identity?: string; // display name shown in UI (SSO account/role)
-  instance_id?: string; // Amazon Connect instance ID (used by SkillsPanel)
+  identity?: string;
+  instance_id?: string;
 }
 
-// Serialisable form stored in sessionStorage (Date as ISO string)
+export interface ConnectInstance {
+  id: string;
+  arn: string;
+  alias: string;
+  status: string;
+}
+
 interface StoredCredentials {
   accessKeyId: string;
   secretAccessKey: string;
@@ -53,21 +34,7 @@ interface StoredCredentials {
   endpoint?: string;
   source: "sso" | "manual";
   identity?: string;
-}
-
-// ---------------------------------------------------------------------------
-// SSO intermediate state
-// ---------------------------------------------------------------------------
-
-export interface SsoDeviceCodeState {
-  verificationUriComplete: string; // open in new tab
-  userCode: string; // show to user as confirmation
-  deviceCode: string; // used internally when polling
-  clientId: string;
-  clientSecret: string;
-  expiresAt: number; // ms epoch
-  ssoStartUrl: string;
-  ssoRegion: string;
+  instance_id?: string;
 }
 
 export interface SsoAccount {
@@ -76,13 +43,17 @@ export interface SsoAccount {
   roles: string[];
 }
 
-// ---------------------------------------------------------------------------
-// localStorage helpers (with 1-hour expiry)
-// ---------------------------------------------------------------------------
+export type AuthStep =
+  | "idle"
+  | "sso-url"
+  | "sso-pending"
+  | "sso-select"
+  | "manual"
+  | "ready";
 
 const STORAGE_KEY = "ivr_aws_credentials";
 const EXPIRY_KEY = "ivr_aws_credentials_expiry";
-const EXPIRY_DURATION_MS = 3600000; // 1 hour
+const EXPIRY_DURATION_MS = 3600000;
 
 function saveToStorage(creds: AwsCredentials): void {
   const stored: StoredCredentials = {
@@ -94,47 +65,32 @@ function saveToStorage(creds: AwsCredentials): void {
     endpoint: creds.endpoint,
     source: creds.source,
     identity: creds.identity,
+    instance_id: creds.instance_id,
   };
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
-    localStorage.setItem(EXPIRY_KEY, String(Date.now() + EXPIRY_DURATION_MS));
-  } catch {
-    /* ignore */
-  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
+  localStorage.setItem(EXPIRY_KEY, String(Date.now() + EXPIRY_DURATION_MS));
 }
 
 function loadFromStorage(): AwsCredentials | null {
   try {
-    // Check custom expiry first
     const expiryStr = localStorage.getItem(EXPIRY_KEY);
     if (expiryStr && Date.now() > parseInt(expiryStr, 10)) {
-      // Expired - clear storage
-      localStorage.removeItem(STORAGE_KEY);
-      localStorage.removeItem(EXPIRY_KEY);
+      localStorage.clear();
       return null;
     }
-
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const stored: StoredCredentials = JSON.parse(raw);
-    const expiration = stored.expirationIso
-      ? new Date(stored.expirationIso)
-      : undefined;
-    // Discard if credential expiration is within 5 minutes
-    if (expiration && expiration.getTime() - Date.now() < 5 * 60 * 1000) {
-      localStorage.removeItem(STORAGE_KEY);
-      localStorage.removeItem(EXPIRY_KEY);
-      return null;
-    }
     return {
       accessKeyId: stored.accessKeyId,
       secretAccessKey: stored.secretAccessKey,
       sessionToken: stored.sessionToken,
-      expiration,
+      expiration: stored.expirationIso ? new Date(stored.expirationIso) : undefined,
       region: stored.region,
       endpoint: stored.endpoint,
       source: stored.source,
       identity: stored.identity,
+      instance_id: stored.instance_id,
     };
   } catch {
     return null;
@@ -142,273 +98,228 @@ function loadFromStorage(): AwsCredentials | null {
 }
 
 function clearStorage(): void {
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem(EXPIRY_KEY);
-  } catch {
-    /* ignore */
-  }
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(EXPIRY_KEY);
 }
 
-// ---------------------------------------------------------------------------
-// SSO OIDC helpers (exported so tests can call them directly)
-// ---------------------------------------------------------------------------
-
-const SSO_CLIENT_NAME = "ivr-flow-editor";
-const SSO_GRANT_TYPE = "urn:ietf:params:oauth:grant-type:device_code";
-const POLL_INTERVAL_MS = 5_000;
-
-export async function startSsoDeviceFlow(
-  ssoStartUrl: string,
-  ssoRegion: string,
-): Promise<SsoDeviceCodeState> {
-  const oidc = new SSOOIDCClient({ region: ssoRegion });
-
-  const regResp = await oidc.send(
-    new RegisterClientCommand({
-      clientName: SSO_CLIENT_NAME,
-      clientType: "public",
-    }),
-  );
-
-  const authResp = await oidc.send(
-    new StartDeviceAuthorizationCommand({
-      clientId: regResp.clientId!,
-      clientSecret: regResp.clientSecret!,
-      startUrl: ssoStartUrl,
-    }),
-  );
-
-  return {
-    verificationUriComplete: authResp.verificationUriComplete!,
-    userCode: authResp.userCode!,
-    deviceCode: authResp.deviceCode!,
-    clientId: regResp.clientId!,
-    clientSecret: regResp.clientSecret!,
-    expiresAt: Date.now() + (authResp.expiresIn ?? 600) * 1000,
-    ssoStartUrl,
-    ssoRegion,
-  };
+function buildConnectClient(creds: AwsCredentials): ConnectClient {
+  return new ConnectClient({
+    region: creds.region || "us-east-1",
+    credentials: {
+      accessKeyId: creds.accessKeyId,
+      secretAccessKey: creds.secretAccessKey,
+      ...(creds.sessionToken ? { sessionToken: creds.sessionToken } : {}),
+    },
+  });
 }
-
-export async function pollForSsoToken(
-  state: SsoDeviceCodeState,
-  signal?: AbortSignal,
-): Promise<CreateTokenCommandOutput> {
-  const oidc = new SSOOIDCClient({ region: state.ssoRegion });
-
-  while (true) {
-    if (signal?.aborted) throw new Error("Login cancelled");
-    if (Date.now() > state.expiresAt)
-      throw new Error("Device code expired — please try again");
-
-    await new Promise<void>((res) => setTimeout(res, POLL_INTERVAL_MS));
-    if (signal?.aborted) throw new Error("Login cancelled");
-
-    try {
-      return await oidc.send(
-        new CreateTokenCommand({
-          clientId: state.clientId,
-          clientSecret: state.clientSecret,
-          grantType: SSO_GRANT_TYPE,
-          deviceCode: state.deviceCode,
-        }),
-      );
-    } catch (err: any) {
-      const code = err?.name ?? "";
-      if (code === "AuthorizationPendingException") continue;
-      if (code === "SlowDownException") {
-        await new Promise<void>((res) => setTimeout(res, POLL_INTERVAL_MS * 2));
-        continue;
-      }
-      throw err;
-    }
-  }
-}
-
-export async function listSsoAccountsAndRoles(
-  accessToken: string,
-  ssoRegion: string,
-): Promise<SsoAccount[]> {
-  const sso = new SSOClient({ region: ssoRegion });
-  const accounts = await sso.send(
-    new ListAccountsCommand({ accessToken, maxResults: 50 }),
-  );
-  const result: SsoAccount[] = [];
-
-  for (const acct of accounts.accountList ?? []) {
-    const rolesResp = await sso.send(
-      new ListAccountRolesCommand({
-        accessToken,
-        accountId: acct.accountId!,
-        maxResults: 20,
-      }),
-    );
-    result.push({
-      accountId: acct.accountId!,
-      accountName: acct.accountName ?? acct.accountId!,
-      roles: (rolesResp.roleList ?? []).map((r) => r.roleName!).filter(Boolean),
-    });
-  }
-  return result;
-}
-
-export async function getSsoRoleCredentials(
-  accessToken: string,
-  accountId: string,
-  roleName: string,
-  ssoRegion: string,
-  targetRegion: string,
-): Promise<AwsCredentials> {
-  const sso = new SSOClient({ region: ssoRegion });
-  const resp = await sso.send(
-    new GetRoleCredentialsCommand({ accessToken, accountId, roleName }),
-  );
-  const rc = resp.roleCredentials!;
-  return {
-    accessKeyId: rc.accessKeyId!,
-    secretAccessKey: rc.secretAccessKey!,
-    sessionToken: rc.sessionToken,
-    expiration: rc.expiration ? new Date(rc.expiration) : undefined,
-    region: targetRegion,
-    source: "sso",
-    identity: `${accountId} / ${roleName}`,
-  };
-}
-
-// ---------------------------------------------------------------------------
-// Hook
-// ---------------------------------------------------------------------------
-
-export type AuthStep =
-  | "idle" // no creds, not trying
-  | "sso-url" // waiting for SSO start URL entry
-  | "sso-pending" // device code shown, polling for approval
-  | "sso-select" // token received, user picks account/role
-  | "manual" // user entering keys manually
-  | "ready"; // credentials resolved
 
 export interface UseAwsCredentialsReturn {
   credentials: AwsCredentials | null;
   authStep: AuthStep;
+  instances: ConnectInstance[];
+  instancesLoading: boolean;
   startSso: (startUrl: string, region: string) => Promise<void>;
-  setManual: (creds: Omit<AwsCredentials, "source">) => void;
+  setManual: (base: Omit<AwsCredentials, "source">) => void;
   logout: () => void;
   setAuthStep: (step: AuthStep) => void;
-  ssoDeviceState: SsoDeviceCodeState | null;
+  ssoDeviceState: { verificationUriComplete: string; userCode: string } | null;
   ssoToken: string | null;
   ssoAccounts: SsoAccount[];
-  selectSsoRole: (
-    accountId: string,
-    roleName: string,
-    region: string,
-  ) => Promise<void>;
+  selectSsoRole: (accountId: string, roleName: string, region: string) => Promise<void>;
   cancelSso: () => void;
+  fetchInstances: () => Promise<void>;
 }
 
 export function useAwsCredentials(): UseAwsCredentialsReturn {
-  const [credentials, setCredentials] = useState<AwsCredentials | null>(() =>
-    loadFromStorage(),
-  );
+  const [credentials, setCredentials] = useState<AwsCredentials | null>(loadFromStorage);
   const [authStep, setAuthStep] = useState<AuthStep>(() =>
-    loadFromStorage() ? "ready" : "idle",
+    loadFromStorage() ? "ready" : "idle"
   );
-  const [ssoDeviceState, setSsoDeviceState] =
-    useState<SsoDeviceCodeState | null>(null);
+  const [instances, setInstances] = useState<ConnectInstance[]>([]);
+  const [instancesLoading, setInstancesLoading] = useState(false);
+
+  const [ssoSessionId, setSsoSessionId] = useState<string | null>(null);
+  const [ssoRegion, setSsoRegion] = useState("");
   const [ssoToken, setSsoToken] = useState<string | null>(null);
   const [ssoAccounts, setSsoAccounts] = useState<SsoAccount[]>([]);
+  const [ssoDeviceState, setSsoDeviceState] = useState<{
+    verificationUriComplete: string;
+    userCode: string;
+  } | null>(null);
   const [abortCtrl, setAbortCtrl] = useState<AbortController | null>(null);
+
+  // ── Fetch Connect instances ──────────────────────────────────────────────
+
+  const fetchInstances = useCallback(async (creds?: AwsCredentials) => {
+    const c = creds ?? credentials;
+    if (!c) return;
+    setInstancesLoading(true);
+    try {
+      const client = buildConnectClient(c);
+      const all: InstanceSummary[] = [];
+      let nextToken: string | undefined;
+      do {
+        const resp = await client.send(
+          new ListInstancesCommand({ MaxResults: 10, ...(nextToken ? { NextToken: nextToken } : {}) })
+        );
+        all.push(...(resp.InstanceSummaryList ?? []));
+        nextToken = resp.NextToken;
+      } while (nextToken);
+
+      setInstances(
+        all
+          .filter(i => i.InstanceStatus === "ACTIVE")
+          .map(i => ({
+            id: i.Id ?? "",
+            arn: i.Arn ?? "",
+            alias: i.InstanceAlias ?? i.Id ?? "Unknown",
+            status: i.InstanceStatus ?? "",
+          }))
+      );
+    } catch (e) {
+      console.warn("[useAwsCredentials] ListInstances failed:", e);
+      setInstances([]);
+    } finally {
+      setInstancesLoading(false);
+    }
+  }, [credentials]);
+
+  // ── Apply & persist credentials ──────────────────────────────────────────
 
   function applyCredentials(creds: AwsCredentials) {
     saveToStorage(creds);
     setCredentials(creds);
     setAuthStep("ready");
-    setSsoDeviceState(null);
     setSsoToken(null);
     setSsoAccounts([]);
+    setSsoDeviceState(null);
     setAbortCtrl(null);
+    // Fetch instances automatically after auth
+    fetchInstances(creds);
   }
 
-  const startSso = useCallback(async (startUrl: string, ssoRegion: string) => {
-    setAuthStep("sso-pending");
-    const deviceState = await startSsoDeviceFlow(startUrl, ssoRegion);
-    setSsoDeviceState(deviceState);
+  // ── SSO flow ─────────────────────────────────────────────────────────────
 
-    window.open(
-      deviceState.verificationUriComplete,
-      "_blank",
-      "noopener,noreferrer",
-    );
+  const startSso = useCallback(async (startUrl: string, region: string) => {
+    setAuthStep("sso-pending");
+    setSsoRegion(region);
+
+    const res = await fetch("/api/aws/sso/start", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ startUrl, region }),
+    });
+    const data = await res.json();
+    setSsoSessionId(data.sessionId);
+    setSsoDeviceState({
+      verificationUriComplete: data.verificationUriComplete,
+      userCode: data.userCode,
+    });
+    window.open(data.verificationUriComplete, "_blank");
 
     const ctrl = new AbortController();
     setAbortCtrl(ctrl);
 
-    pollForSsoToken(deviceState, ctrl.signal)
-      .then(async (tokenResp) => {
-        const token = tokenResp.accessToken!;
-        setSsoToken(token);
-        const accounts = await listSsoAccountsAndRoles(token, ssoRegion);
-        setSsoAccounts(accounts);
+    (async () => {
+      try {
+        while (true) {
+          if (ctrl.signal.aborted) throw new Error("cancelled");
+          await new Promise(r => setTimeout(r, 5000));
 
-        // Auto-select if there is only one option
-        if (accounts.length === 1 && accounts[0].roles.length === 1) {
-          const a = accounts[0];
-          const creds = await getSsoRoleCredentials(
-            token,
-            a.accountId,
-            a.roles[0],
-            ssoRegion,
-            ssoRegion,
-          );
-          applyCredentials(creds);
-        } else {
-          setAuthStep("sso-select");
+          const pollRes = await fetch(`/api/aws/sso/poll/${data.sessionId}`);
+          const pollData = await pollRes.json();
+
+          if (pollData.status === "done") {
+            const token = pollData.tokens.accessToken ?? pollData.tokens.access_token;
+            setSsoToken(token);
+
+            const acctRes = await fetch("/api/aws/sso/accounts", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ accessToken: token, region }),
+            });
+            const accounts = await acctRes.json();
+            setSsoAccounts(accounts);
+
+            if (accounts.length === 1 && accounts[0].roles.length === 1) {
+              const a = accounts[0];
+              const credRes = await fetch("/api/aws/sso/credentials", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ accessToken: token, region, accountId: a.accountId, roleName: a.roles[0] }),
+              });
+              const rc = await credRes.json();
+              applyCredentials({
+                accessKeyId: rc.accessKeyId,
+                secretAccessKey: rc.secretAccessKey,
+                sessionToken: rc.sessionToken,
+                expiration: rc.expiration ? new Date(rc.expiration) : undefined,
+                region,
+                source: "sso",
+                identity: `${a.accountId} / ${a.roles[0]}`,
+              });
+            } else {
+              setAuthStep("sso-select");
+            }
+            return;
+          }
         }
-      })
-      .catch((err: Error) => {
-        if (err.message !== "Login cancelled")
-          console.error("SSO polling failed:", err);
+      } catch {
         setAuthStep("sso-url");
-      });
+        setSsoDeviceState(null);
+      }
+    })();
   }, []);
 
-  const selectSsoRole = useCallback(
-    async (accountId: string, roleName: string, region: string) => {
-      if (!ssoToken || !ssoDeviceState) return;
-      const creds = await getSsoRoleCredentials(
-        ssoToken,
-        accountId,
-        roleName,
-        ssoDeviceState.ssoRegion,
-        region,
-      );
-      applyCredentials(creds);
-    },
-    [ssoToken, ssoDeviceState],
-  );
+  const selectSsoRole = useCallback(async (accountId: string, roleName: string, region: string) => {
+    if (!ssoToken) return;
+    const res = await fetch("/api/aws/sso/credentials", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ accessToken: ssoToken, region, accountId, roleName }),
+    });
+    const rc = await res.json();
+    applyCredentials({
+      accessKeyId: rc.accessKeyId,
+      secretAccessKey: rc.secretAccessKey,
+      sessionToken: rc.sessionToken,
+      expiration: rc.expiration ? new Date(rc.expiration) : undefined,
+      region,
+      source: "sso",
+      identity: `${accountId} / ${roleName}`,
+    });
+  }, [ssoToken]);
 
   const cancelSso = useCallback(() => {
     abortCtrl?.abort();
     setAbortCtrl(null);
-    setSsoDeviceState(null);
+    setSsoSessionId(null);
     setSsoToken(null);
     setSsoAccounts([]);
+    setSsoDeviceState(null);
   }, [abortCtrl]);
+
+  // ── Manual credentials ───────────────────────────────────────────────────
 
   const setManual = useCallback((base: Omit<AwsCredentials, "source">) => {
     applyCredentials({ ...base, source: "manual" });
   }, []);
 
+  // ── Logout ───────────────────────────────────────────────────────────────
+
   const logout = useCallback(() => {
     clearStorage();
     setCredentials(null);
     setAuthStep("idle");
+    setInstances([]);
     cancelSso();
   }, [cancelSso]);
 
   return {
     credentials,
     authStep,
+    instances,
+    instancesLoading,
     startSso,
     setManual,
     logout,
@@ -418,5 +329,6 @@ export function useAwsCredentials(): UseAwsCredentialsReturn {
     ssoAccounts,
     selectSsoRole,
     cancelSso,
+    fetchInstances,
   };
 }

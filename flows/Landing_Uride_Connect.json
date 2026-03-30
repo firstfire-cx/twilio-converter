@@ -1,0 +1,1385 @@
+{
+ "scriptContent": {
+  "header": {
+   "scriptName": "Landing_Uride_Connect",
+   "busNo": 4601541,
+   "mediaType": 4,
+   "mediaTypeName": "call",
+   "purposeType": "General",
+   "variableRedaction": "",
+   "nextActionId": 31,
+   "status": "Active",
+   "lastSavedIn": "cxs",
+   "wasLayoutAlgorithmRun": true
+  },
+  "actions": {
+   "1": {
+    "actionId": 1,
+    "libraryId": "B2F794C5-0232-40E7-9830-76D573BF57D7",
+    "name": "BEGIN",
+    "version": 1,
+    "label": "Uride Landing",
+    "dependencyOrder": "0",
+    "implType": "0",
+    "x": 296,
+    "y": 680,
+    "xws": 296,
+    "yws": 680
+   },
+   "2": {
+    "actionId": 2,
+    "libraryId": "F8B958D0-8CD3-40DF-97D3-5862930B0807",
+    "name": "RUNSUB",
+    "version": 1,
+    "label": "Check Ports",
+    "dependencyOrder": "1",
+    "implType": "0",
+    "x": 2208,
+    "y": 664,
+    "xws": 2208,
+    "yws": 664
+   },
+   "3": {
+    "actionId": 3,
+    "libraryId": "7D5D3B99-DF55-4CCC-A78A-981B3F99F5BE",
+    "name": "VOICEPARAMS",
+    "version": 1,
+    "label": "Voiceparams - 4: Heather, Female (US)",
+    "dependencyOrder": "2",
+    "implType": "0",
+    "x": 1792,
+    "y": 688,
+    "xws": 1792,
+    "yws": 688
+   },
+   "4": {
+    "actionId": 4,
+    "libraryId": "DAEE9C00-12CE-4222-A42E-307C37D53B7F",
+    "name": "MENU",
+    "version": 1,
+    "label": "Uride Menu",
+    "dependencyOrder": "3",
+    "implType": "0",
+    "x": 3328,
+    "y": 664,
+    "xws": 3328,
+    "yws": 664
+   },
+   "5": {
+    "actionId": 5,
+    "libraryId": "93232E99-D607-4E7D-9300-17986D70DA3C",
+    "name": "RUNSCRIPT",
+    "version": 1,
+    "label": "KPMA Queue",
+    "dependencyOrder": "4",
+    "implType": "0",
+    "x": 5056,
+    "y": 664,
+    "xws": 5056,
+    "yws": 664
+   },
+   "7": {
+    "actionId": 7,
+    "libraryId": "9015C095-98D9-441F-BF92-E90F5C5ED8C8",
+    "name": "ASSIGN",
+    "version": 1,
+    "label": "Lang = EN",
+    "dependencyOrder": "5",
+    "implType": "0",
+    "x": 1440,
+    "y": 688,
+    "xws": 1440,
+    "yws": 688
+   },
+   "8": {
+    "actionId": 8,
+    "libraryId": "B64A6796-4F66-4B1B-A9B5-3AF926AB4B7C",
+    "name": "HANGUP",
+    "version": 1,
+    "label": "Hangup",
+    "dependencyOrder": "6",
+    "implType": "0",
+    "x": 4640,
+    "y": 400,
+    "xws": 4640,
+    "yws": 400
+   },
+   "9": {
+    "actionId": 9,
+    "libraryId": "B333DA63-33C8-4297-A58A-E9546CF7F0F2",
+    "name": "SNIPPET",
+    "version": 1,
+    "label": "Skills",
+    "dependencyOrder": "7",
+    "implType": "0",
+    "x": 4224,
+    "y": 664,
+    "xws": 4224,
+    "yws": 664
+   },
+   "10": {
+    "actionId": 10,
+    "libraryId": "A10F9F27-A5DD-48BA-AE37-E206FC6E101B",
+    "name": "LOOP",
+    "version": 1,
+    "label": "Loop x3",
+    "dependencyOrder": "8",
+    "implType": "0",
+    "x": 3744,
+    "y": 400,
+    "xws": 3744,
+    "yws": 400
+   },
+   "11": {
+    "actionId": 11,
+    "libraryId": "B1B9A2DD-65B6-4626-9CF5-9CFA69CF59E2",
+    "name": "PLAY",
+    "version": 1,
+    "label": "Invalid",
+    "dependencyOrder": "9",
+    "implType": "0",
+    "x": 3328,
+    "y": 376,
+    "xws": 3328,
+    "yws": 376
+   },
+   "12": {
+    "actionId": 12,
+    "libraryId": "B1B9A2DD-65B6-4626-9CF5-9CFA69CF59E2",
+    "name": "PLAY",
+    "version": 1,
+    "label": "Invalid Final",
+    "dependencyOrder": "10",
+    "implType": "0",
+    "x": 4224,
+    "y": 376,
+    "xws": 4224,
+    "yws": 376
+   },
+   "13": {
+    "actionId": 13,
+    "libraryId": "D639CF70-9DE8-47FE-AA7E-6B39E4556D9D",
+    "name": "HOURS",
+    "version": 1,
+    "label": "Uride Hours",
+    "dependencyOrder": "22",
+    "implType": "0",
+    "x": 2848,
+    "y": 688,
+    "xws": 2848,
+    "yws": 688
+   },
+   "15": {
+    "actionId": 15,
+    "libraryId": "B1B9A2DD-65B6-4626-9CF5-9CFA69CF59E2",
+    "name": "PLAY",
+    "version": 1,
+    "label": "QA and Mask up",
+    "dependencyOrder": "11",
+    "implType": "0",
+    "x": 4640,
+    "y": 664,
+    "xws": 4640,
+    "yws": 664
+   },
+   "17": {
+    "actionId": 17,
+    "libraryId": "F8B958D0-8CD3-40DF-97D3-5862930B0807",
+    "name": "RUNSUB",
+    "version": 1,
+    "label": "Check Hours",
+    "dependencyOrder": "12",
+    "implType": "0",
+    "x": 2848,
+    "y": 888,
+    "xws": 2848,
+    "yws": 888
+   },
+   "18": {
+    "actionId": 18,
+    "libraryId": "B64A6796-4F66-4B1B-A9B5-3AF926AB4B7C",
+    "name": "HANGUP",
+    "version": 1,
+    "label": "Hangup",
+    "dependencyOrder": "13",
+    "implType": "0",
+    "x": 2848,
+    "y": 1328,
+    "xws": 2848,
+    "yws": 1328
+   },
+   "19": {
+    "actionId": 19,
+    "libraryId": "D28D2B39-D4DB-499A-9B8B-F3879E4C5B25",
+    "name": "ANNOTATION",
+    "version": 1,
+    "label": "Annotation",
+    "dependencyOrder": "14",
+    "implType": "0",
+    "x": 2464,
+    "y": 1008,
+    "xws": 2464,
+    "yws": 1008
+   },
+   "21": {
+    "actionId": 21,
+    "libraryId": "B64A6796-4F66-4B1B-A9B5-3AF926AB4B7C",
+    "name": "HANGUP",
+    "version": 1,
+    "label": "Hangup",
+    "dependencyOrder": "15",
+    "implType": "0",
+    "x": 1024,
+    "y": 1104,
+    "xws": 1024,
+    "yws": 1104
+   },
+   "22": {
+    "actionId": 22,
+    "libraryId": "B1B9A2DD-65B6-4626-9CF5-9CFA69CF59E2",
+    "name": "PLAY",
+    "version": 1,
+    "label": "Play Ineligible Prompt",
+    "dependencyOrder": "16",
+    "implType": "0",
+    "x": 1024,
+    "y": 888,
+    "xws": 1024,
+    "yws": 888
+   },
+   "23": {
+    "actionId": 23,
+    "libraryId": "6695BA9C-E1D6-4F3C-A15A-94F1400E3169",
+    "name": "IF",
+    "version": 1,
+    "label": "If BlockCall = true",
+    "dependencyOrder": "17",
+    "implType": "0",
+    "x": 1024,
+    "y": 688,
+    "xws": 1024,
+    "yws": 688
+   },
+   "24": {
+    "actionId": 24,
+    "libraryId": "F8B958D0-8CD3-40DF-97D3-5862930B0807",
+    "name": "RUNSUB",
+    "version": 1,
+    "label": "CallBlocker",
+    "dependencyOrder": "18",
+    "implType": "0",
+    "x": 640,
+    "y": 664,
+    "xws": 640,
+    "yws": 664
+   },
+   "26": {
+    "actionId": 26,
+    "libraryId": "B1B9A2DD-65B6-4626-9CF5-9CFA69CF59E2",
+    "name": "PLAY",
+    "version": 1,
+    "label": "After Hours Line",
+    "dependencyOrder": "23",
+    "implType": "0",
+    "x": 3744,
+    "y": 920,
+    "xws": 3744,
+    "yws": 920
+   },
+   "27": {
+    "actionId": 27,
+    "libraryId": "B333DA63-33C8-4297-A58A-E9546CF7F0F2",
+    "name": "SNIPPET",
+    "version": 1,
+    "label": "Skills",
+    "dependencyOrder": "19",
+    "implType": "0",
+    "x": 4224,
+    "y": 920,
+    "xws": 4224,
+    "yws": 920
+   },
+   "29": {
+    "actionId": 29,
+    "libraryId": "B1B9A2DD-65B6-4626-9CF5-9CFA69CF59E2",
+    "name": "PLAY",
+    "version": 1,
+    "label": "Closed",
+    "dependencyOrder": "20",
+    "implType": "0",
+    "x": 3328,
+    "y": 1304,
+    "xws": 3328,
+    "yws": 1304
+   },
+   "30": {
+    "actionId": 30,
+    "libraryId": "D639CF70-9DE8-47FE-AA7E-6B39E4556D9D",
+    "name": "HOURS",
+    "version": 1,
+    "label": "Uride Sundays",
+    "dependencyOrder": "21",
+    "implType": "0",
+    "x": 3328,
+    "y": 944,
+    "xws": 3328,
+    "yws": 944
+   }
+  },
+  "properties": {
+   "1": {
+    "0": {
+     "name": "RootFolder",
+     "value": ""
+    },
+    "1": {
+     "name": "Application",
+     "value": ""
+    },
+    "2": {
+     "name": "ParamCount",
+     "value": ""
+    },
+    "3": {
+     "name": "Parameters",
+     "value": []
+    }
+   },
+   "2": {
+    "0": {
+     "name": "ScriptName",
+     "value": "CheckPorts"
+    },
+    "1": {
+     "name": "ParamCount",
+     "value": ""
+    },
+    "2": {
+     "name": "ReturnVariable",
+     "value": "RTN"
+    },
+    "3": {
+     "name": "Parameters",
+     "value": []
+    }
+   },
+   "3": {
+    "0": {
+     "name": "TTSVolume",
+     "value": "70"
+    },
+    "1": {
+     "name": "TTSRate",
+     "value": "0"
+    },
+    "2": {
+     "name": "TTSVoice",
+     "value": "4: Heather, Female (US)"
+    },
+    "3": {
+     "name": "unused1073743309",
+     "value": ""
+    },
+    "4": {
+     "name": "ASRTuningEnabled",
+     "value": "NoChange"
+    },
+    "5": {
+     "name": "ASRUniversalsEnabled",
+     "value": "NoChange"
+    },
+    "6": {
+     "name": "ASRUniversalContentType",
+     "value": "PhraseList"
+    },
+    "7": {
+     "name": "ASRUniversalPhraseList",
+     "value": ""
+    },
+    "8": {
+     "name": "ASRUniversalGrammarFile",
+     "value": ""
+    },
+    "9": {
+     "name": "ASRUniversalVarName",
+     "value": "_ASRUniversal"
+    },
+    "10": {
+     "name": "ASRLanguageLocale",
+     "value": "NoChange"
+    }
+   },
+   "4": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\2023\\Uride-Menu.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "Thank you for calling United Healthcare U-Ride Transportation provided by Saferide Health. If this is a medical emergency, please hang up and dial 911.\n\n\nPlease listen carefully as our menu options have changed.\n\nIf you are calling on behalf of a Group Retiree member push 1\n\nIf you are calling on behalf of a Florida Medicaid Wrap member push 2.\n\nFor all other WMR and Broken rides push 3.\n\nFor Platform issues push 4."
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "MaxDigits",
+     "value": "1"
+    },
+    "4": {
+     "name": "Terminator",
+     "value": "#-"
+    },
+    "5": {
+     "name": "Timeout",
+     "value": "5"
+    },
+    "6": {
+     "name": "InterDigitTimeout",
+     "value": "5"
+    },
+    "7": {
+     "name": "Variable",
+     "value": "AHPMenu_RES"
+    }
+   },
+   "5": {
+    "0": {
+     "name": "ScriptName",
+     "value": "Queue_KPMA"
+    }
+   },
+   "7": {
+    "0": {
+     "name": "Variable",
+     "value": "Lang"
+    },
+    "1": {
+     "name": "Value",
+     "value": "EN"
+    },
+    "2": {
+     "name": "Type",
+     "value": "String"
+    },
+    "3": {
+     "name": "Publish",
+     "value": ""
+    },
+    "4": {
+     "name": "ScreenPop",
+     "value": "False"
+    },
+    "5": {
+     "name": "SaveToDB",
+     "value": "False"
+    },
+    "6": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   },
+   "8": {},
+   "9": {
+    "0": {
+     "name": "Data",
+     "value": "SWITCH AHPMenu_RES\r\n{\r\n\tCASE 1\r\n\t{ \r\n\t\t\tASSIGN QueueSkill = 23113014  //UHC_Group_Retiree\r\n\t\t\tASSIGN SkillWhisper = \"UHC_Group_Retiree\"\r\n\t} \r\n\tCASE 2\r\n\t{ \r\n\t\t\tASSIGN QueueSkill = 20923304  //Uride_FL_DSNP_EN\r\n\t\t\tASSIGN SkillWhisper = \"Uride-FL-DSNP-English\"\r\n\t}\r\n\tCASE 3\r\n\t{ \r\n\t\t\tASSIGN QueueSkill =  18556353  //Uride_Reservations_EN\r\n\t\t\tASSIGN SkillWhisper = \"Uride-Reservations-English\"\r\n\t} \r\n\tCASE 4\r\n\t{ \r\n\t\t\tASSIGN QueueSkill =  18556355  //Uride_WMR_EN\r\n\t\t\tASSIGN SkillWhisper = \"Uride-W-M-R-English\"\r\n\t} \r\n\r\n}"
+    },
+    "1": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   },
+   "10": {
+    "0": {
+     "name": "Repeat",
+     "value": "3"
+    },
+    "1": {
+     "name": "CounterName",
+     "value": "MenuLoop"
+    }
+   },
+   "11": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\Driscoll_Invalid_{Lang}.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "I'm sorry, that was an invalid option. Please try again."
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "DetectDTMF",
+     "value": "True"
+    },
+    "4": {
+     "name": "SuppressSilence",
+     "value": ""
+    },
+    "5": {
+     "name": "TTSVolume",
+     "value": ""
+    },
+    "6": {
+     "name": "TTSRate",
+     "value": ""
+    },
+    "7": {
+     "name": "TTSVoice",
+     "value": ""
+    }
+   },
+   "12": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\Driscoll_InvalidFinal_{Lang}.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "I'm sorry, but that was still an invalid option. Please try your call again later. Goodbye."
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "DetectDTMF",
+     "value": "True"
+    },
+    "4": {
+     "name": "SuppressSilence",
+     "value": ""
+    },
+    "5": {
+     "name": "TTSVolume",
+     "value": ""
+    },
+    "6": {
+     "name": "TTSRate",
+     "value": ""
+    },
+    "7": {
+     "name": "TTSVoice",
+     "value": ""
+    }
+   },
+   "13": {
+    "0": {
+     "name": "Profile",
+     "value": "2044"
+    }
+   },
+   "15": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\CallsRecorded_{Lang}.wav\" \"Prompts\\MaskUp_{Lang}.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "EN - This call may be recorded for quality and training purposes.  To protect you and your drivers, please wear a mask at all times in transport.\n\nSP - Esta llamada se esta garbando por motivois de calidad y propositos de entrenamiento.  Para protejerlo a usted y a su conductor use se mascara en todo momento durante su transporte."
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "DetectDTMF",
+     "value": "True"
+    },
+    "4": {
+     "name": "SuppressSilence",
+     "value": ""
+    },
+    "5": {
+     "name": "TTSVolume",
+     "value": ""
+    },
+    "6": {
+     "name": "TTSRate",
+     "value": ""
+    },
+    "7": {
+     "name": "TTSVoice",
+     "value": ""
+    }
+   },
+   "17": {
+    "0": {
+     "name": "ScriptName",
+     "value": "CheckHours"
+    },
+    "1": {
+     "name": "ParamCount",
+     "value": ""
+    },
+    "2": {
+     "name": "ReturnVariable",
+     "value": "isOpen"
+    },
+    "3": {
+     "name": "Parameters",
+     "value": [
+      "1942"
+     ]
+    }
+   },
+   "18": {},
+   "19": {
+    "0": {
+     "name": "Comments",
+     "value": "Handles Overrides"
+    },
+    "1": {
+     "name": "Width",
+     "value": "84"
+    },
+    "2": {
+     "name": "Height",
+     "value": "70"
+    }
+   },
+   "21": {},
+   "22": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\Block_Number_EN.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "Thank you for calling SafeRide Health. The account associated with this phone number is not eligible for a transportation benefit at this time. Goodbye."
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "DetectDTMF",
+     "value": "True"
+    },
+    "4": {
+     "name": "SuppressSilence",
+     "value": ""
+    },
+    "5": {
+     "name": "TTSVolume",
+     "value": ""
+    },
+    "6": {
+     "name": "TTSRate",
+     "value": ""
+    },
+    "7": {
+     "name": "TTSVoice",
+     "value": ""
+    }
+   },
+   "23": {
+    "0": {
+     "name": "Expression",
+     "value": "BlockCall = 1"
+    }
+   },
+   "24": {
+    "0": {
+     "name": "ScriptName",
+     "value": "CallBlocker"
+    },
+    "1": {
+     "name": "ParamCount",
+     "value": ""
+    },
+    "2": {
+     "name": "ReturnVariable",
+     "value": "BlockCall"
+    },
+    "3": {
+     "name": "Parameters",
+     "value": [
+      "{ANI}"
+     ]
+    }
+   },
+   "26": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\2023\\AfterHours_SCAN_{LANG}.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "EN - You have reached the afterhours line. Please hold for the next representative to assist you.\n\nSP - Esta contactando a nuestra linea fuera de horario regular. Por Favor espere al siguiente representante para que le pueda asistir "
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "DetectDTMF",
+     "value": "True"
+    },
+    "4": {
+     "name": "SuppressSilence",
+     "value": ""
+    },
+    "5": {
+     "name": "TTSVolume",
+     "value": ""
+    },
+    "6": {
+     "name": "TTSRate",
+     "value": ""
+    },
+    "7": {
+     "name": "TTSVoice",
+     "value": ""
+    }
+   },
+   "27": {
+    "0": {
+     "name": "Data",
+     "value": "ASSIGN QueueSkill = 18556353 //UHC After Hours EN\r\nASSIGN SkillWhisper = \"UHC-After-Hours-English\""
+    },
+    "1": {
+     "name": "MaxStringSize",
+     "value": "Limit2K"
+    }
+   },
+   "29": {
+    "0": {
+     "name": "Sequence",
+     "value": "\"Prompts\\2023\\Closed_Uride_EN.wav\""
+    },
+    "1": {
+     "name": "Phrase",
+     "value": "EN - Our offices are currently closed, please call back during regular business hours.\n\nSP - Nuestras oficinas se encuentran cerradas en este momento. Por favor, vuelva a llamar durante nuestro horario regular de atención."
+    },
+    "2": {
+     "name": "ClearDigits",
+     "value": "True"
+    },
+    "3": {
+     "name": "DetectDTMF",
+     "value": "True"
+    },
+    "4": {
+     "name": "SuppressSilence",
+     "value": ""
+    },
+    "5": {
+     "name": "TTSVolume",
+     "value": ""
+    },
+    "6": {
+     "name": "TTSRate",
+     "value": ""
+    },
+    "7": {
+     "name": "TTSVoice",
+     "value": ""
+    }
+   },
+   "30": {
+    "0": {
+     "name": "Profile",
+     "value": "2426"
+    }
+   }
+  },
+  "branches": {
+   "1": [
+    {
+     "to": 24,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "r,l",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "2": [
+    {
+     "to": 13,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "r,l",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "3": [
+    {
+     "to": 2,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "r,l",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "4": [
+    {
+     "to": 10,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "r,l",
+     "lineType": "straight",
+     "elbows": []
+    },
+    {
+     "to": 9,
+     "label": "1",
+     "type": "custom",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "r,l",
+     "lineType": "straight",
+     "elbows": []
+    },
+    {
+     "to": 9,
+     "label": "2",
+     "type": "custom",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "r,l",
+     "lineType": "straight",
+     "elbows": []
+    },
+    {
+     "to": 9,
+     "label": "3",
+     "type": "custom",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "r,l",
+     "lineType": "straight",
+     "elbows": []
+    },
+    {
+     "to": 9,
+     "label": "4",
+     "type": "custom",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "7": [
+    {
+     "to": 3,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "t,t",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "9": [
+    {
+     "to": 15,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "r,l",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "10": [
+    {
+     "to": 12,
+     "label": "Finished",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "r,l",
+     "lineType": "straight",
+     "elbows": []
+    },
+    {
+     "to": 11,
+     "label": "Repeat",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 1,
+     "ports": "l,r",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "11": [
+    {
+     "to": 4,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "r,r",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "12": [
+    {
+     "to": 8,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "r,l",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "13": [
+    {
+     "to": 17,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "b,t",
+     "lineType": "straight",
+     "elbows": []
+    },
+    {
+     "to": 4,
+     "label": "Open",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "r,l",
+     "lineType": "straight",
+     "elbows": []
+    },
+    {
+     "to": 30,
+     "label": "Closed",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 1,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "15": [
+    {
+     "to": 5,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "r,l",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "17": [
+    {
+     "to": 18,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "r,r",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "19": [
+    {
+     "to": 17,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "r,l",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "22": [
+    {
+     "to": 21,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "b,b",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "23": [
+    {
+     "to": 22,
+     "label": "True",
+     "type": "branch",
+     "labelDistance": 0.5,
+     "index": 0,
+     "ports": "b,t",
+     "lineType": "straight",
+     "elbows": []
+    },
+    {
+     "to": 7,
+     "label": "False",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 1,
+     "ports": "r,l",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "24": [
+    {
+     "to": 23,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "r,l",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "26": [
+    {
+     "to": 27,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "r,l",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "27": [
+    {
+     "to": 15,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "r,l",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "29": [
+    {
+     "to": 18,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "l,r",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ],
+   "30": [
+    {
+     "to": 26,
+     "label": "",
+     "type": "default",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    },
+    {
+     "to": 26,
+     "label": "Open",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 0,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    },
+    {
+     "to": 29,
+     "label": "Closed",
+     "type": "branch",
+     "labelDistance": null,
+     "index": 1,
+     "ports": "c,c",
+     "lineType": "straight",
+     "elbows": []
+    }
+   ]
+  },
+  "isDataLoaded": true,
+  "isDataLoading": false,
+  "isDataSaving": false,
+  "isNewScript": false,
+  "isViewOnlyMode": false,
+  "isLockOverride": false,
+  "isVersionHistoryMode": false,
+  "dataLoadingProgress": {
+   "key": "reset"
+  },
+  "error": null,
+  "issues": {
+   "totalErrors": 0,
+   "totalWarnings": 0,
+   "actions": {},
+   "script": {}
+  },
+  "startTraceOptions": {
+   "skill": "",
+   "skillDescription": "",
+   "simulateInboundCall": false,
+   "phone": "",
+   "dnis": "",
+   "ani": "",
+   "simulateDateTime": false,
+   "dateTime": null,
+   "timezone": "(Business Unit Default)",
+   "parameters": []
+  },
+  "versionHistory": null,
+  "scriptVersions": {},
+  "lastVersionEdited": null,
+  "traceWindowCount": 0,
+  "variables": {
+   "ahpmenu_res": [
+    {
+     "name": "Menu",
+     "label": "Uride Menu",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#num-list"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 4
+    },
+    {
+     "name": "Snippet",
+     "label": "Skills",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 9
+    }
+   ],
+   "lang": [
+    {
+     "name": "Assign",
+     "label": "Lang = EN",
+     "shape": {
+      "type": "rectangle",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#brackets-x"
+      },
+      "width": 128,
+      "height": 32
+     },
+     "actionId": 7
+    },
+    {
+     "name": "Play",
+     "label": "Invalid",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#play"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 11
+    },
+    {
+     "name": "Play",
+     "label": "Invalid Final",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#play"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 12
+    },
+    {
+     "name": "Play",
+     "label": "QA and Mask up",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#play"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 15
+    },
+    {
+     "name": "Play",
+     "label": "After Hours Line",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#42A674",
+       "url": "#play"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "subTitle": {
+       "text": "{{Sequence}}",
+       "link": "editor"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 26
+    }
+   ],
+   "queueskill": [
+    {
+     "name": "Snippet",
+     "label": "Skills",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 9
+    },
+    {
+     "name": "Snippet",
+     "label": "Skills",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 27
+    }
+   ],
+   "skillwhisper": [
+    {
+     "name": "Snippet",
+     "label": "Skills",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 9
+    },
+    {
+     "name": "Snippet",
+     "label": "Skills",
+     "shape": {
+      "type": "rectangle-editor",
+      "icon": {
+       "color": "#CCCC00",
+       "url": "#code"
+      },
+      "editorIcon": {
+       "url": "#browser"
+      },
+      "width": 128,
+      "height": 80
+     },
+     "actionId": 27
+    }
+   ]
+  },
+  "compareScript": {},
+  "customConnectorIdentifier": null,
+  "schemaVersion": "1.0.0"
+ }
+}

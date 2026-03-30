@@ -1,0 +1,556 @@
+[
+  {
+    "flow_id": "landing_aetnahealth_sl",
+    "step_id": "start",
+    "action_type": "START",
+    "label": "Flow Start",
+    "content": {
+      "branches": {}
+    },
+    "default_next": "s42"
+  },
+  {
+    "flow_id": "landing_aetnahealth_sl",
+    "step_id": "sn22_c0_g0_if",
+    "action_type": "CHECK",
+    "label": "IF Lang == 'spa'",
+    "content": {
+      "expression": "Lang == 'spa'",
+      "branches": {
+        "True": "sn22_c0_g0_a0",
+        "False": "sn22_c0_g1_a0"
+      }
+    },
+    "default_next": null
+  },
+  {
+    "flow_id": "landing_aetnahealth_sl",
+    "step_id": "sn22_c0_g0_a0",
+    "action_type": "SET",
+    "label": "QueueSkill = 18556372",
+    "content": {
+      "assignments": {
+        "QueueSkill": "18556372",
+        "SkillWhisper": "Aetna_Reserv SP"
+      },
+      "branches": {}
+    },
+    "default_next": "s50"
+  },
+  {
+    "flow_id": "landing_aetnahealth_sl",
+    "step_id": "sn22_c0_g1_a0",
+    "action_type": "SET",
+    "label": "QueueSkill = 18556371",
+    "content": {
+      "assignments": {
+        "QueueSkill": "18556371",
+        "SkillWhisper": "Aetna_Reserv EN"
+      },
+      "branches": {}
+    },
+    "default_next": "s50"
+  },
+  {
+    "flow_id": "landing_aetnahealth_sl",
+    "step_id": "sn22_c1_g0_if",
+    "action_type": "CHECK",
+    "label": "IF Lang == 'spa'",
+    "content": {
+      "expression": "Lang == 'spa'",
+      "branches": {
+        "True": "sn22_c1_g0_a0",
+        "False": "sn22_c1_g1_a0"
+      }
+    },
+    "default_next": null
+  },
+  {
+    "flow_id": "landing_aetnahealth_sl",
+    "step_id": "sn22_c1_g0_a0",
+    "action_type": "SET",
+    "label": "QueueSkill = 18556374",
+    "content": {
+      "assignments": {
+        "QueueSkill": "18556374",
+        "SkillWhisper": "Aetna_WMR SP"
+      },
+      "branches": {}
+    },
+    "default_next": "s50"
+  },
+  {
+    "flow_id": "landing_aetnahealth_sl",
+    "step_id": "sn22_c1_g1_a0",
+    "action_type": "SET",
+    "label": "QueueSkill = 18556373",
+    "content": {
+      "assignments": {
+        "QueueSkill": "18556373",
+        "SkillWhisper": "Aetna_WMR EN"
+      },
+      "branches": {}
+    },
+    "default_next": "s50"
+  },
+  {
+    "flow_id": "landing_aetnahealth_sl",
+    "step_id": "m10_exit_play",
+    "action_type": "PLAY",
+    "label": "AetnaHealth Menu: max retries",
+    "content": {
+      "text": {
+        "eng": "No option has been selected. Goodbye.",
+        "spa": "No se seleccionó ninguna opción. Adiós."
+      },
+      "branches": {}
+    },
+    "default_next": "s21"
+  },
+  {
+    "flow_id": "landing_aetnahealth_sl",
+    "step_id": "m10_retry_play",
+    "action_type": "PLAY",
+    "label": "AetnaHealth Menu: retry prompt",
+    "content": {
+      "text": {
+        "eng": "I’m sorry, that was an invalid option. Please try again.",
+        "spa": "Lo sentimos, esa opción no es válida. Por favor, intente de nuevo."
+      },
+      "branches": {}
+    },
+    "default_next": "m10_gather"
+  },
+  {
+    "flow_id": "landing_aetnahealth_sl",
+    "step_id": "m10_reset",
+    "action_type": "SET",
+    "label": "AetnaHealth Menu: reset",
+    "content": {
+      "assignments": {
+        "AHPMenu_RES": null,
+        "MenuLoop": 0
+      },
+      "branches": {}
+    },
+    "default_next": "m10_gather"
+  },
+  {
+    "flow_id": "landing_aetnahealth_sl",
+    "step_id": "m10_gather",
+    "action_type": "GATHER",
+    "label": "AetnaHealth Menu: gather",
+    "content": {
+      "text": {
+        "eng": "Please listen carefully to the following options.\n\nIf you are calling to schedule a new trip, or to confirm or make changes to an existing trip, press 1.\n\nIf you are calling for “Where’s My Ride,” press 2.\n\nIf you are a new member, press 3.",
+        "spa": "Por favor, escuche atentamente las siguientes opciones.\n\nSi llama para programar un viaje nuevo, o para confirmar o hacer cambios a un viaje existente, oprima uno.\n\nSi llama por “¿Dónde está mi viaje?”, oprima dos.\n\nSi es un miembro nuevo, oprima tres."
+      },
+      "variable": "AHPMenu_RES",
+      "num_digits": "1",
+      "timeout": "5",
+      "branches": {}
+    },
+    "default_next": "m10_check"
+  },
+  {
+    "flow_id": "landing_aetnahealth_sl",
+    "step_id": "m10_check",
+    "action_type": "CHECK",
+    "label": "AetnaHealth Menu: check digit",
+    "content": {
+      "var": "AHPMenu_RES",
+      "branches": {
+        "1": "sn22_c0_g0_if",
+        "2": "sn22_c1_g0_if",
+        "3": "s48"
+      }
+    },
+    "default_next": "m10_incr"
+  },
+  {
+    "flow_id": "landing_aetnahealth_sl",
+    "step_id": "m10_incr",
+    "action_type": "SET",
+    "label": "AetnaHealth Menu: increment retry",
+    "content": {
+      "assignments": {
+        "MenuLoop": "MenuLoop++",
+        "AHPMenu_RES": ""
+      },
+      "branches": {}
+    },
+    "default_next": "m10_limit"
+  },
+  {
+    "flow_id": "landing_aetnahealth_sl",
+    "step_id": "m10_limit",
+    "action_type": "CHECK",
+    "label": "AetnaHealth Menu: retry limit",
+    "content": {
+      "expression": "MenuLoop < 3",
+      "branches": {
+        "True": "m10_retry_play",
+        "False": "m10_exit_play"
+      }
+    },
+    "default_next": null
+  },
+  {
+    "flow_id": "landing_aetnahealth_sl",
+    "step_id": "m15_reset",
+    "action_type": "SET",
+    "label": "Aetna Greeting: reset",
+    "content": {
+      "assignments": {
+        "MRES": null
+      },
+      "branches": {}
+    },
+    "default_next": "m15_gather"
+  },
+  {
+    "flow_id": "landing_aetnahealth_sl",
+    "step_id": "m15_gather",
+    "action_type": "GATHER",
+    "label": "Aetna Greeting: gather",
+    "content": {
+      "text": {
+        "eng": "Thank you for calling Aetna Health Transportation provided by Saferide Health.\nIf this is a medical emergency, please hang up and dial 911.\nFor English, please press 1.",
+        "spa": "Para espanol, presione 2."
+      },
+      "variable": "MRES",
+      "num_digits": "1",
+      "timeout": "5",
+      "branches": {}
+    },
+    "default_next": "m15_check"
+  },
+  {
+    "flow_id": "landing_aetnahealth_sl",
+    "step_id": "m15_check",
+    "action_type": "CHECK",
+    "label": "Aetna Greeting: check digit",
+    "content": {
+      "var": "MRES",
+      "branches": {
+        "1": "s17",
+        "2": "s16"
+      }
+    },
+    "default_next": "s30"
+  },
+  {
+    "flow_id": "landing_aetnahealth_sl",
+    "step_id": "s16",
+    "action_type": "SET",
+    "label": "Lang = SP",
+    "content": {
+      "assignments": {
+        "Lang": "SP"
+      },
+      "branches": {}
+    },
+    "default_next": "s30"
+  },
+  {
+    "flow_id": "landing_aetnahealth_sl",
+    "step_id": "s17",
+    "action_type": "SET",
+    "label": "Lang = EN",
+    "content": {
+      "assignments": {
+        "Lang": "eng"
+      },
+      "branches": {}
+    },
+    "default_next": "s30"
+  },
+  {
+    "flow_id": "landing_aetnahealth_sl",
+    "step_id": "s21",
+    "action_type": "HANGUP",
+    "label": "Hangup",
+    "content": {
+      "branches": {}
+    },
+    "default_next": null
+  },
+  {
+    "flow_id": "landing_aetnahealth_sl",
+    "step_id": "s30",
+    "action_type": "HOURS",
+    "label": "Aetna Hours",
+    "content": {
+      "hoo_arn": "2028",
+      "branches": {
+        "Open": "s34",
+        "Closed": "l39_init"
+      }
+    },
+    "default_next": null
+  },
+  {
+    "flow_id": "landing_aetnahealth_sl",
+    "step_id": "s31",
+    "action_type": "PLAY",
+    "label": "After Hours Message",
+    "content": {
+      "text": {
+        "eng": "\"Thank you for calling Aetna  Health Transportation Managed by SafeRide, our offices are currently closed. Please call back during regular business hours 6:00a - 6:00ap PST, Monday thru Saturday.\"",
+        "spa": "\"Gracias por llamar a Aetna  Health Transportation Managed by SafeRide, nuestras oficinas están actualmente cerradas. Vuelva a llamar durante el horario comercial habitual de 6:00a - 6:00ap PST de lunes a sábado.\""
+      },
+      "branches": {}
+    },
+    "default_next": "l39_incr"
+  },
+  {
+    "flow_id": "landing_aetnahealth_sl",
+    "step_id": "s33",
+    "action_type": "PLAY",
+    "label": "QA and Mask up",
+    "content": {
+      "text": {
+        "eng": "This call may be recorded for quality and training purposes.  To protect you and your drivers, please wear a mask at all times in transport.",
+        "spa": "Esta llamada se esta garbando por motivois de calidad y propositos de entrenamiento.  Para protejerlo a usted y a su conductor use se mascara en todo momento durante su transporte."
+      },
+      "branches": {}
+    },
+    "default_next": "s59"
+  },
+  {
+    "flow_id": "landing_aetnahealth_sl",
+    "step_id": "s34",
+    "action_type": "PLAY",
+    "label": "Scheduling Hours",
+    "content": {
+      "text": {
+        "eng": "\"We are open to schedule Monday - Saturday from 6:00a - 6:00ap CST, Closed Sunday.\"",
+        "spa": "\"Nuestro horario normal de operaciones es de Lunes a Sabado de 6:00a - 6:00ap CST. Cerrado Domingo.\""
+      },
+      "branches": {}
+    },
+    "default_next": "m10_reset"
+  },
+  {
+    "flow_id": "landing_aetnahealth_sl",
+    "step_id": "l39_init",
+    "action_type": "SET",
+    "label": "Loop x1: init counter",
+    "content": {
+      "assignments": {
+        "AHLoop": 0
+      },
+      "branches": {}
+    },
+    "default_next": "s31"
+  },
+  {
+    "flow_id": "landing_aetnahealth_sl",
+    "step_id": "l39_incr",
+    "action_type": "SET",
+    "label": "Loop x1: AHLoop++",
+    "content": {
+      "assignments": {
+        "AHLoop": "AHLoop++"
+      },
+      "branches": {}
+    },
+    "default_next": "l39_check"
+  },
+  {
+    "flow_id": "landing_aetnahealth_sl",
+    "step_id": "l39_check",
+    "action_type": "CHECK",
+    "label": "Loop x1: AHLoop < 1",
+    "content": {
+      "expression": "AHLoop < 1",
+      "branches": {
+        "False": "s21",
+        "True": "s31"
+      }
+    },
+    "default_next": null
+  },
+  {
+    "flow_id": "landing_aetnahealth_sl",
+    "step_id": "s40",
+    "action_type": "HANGUP",
+    "label": "Hangup",
+    "content": {
+      "branches": {}
+    },
+    "default_next": null
+  },
+  {
+    "flow_id": "landing_aetnahealth_sl",
+    "step_id": "s41",
+    "action_type": "PLAY",
+    "label": "Play Ineligible Prompt",
+    "content": {
+      "text": {
+        "eng": "Thank you for calling SafeRide Health. The account associated with this phone number is not eligible for a transportation benefit at this time. Goodbye.",
+        "spa": ""
+      },
+      "branches": {}
+    },
+    "default_next": "s40"
+  },
+  {
+    "flow_id": "landing_aetnahealth_sl",
+    "step_id": "s42",
+    "action_type": "CHECK",
+    "label": "If BlockCall = true",
+    "content": {
+      "expression": "BlockCall == 1",
+      "branches": {
+        "True": "s41",
+        "False": "m15_reset"
+      }
+    },
+    "default_next": null
+  },
+  {
+    "flow_id": "landing_aetnahealth_sl",
+    "step_id": "s47",
+    "action_type": "SET",
+    "label": "Assign Res",
+    "content": {
+      "assignments": {
+        "QueueSkill": "18556371",
+        "SkillWhisper": "Aetna_Reserv EN"
+      },
+      "branches": {}
+    },
+    "default_next": "s33"
+  },
+  {
+    "flow_id": "landing_aetnahealth_sl",
+    "step_id": "s48",
+    "action_type": "CHECK",
+    "label": "Lang",
+    "content": {
+      "expression": "Lang == 'eng'",
+      "branches": {
+        "True": "s47",
+        "False": "s49"
+      }
+    },
+    "default_next": null
+  },
+  {
+    "flow_id": "landing_aetnahealth_sl",
+    "step_id": "s49",
+    "action_type": "SET",
+    "label": "Assign Res",
+    "content": {
+      "assignments": {
+        "QueueSkill": "18556372",
+        "SkillWhisper": "Aetna_Reserv SP"
+      },
+      "branches": {}
+    },
+    "default_next": "s33"
+  },
+  {
+    "flow_id": "landing_aetnahealth_sl",
+    "step_id": "s50",
+    "action_type": "CHECK",
+    "label": "Lang",
+    "content": {
+      "expression": "Lang == 'eng'",
+      "branches": {
+        "True": "s54",
+        "False": "s59"
+      }
+    },
+    "default_next": null
+  },
+  {
+    "flow_id": "landing_aetnahealth_sl",
+    "step_id": "s54",
+    "action_type": "TRANSFER",
+    "label": "Transfer to Poly",
+    "content": {
+      "transferType": "SIP",
+      "X-UID": "{{uid}}",
+      "X-SkillId": "{{QueueSkill}}",
+      "X-SkillWhisper": "{{SkillWhisper}}",
+      "branches": {}
+    },
+    "default_next": "s56"
+  },
+  {
+    "flow_id": "landing_aetnahealth_sl",
+    "step_id": "s56",
+    "action_type": "PLAY",
+    "label": "Play",
+    "content": {
+      "text": {
+        "eng": "",
+        "spa": ""
+      },
+      "branches": {}
+    },
+    "default_next": "s57"
+  },
+  {
+    "flow_id": "landing_aetnahealth_sl",
+    "step_id": "s57",
+    "action_type": "SET",
+    "label": "Handoff",
+    "content": {
+      "assignments": {
+        "Handoff": "{{DialSipHeader_X-Handoff}}"
+      },
+      "branches": {}
+    },
+    "default_next": "s58"
+  },
+  {
+    "flow_id": "landing_aetnahealth_sl",
+    "step_id": "s58",
+    "action_type": "CHECK",
+    "label": "Assign PolyNote",
+    "content": {
+      "assignments": {
+        "PolyNote": "{SP3}"
+      },
+      "branches": {
+        "Yes": "set_handoffreason"
+      },
+      "var": "Handoff",
+      "expression": "Handoff == \"Yes\""
+    },
+    "default_next": "s21"
+  },
+  {
+    "flow_id": "landing_aetnahealth_sl",
+    "step_id": "s59",
+    "action_type": "TRANSFER",
+    "label": "Reqagent",
+    "content": {
+      "transferType": "CONNECT",
+      "digits": "{{uid}}",
+      "agentSkill": "21036274",
+      "branches": {}
+    },
+    "default_next": "s21"
+  },
+  {
+    "flow_id": "landing_aetnahealth_sl",
+    "step_id": "set_handoffreason",
+    "action_type": "SET",
+    "label": "Set handoff reason",
+    "content": {
+      "branches": {},
+      "text": {
+        "eng": "",
+        "spa": ""
+      },
+      "assignments": {
+        "HandoffReason": "{{DialSipHeader_X-HandoffReason}}"
+      }
+    },
+    "default_next": "s59"
+  }
+]

@@ -22,10 +22,11 @@ export type AtomicActionType =
  */
 export type ActionType = AtomicActionType | "MENU";
 
-export interface SayText {
-  eng: string;
-  spa: string;
-}
+/**
+ * Prompt text keyed by ISO 639-2/B language code (e.g. "eng", "spa", "fra").
+ * At least one key is expected; "eng" is the conventional default.
+ */
+export type SayText = Record<string, string>;
 
 export interface IVRContent {
   // Common
@@ -108,3 +109,4 @@ export interface FlowMeta {
   instance_id?: string; // Connect instance ID
   description?: string; // human label, not used by engine
 }
+

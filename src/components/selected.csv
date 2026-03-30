@@ -1,0 +1,2 @@
+"flow_id","step_id","action_type","content","default_next","label"
+"Landing_SCAN_Connect","sn9_c0_g0_a0","SET","{""branches"":{""M"":{}},""assignments"":{""M"":{""QueueSkill"":{""S"":""18556550""},""SkillWhisper"":{""S"":""SCAN_Reserv SP""}}}}","s36","""Set QueueSkill, SkillWhisper"""

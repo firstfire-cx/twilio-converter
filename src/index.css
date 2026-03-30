@@ -614,3 +614,145 @@ select.input {
 }
 
 .rename-row .input { flex: 1; }
+
+/* ── Tab Strip ─────────────────────────────────────────────────────────────── */
+/* Append this block to index.css */
+
+.tab-strip {
+  display: flex;
+  align-items: stretch;
+  height: 30px;
+  background: var(--bg-0);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+.tab-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.tab-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px 0 12px;
+  min-width: 100px;
+  max-width: 200px;
+  cursor: pointer;
+  border-right: 1px solid var(--border);
+  background: var(--bg-0);
+  color: var(--text-3);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  position: relative;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.1s, color 0.1s;
+  user-select: none;
+}
+
+.tab-item:hover {
+  background: var(--bg-2);
+  color: var(--text-1);
+}
+
+.tab-item-active {
+  background: var(--bg-2) !important;
+  color: var(--text-0) !important;
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+.tab-item-account {
+  min-width: auto;
+  gap: 5px;
+  padding: 0 14px;
+  color: var(--text-3);
+  font-family: 'IBM Plex Sans', sans-serif;
+}
+
+.tab-item-account.tab-item-active {
+  color: var(--orange) !important;
+  box-shadow: inset 0 -2px 0 var(--orange);
+  background: rgba(232, 149, 90, 0.05) !important;
+}
+
+.tab-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tab-count {
+  font-size: 9px;
+  color: var(--text-3);
+  background: var(--bg-4);
+  border-radius: 8px;
+  padding: 0 5px;
+  min-width: 16px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.tab-item-active .tab-count {
+  background: var(--accent-glow);
+  color: var(--accent);
+}
+
+.tab-dirty {
+  font-size: 8px;
+  color: var(--orange);
+  flex-shrink: 0;
+  margin-left: -2px;
+}
+
+.tab-close {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: none;
+  background: transparent;
+  color: var(--text-3);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.tab-item:hover .tab-close,
+.tab-item-active .tab-close {
+  display: flex;
+}
+
+.tab-close:hover {
+  background: rgba(224, 90, 90, 0.15);
+  color: var(--red);
+}
+
+.tab-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  border: none;
+  border-right: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-3);
+  font-size: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.1s, color 0.1s;
+}
+
+.tab-add:hover {
+  background: var(--bg-2);
+  color: var(--text-1);
+}

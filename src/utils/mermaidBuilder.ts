@@ -56,6 +56,7 @@ export function buildMermaid(
   m += "classDef selected   fill:#0e3a6e,stroke:#4fc1ff,stroke-width:3px,color:#e0f0ff;\n";
   m += "classDef start_node fill:#0a1f0f,stroke:#3dba7e,stroke-width:2.5px,color:#7de8b0,stroke-dasharray:4 2;\n";
   m += "classDef ghost      fill:#1a1014,stroke:#7a3040,stroke-width:1.5px,color:#c06070,stroke-dasharray:6 3;\n";
+  m += "classDef dead_end   fill:#1f1008,stroke:#c08030,stroke-width:2px,color:#e8b060,stroke-dasharray:3 2;\n";
   m += "classDef default    fill:#1e1e22,stroke:#444,color:#ccc,stroke-width:1px;\n";
 
   const sanitize = (s: string) =>
@@ -66,27 +67,45 @@ export function buildMermaid(
 
   const startStep = ir.start_step;
 
+  // Pre-compute which nodes are dead-ends (no outgoing edges to existing nodes)
+  const isDeadEnd = (node: ReturnType<typeof Object.values<typeof ir.nodes>>[number]): boolean => {
+    if (node.action_type === "HANGUP") return false; // HANGUP is intentional terminal
+    const hasRealBranch = Object.values(node.content?.branches ?? {}).some(t => t && ir.nodes[t]);
+    const hasRealNext = !!node.default_next && !!ir.nodes[node.default_next];
+    return !hasRealBranch && !hasRealNext;
+  };
+
   // ── Real nodes + edges ──────────────────────────────────────────────────
   for (const node of nodes) {
     const nid = `n_${node.step_id}`;
     const isSelected = node.step_id === selectedId;
     const isStart = node.step_id === startStep;
+    const isHangup = node.action_type === "HANGUP";
+    const deadEnd = isDeadEnd(node);
 
+    // HANGUP: compact label — just the ✕ symbol and type
     const topLine = sanitize(node.step_id);
-    const midLine = node.action_type;
-    const botLine = sanitize(node.label || node.step_id).slice(0, 40);
+    const midLine = isHangup ? "✕ HANGUP" : node.action_type;
+    const botLine = isHangup ? "" : sanitize(node.label || node.step_id).slice(0, 40);
     const startPrefix = isStart ? "▶ " : "";
-    const labelHtml = `<small>${startPrefix}${topLine}</small><br/><b>${midLine}</b><br/>${botLine}`;
+    const deadPrefix = deadEnd ? "⚠ " : "";
+    const labelHtml = isHangup
+      ? `<b>${midLine}</b>`
+      : `<small>${startPrefix}${deadPrefix}${topLine}</small><br/><b>${midLine}</b><br/>${botLine}`;
 
     const styleClass = isSelected
       ? ":::selected"
       : isStart
         ? ":::start_node"
-        : ACTION_COLORS[node.action_type]
-          ? `:::at_${node.action_type}`
-          : ":::default";
+        : deadEnd
+          ? ":::dead_end"
+          : ACTION_COLORS[node.action_type]
+            ? `:::at_${node.action_type}`
+            : ":::default";
 
-    m += `${nid}["${labelHtml}"]${styleClass}\n`;
+    m += isHangup
+      ? `${nid}(["${labelHtml}"])${ACTION_COLORS.HANGUP ? `:::at_HANGUP` : ":::default"}\n`
+      : `${nid}["${labelHtml}"]${styleClass}\n`;
 
     const branches = node.content?.branches ?? {};
 

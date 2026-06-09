@@ -61,6 +61,107 @@ export interface SyncResult {
   errors: Array<{ resource: string; error: string }>;
 }
 
+// ─── Name normalization ──────────────────────────────────────────────────────
+
+/**
+ * Normalize a queue/HOO name for fuzzy comparison:
+ * - lowercase
+ * - remove all common separators (hyphens, underscores, spaces, dots)
+ *
+ * This handles cases like:
+ *   "K-P-M-A" → "kpma"
+ *   "K_P_M_A" → "kpma"
+ *   "K P M A" → "kpma"
+ *   "KPMA"    → "kpma"
+ *   "Support-English" → "supportenglish"
+ *   "Support English" → "supportenglish"
+ */
+export function normalizeQueueName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[-_.\s]+/g, "");  // strip separators
+}
+
+/**
+ * Normalize a HOO name — same logic as queue normalization.
+ * Aliased for semantic clarity when used with HOO resources.
+ */
+export function normalizeHooName(name: string): string {
+  return normalizeQueueName(name);
+}
+
+/**
+ * Try to match a target name against a list of live queue names using
+ * progressively more relaxed strategies:
+ *   1. Exact case-insensitive match
+ *   2. Normalized match (separators stripped)
+ *   3. Partial/substring match (one contains the other)
+ *
+ * Returns the matched queue or undefined.
+ */
+export function findQueueByName(
+  targetName: string,
+  liveQueues: QueuedWithTags[],
+): QueuedWithTags | undefined {
+  const targetLower = targetName.toLowerCase();
+  const targetNorm = normalizeQueueName(targetName);
+
+  // Strategy 1: exact case-insensitive
+  let match = liveQueues.find((q) => q.Name?.toLowerCase() === targetLower);
+  if (match) return match;
+
+  // Strategy 2: normalized (separators stripped)
+  match = liveQueues.find((q) => normalizeQueueName(q.Name ?? "") === targetNorm);
+  if (match) return match;
+
+  // Strategy 3: one normalized name contains the other (e.g., "KPMA" inside "KPMA-Support")
+  if (targetNorm.length >= 3) {
+    match = liveQueues.find((q) => {
+      const qNorm = normalizeQueueName(q.Name ?? "");
+      return qNorm.includes(targetNorm) || targetNorm.includes(qNorm);
+    });
+    if (match) return match;
+  }
+
+  return undefined;
+}
+
+/**
+ * Try to match a target HOO name against a list of live HOOs using
+ * progressively more relaxed strategies:
+ *   1. Exact case-insensitive match
+ *   2. Normalized match (separators stripped)
+ *   3. Partial/substring match (one contains the other)
+ *
+ * Returns the matched HOO or undefined.
+ */
+export function findHooByName(
+  targetName: string,
+  liveHoos: HooWithTags[],
+): HooWithTags | undefined {
+  const targetLower = targetName.toLowerCase();
+  const targetNorm = normalizeHooName(targetName);
+
+  // Strategy 1: exact case-insensitive
+  let match = liveHoos.find((h) => h.Name?.toLowerCase() === targetLower);
+  if (match) return match;
+
+  // Strategy 2: normalized (separators stripped)
+  match = liveHoos.find((h) => normalizeHooName(h.Name ?? "") === targetNorm);
+  if (match) return match;
+
+  // Strategy 3: one normalized name contains the other
+  if (targetNorm.length >= 3) {
+    match = liveHoos.find((h) => {
+      const hNorm = normalizeHooName(h.Name ?? "");
+      return hNorm.includes(targetNorm) || targetNorm.includes(hNorm);
+    });
+    if (match) return match;
+  }
+
+  return undefined;
+}
+
 // ─── Client builder ──────────────────────────────────────────────────────────
 
 export function buildConnectClient(creds: AwsCredentials): ConnectClient {

@@ -154,10 +154,17 @@ export default function App() {
       // Auto-populate meta fields that can be inferred from the IR
       const autoMeta: Partial<FlowMeta> = {
         ...t.meta,
-        target_flow_id: t.meta.target_flow_id || ir.flow_id,
-        start_step: t.meta.start_step || ir.start_step || "",
-        hoo_arn: t.meta.hoo_arn || ir.hoo_arn || "",
+        ...ir.meta, // Include meta from the IR itself
+        target_flow_id: ir.meta?.target_flow_id || t.meta.target_flow_id || ir.flow_id,
+        start_step: ir.meta?.start_step || t.meta.start_step || ir.start_step || "",
+        hoo_arn: ir.meta?.hoo_arn || t.meta.hoo_arn || ir.hoo_arn || "",
       };
+      
+      // Update auth credentials if instance_id is provided in meta
+      if (ir.meta?.instance_id && auth.credentials && ir.meta.instance_id !== auth.credentials.instance_id) {
+        auth.setManual({ ...auth.credentials, instance_id: ir.meta.instance_id });
+      }
+      
       return {
         ...tabPushIR(t, ir),
         rawCx: cx ?? t.rawCx,
@@ -167,7 +174,7 @@ export default function App() {
         meta: autoMeta,
       };
     });
-  }, [updateActive]);
+  }, [updateActive, auth]);
 
   // ── Node operations ──────────────────────────────────────────────────────
 

@@ -35,14 +35,14 @@ const INFO_BOX = (color: string, bg: string, border: string): React.CSSPropertie
 // ---------------------------------------------------------------------------
 
 function SsoPanel({ auth }: { auth: UseAwsCredentialsReturn }) {
-  const [startUrl, setStartUrl] = useState("");
-  const [ssoRegion, setSsoRegion] = useState("us-east-1");
+  const [startUrl, setStartUrl] = useState("https://d-9267541f78.awsapps.com/start/#");
+  const [ssoRegion, setSsoRegion] = useState("us-west-2");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   // For account/role selection
   const [selAccount, setSelAccount] = useState("");
   const [selRole, setSelRole] = useState("");
-  const [selRegion, setSelRegion] = useState("us-east-1");
+  const [selRegion, setSelRegion] = useState("us-west-2");
 
   const { authStep, ssoDeviceState, ssoAccounts, startSso, selectSsoRole, cancelSso } = auth;
 

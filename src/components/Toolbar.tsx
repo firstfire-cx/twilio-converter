@@ -1,7 +1,7 @@
 // src/components/Toolbar.tsx
 import { useState } from "react";
 import { DynamoDBClient, type DynamoDBClientConfig } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import type { IR, FlowMeta, IVRNode } from "../types";
 import { exportCSV, importCSV, expandAllMenus } from "../utils/csv";
 import { convertCxJson } from "../converter/convertCXJson";
@@ -65,6 +65,7 @@ function buildDocClient(creds: AwsCredentials): DynamoDBDocumentClient {
 }
 
 async function writeMeta(client: DynamoDBDocumentClient, meta: FlowMeta): Promise<void> {
+  // Write META under dialed_number (primary key)
   const item: Record<string, any> = {
     flow_id: meta.dialed_number,
     step_id: "META",
@@ -75,6 +76,21 @@ async function writeMeta(client: DynamoDBDocumentClient, meta: FlowMeta): Promis
   if (meta.instance_id) item.instance_id = meta.instance_id;
   if (meta.description) item.description = meta.description;
   await client.send(new PutCommand({ TableName: FLOW_TABLE, Item: item }));
+
+  // Also write META under target_flow_id for easier loading
+  if (meta.target_flow_id !== meta.dialed_number) {
+    const targetItem: Record<string, any> = {
+      flow_id: meta.target_flow_id,
+      step_id: "META",
+      dialed_number: meta.dialed_number,
+      target_flow_id: meta.target_flow_id,
+      start_step: meta.start_step,
+    };
+    if (meta.hoo_arn) targetItem.hoo_arn = meta.hoo_arn;
+    if (meta.instance_id) targetItem.instance_id = meta.instance_id;
+    if (meta.description) targetItem.description = meta.description;
+    await client.send(new PutCommand({ TableName: FLOW_TABLE, Item: targetItem }));
+  }
 }
 
 async function writeSteps(
@@ -96,6 +112,59 @@ async function writeSteps(
     await client.send(new PutCommand({ TableName: FLOW_TABLE, Item: item }));
     onProgress?.(i + 1, steps.length);
   }
+}
+
+async function loadFlowFromDynamoDB(client: DynamoDBDocumentClient, flowId: string): Promise<{ ir: IR; meta?: FlowMeta }> {
+  const result = await client.send(new QueryCommand({
+    TableName: FLOW_TABLE,
+    KeyConditionExpression: "flow_id = :flowId",
+    ExpressionAttributeValues: { ":flowId": flowId },
+  }));
+
+  if (!result.Items || result.Items.length === 0) {
+    throw new Error(`No flow found with ID: ${flowId}`);
+  }
+
+  const nodes: Record<string, IVRNode> = {};
+  let meta: FlowMeta | undefined;
+  let startStep: string | undefined;
+  let hooArn: string | undefined;
+
+  for (const item of result.Items) {
+    if (item.step_id === "META") {
+      meta = {
+        dialed_number: item.dialed_number || item.flow_id,
+        target_flow_id: item.target_flow_id,
+        start_step: item.start_step,
+        hoo_arn: item.hoo_arn,
+        instance_id: item.instance_id,
+        description: item.description,
+      };
+      startStep = item.start_step;
+      hooArn = item.hoo_arn;
+    } else {
+      // Regular step
+      const node: IVRNode = {
+        step_id: item.step_id,
+        action_type: item.action_type,
+        label: item.label || "",
+        content: item.content || {},
+        flow_id: item.flow_id,
+      };
+      if (item.default_next) node.default_next = item.default_next;
+      nodes[item.step_id] = node;
+    }
+  }
+
+  const ir: IR = {
+    flow_id: flowId,
+    nodes,
+    start_step: startStep,
+    hoo_arn: hooArn,
+    meta,
+  };
+
+  return { ir, meta };
 }
 
 // ── Validation ───────────────────────────────────────────────────────────────
@@ -305,6 +374,82 @@ function MetadataEditorModal({ ir, currentMeta, onClose, onSave }: {
   );
 }
 
+// ── Load Flow Modal ──────────────────────────────────────────────────────────
+
+function LoadFlowModal({ creds, onClose, onLoad }: {
+  creds: AwsCredentials;
+  onClose: () => void;
+  onLoad: (ir: IR) => void;
+}) {
+  const [flowId, setFlowId] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState<"idle" | "ok" | "err">("idle");
+  const [statusMsg, setStatusMsg] = useState("");
+
+  const INPUT: React.CSSProperties = {
+    width: "100%", boxSizing: "border-box",
+    background: "var(--bg-0)", border: "1px solid var(--border)",
+    borderRadius: "var(--radius)", color: "var(--text-0)",
+    fontFamily: "'IBM Plex Mono', monospace", fontSize: 12,
+    padding: "6px 10px", outline: "none",
+  };
+  const LABEL: React.CSSProperties = {
+    fontSize: 10, color: "var(--text-2)", fontWeight: 500,
+    marginBottom: 4, display: "block", fontFamily: "'IBM Plex Sans', sans-serif",
+  };
+
+  const handleLoad = async () => {
+    if (!flowId.trim()) { setStatus("err"); setStatusMsg("Flow ID is required"); return; }
+    setLoading(true); setStatus("idle");
+    try {
+      const client = buildDocClient(creds);
+      const { ir, meta } = await loadFlowFromDynamoDB(client, flowId.trim());
+      setStatus("ok");
+      setStatusMsg(`Loaded ${Object.keys(ir.nodes).length} steps for ${flowId}`);
+      setTimeout(() => {
+        onLoad(ir);
+        onClose();
+      }, 1000);
+    } catch (e: any) {
+      setStatus("err"); setStatusMsg(e.message ?? "Load failed");
+    } finally { setLoading(false); }
+  };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ background: "var(--bg-2)", border: "1px solid var(--border-hi)", borderRadius: "var(--radius-lg)", width: 400, maxHeight: "80vh", display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "0 24px 48px rgba(0,0,0,0.6)" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", borderBottom: "1px solid var(--border)", background: "var(--bg-3)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ background: "rgba(61,142,240,0.15)", border: "1px solid rgba(61,142,240,0.3)", borderRadius: 3, padding: "2px 7px", fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, fontWeight: 600, color: "var(--accent)", letterSpacing: "0.05em" }}>DYNAMODB</span>
+            <span style={{ fontSize: 12, color: "var(--text-1)", fontWeight: 500 }}>Load Flow</span>
+          </div>
+          <button className="btn btn-ghost" onClick={onClose} style={{ padding: "2px 6px", height: 22, fontSize: 14 }}>×</button>
+        </div>
+        <div style={{ flex: 1, overflow: "auto", padding: 16 }}>
+          <div style={{ marginBottom: 14 }}>
+            <label style={LABEL}>Flow ID <span style={{ color: "var(--text-3)", marginLeft: 4 }}>— Target flow ID from DynamoDB</span></label>
+            <input style={INPUT} value={flowId}
+              onChange={e => setFlowId(e.target.value)}
+              placeholder="e.g. Landing_UHC_Connect"
+              onKeyDown={e => e.key === "Enter" && handleLoad()} />
+          </div>
+          {status !== "idle" && (
+            <div style={{ marginTop: 12, padding: 8, borderRadius: "var(--radius)", background: status === "ok" ? "rgba(61,186,126,0.1)" : "rgba(232,149,90,0.1)", border: `1px solid ${status === "ok" ? "rgba(61,186,126,0.3)" : "rgba(232,149,90,0.3)"}`, color: status === "ok" ? "var(--green)" : "var(--red)", fontSize: 11 }}>
+              {statusMsg}
+            </div>
+          )}
+        </div>
+        <div style={{ padding: "10px 16px", borderTop: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "flex-end", background: "var(--bg-3)", gap: 8 }}>
+          <button className="btn" onClick={onClose} disabled={loading}>Cancel</button>
+          <button className="btn btn-primary" onClick={handleLoad} disabled={loading || !flowId.trim()}>
+            {loading ? "Loading..." : "Load Flow"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Tab Strip ────────────────────────────────────────────────────────────────
 
 function TabStrip({ tabs, activeTabId, onTabSelect, onTabAdd, onTabClose, showAccountTab, onShowAccount, isAccountTab }: {
@@ -390,6 +535,7 @@ export default function Toolbar({
   const [showMetaEditor, setShowMetaEditor] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<"idle" | "ok" | "err">("idle");
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [showLoadModal, setShowLoadModal] = useState(false);
 
   const credReady = auth.authStep === "ready";
   const dynColor = uploadStatus === "ok" ? "var(--green)" : uploadStatus === "err" ? "var(--red)" : "var(--text-2)";
@@ -446,6 +592,10 @@ export default function Toolbar({
     if (newMeta.instance_id && newMeta.instance_id !== auth.credentials?.instance_id) {
       if (auth.credentials) auth.setManual({ ...auth.credentials, instance_id: newMeta.instance_id });
     }
+  };
+
+  const handleLoadFlow = (loadedIR: IR) => {
+    setIR(loadedIR);
   };
 
   const downloadCSV = () => {
@@ -591,6 +741,18 @@ export default function Toolbar({
           <input type="file" accept=".csv,.json,.ivrproj.json" onChange={handleOpen} style={{ display: "none" }} />
         </label>
 
+        {/* Load from DynamoDB */}
+        {!isAccountTab && credReady && (
+          <button className="btn" onClick={() => setShowLoadModal(true)}
+            title="Load flow from DynamoDB">
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+              <ellipse cx="6" cy="3.5" rx="5" ry="2" stroke="currentColor" strokeWidth="1.3" />
+              <path d="M1 3.5v5C1 9.6 3.24 10.5 6 10.5s5-.9 5-2V3.5" stroke="currentColor" strokeWidth="1.3" />
+            </svg>
+            Load DB
+          </button>
+        )}
+
         {/* Save */}
         {!isAccountTab && (
           <button className="btn" onClick={() => downloadProject(currentProject())}
@@ -690,6 +852,14 @@ export default function Toolbar({
           initialMeta={meta}
           onClose={() => setShowUploadModal(false)}
           onUpload={async () => { setShowUploadModal(false); }}
+        />
+      )}
+
+      {showLoadModal && auth.credentials && (
+        <LoadFlowModal
+          creds={auth.credentials}
+          onClose={() => setShowLoadModal(false)}
+          onLoad={handleLoadFlow}
         />
       )}
     </>

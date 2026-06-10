@@ -139,10 +139,14 @@ export default function MermaidCanvas({ ir, selectedId, onSelect, onPickNode }: 
   const handleClick = useCallback((e: React.MouseEvent) => {
     const nodeEl = (e.target as HTMLElement).closest("g.node");
     if (nodeEl) {
-      const rawId = nodeEl.id.split("-")[1] ?? "";
-      const id = rawId.replace("n_", "");
-      // Ghost nodes start with "ghost_" — not selectable
-      if (rawId.startsWith("ghost_")) return;
+      // Ghost nodes ("ghost_…") are not selectable
+      if (nodeEl.id.includes("ghost_")) return;
+      // Mermaid DOM ids look like "[<diagramId>-]flowchart-n_<stepId>-<counter>".
+      // Anchor on the "n_" marker instead of a fixed dash-segment index (which
+      // breaks when a build prefixes the id), then drop the trailing "-<counter>".
+      const marker = nodeEl.id.indexOf("n_");
+      if (marker === -1) return;
+      const id = nodeEl.id.slice(marker + 2).replace(/-\d+$/, "");
       if (onPickNode) {
         onPickNode(id);
       } else {

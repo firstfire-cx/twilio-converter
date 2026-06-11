@@ -1,7 +1,8 @@
 // src/App.tsx
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import type { IR, IVRNode, FlowMeta } from "./types";
 import { useAwsCredentials } from "./hooks/useAwsCredentials";
+import { useDdbStore } from "./stores/ddbStore";
 import Toolbar from "./components/Toolbar";
 import MermaidCanvas from "./components/MermaidCanvas";
 import NodeEditor from "./components/editor/NodeEditor";
@@ -96,6 +97,14 @@ export function makeNode(step_id: string, flow_id: string): IVRNode {
 export default function App() {
   const auth = useAwsCredentials();
 
+  // Scan DynamoDB once per login session, app-wide. The store dedupes by
+  // (account, instance), so this safely no-ops on unrelated re-renders and
+  // re-scans only when the credentials/instance actually change.
+  useEffect(() => {
+    if (auth.credentials) useDdbStore.getState().scan(auth.credentials);
+    else useDdbStore.getState().reset();
+  }, [auth.credentials]);
+
   const [tabs, setTabs] = useState<TabData[]>(() => {
     const t = newTab();
     return [t];
@@ -123,6 +132,17 @@ export default function App() {
 
   const addTab = useCallback(() => {
     const t = newTab();
+    setTabs(prev => [...prev, t]);
+    setActiveTabId(t.id);
+  }, []);
+
+  // Open a loaded flow (e.g. from the Account tab's DDB Flows list) in a new tab.
+  const openFlowInTab = useCallback((ir: IR, meta?: Partial<FlowMeta>) => {
+    const t = newTab({
+      irHistory: [ir],
+      label: ir.flow_id || meta?.target_flow_id || "Loaded Flow",
+      meta: meta ?? ir.meta ?? {},
+    });
     setTabs(prev => [...prev, t]);
     setActiveTabId(t.id);
   }, []);
@@ -326,7 +346,7 @@ export default function App() {
       />
 
       {isAccountTab ? (
-        <AccountPanel auth={auth} />
+        <AccountPanel auth={auth} onLoadFlow={openFlowInTab} />
       ) : !activeTab ? null : (
         <div className="app-body">
           <div className="canvas-pane" style={{ position: "relative" }}>

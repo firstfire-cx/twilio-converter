@@ -4,6 +4,7 @@ import type { IR, IVRNode, ActionType, IVRContent } from "../../types";
 import ExpressionEditor from "./ExpressionEditor";
 import NodePicker from "./NodePicker";
 import SipHeaderRow from "./SipHeaderRow";
+import { readSipHeaders, writeSipHeaders } from "../../utils/sipHeaders";
 
 const ACTION_TYPES: ActionType[] = [
   "PLAY", "GATHER", "CHECK", "SET", "TRANSFER", "HANGUP", "WAIT", "HOURS", "START",
@@ -167,10 +168,12 @@ function AddLangButton({ existing, onAdd }: AddLangButtonProps) {
 }
 const COMPOSITE_TYPES = new Set<ActionType>(["MENU"]);
 
-// Seeded once when a node first switches to SIP. After that, plain rows — no special treatment.
+// Seeded once when a node first switches to SIP. Matches the converter output
+// and what the PolyAI SIP endpoint expects. After that, plain rows.
 const INITIAL_SIP_HEADERS: Record<string, string> = {
-  "X-SkillId": "{{QueueSkill}}",
   "X-UID": "{{uid}}",
+  "X-QueueSkill": "{{QueueSkill}}",
+  "X-SkillWhisper": "{{SkillWhisper}}",
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -291,12 +294,15 @@ export default function NodeEditor({
     updateContent({ branches: { ...branches, [key]: target } });
 
   // ── SIP header helpers ────────────────────────────────────────────────────
-  // sipHeaders is a plain Record — every entry behaves identically.
+  // Headers are stored as TOP-LEVEL content keys (the lambda/converter
+  // convention); readSipHeaders/writeSipHeaders are the single source of truth.
+  // writeSipHeaders rewrites content wholesale (and strips leak-prone keys), so
+  // it goes through updateNode, not the merge-only updateContent.
 
-  const sipHeaders = node.content?.sipHeaders ?? {};
+  const sipHeaders = readSipHeaders(node.content);
 
   const setSipHeaders = (headers: Record<string, string>) =>
-    updateContent({ sipHeaders: headers });
+    updateNode({ content: writeSipHeaders(node.content ?? {}, headers) });
 
   const addSipHeader = () =>
     setSipHeaders({ ...sipHeaders, [`X-Header-${Date.now().toString(36)}`]: "" });
@@ -318,8 +324,11 @@ export default function NodeEditor({
   // When first switching to SIP, seed with standard headers so the user has
   // something to start from. They can rename, edit, or delete any of them.
   const handleTransferTypeChange = (type: "CONNECT" | "SIP") => {
-    if (type === "SIP" && node.content?.sipHeaders === undefined) {
-      updateContent({ transferType: type, sipHeaders: { ...INITIAL_SIP_HEADERS } });
+    if (type === "SIP") {
+      const existing = readSipHeaders(node.content);
+      const headers = Object.keys(existing).length ? existing : { ...INITIAL_SIP_HEADERS };
+      // writeSipHeaders also strips leak-prone CONNECT keys (digits/agentSkill/queueArn).
+      updateNode({ content: writeSipHeaders(node.content ?? {}, headers) });
     } else {
       updateContent({ transferType: type });
     }

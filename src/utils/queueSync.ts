@@ -90,35 +90,47 @@ export function normalizeHooName(name: string): string {
   return normalizeQueueName(name);
 }
 
+export interface FuzzyMatchOptions {
+  /**
+   * Allow the substring/partial strategy (one normalized name contains the
+   * other). Off by default because a partial match can resolve to the wrong
+   * resource — unsafe for destructive operations (rename/recreate/delete).
+   * Enable only for read-only lookups (ARN enrichment, missing detection).
+   */
+  allowPartial?: boolean;
+}
+
 /**
- * Try to match a target name against a list of live queue names using
- * progressively more relaxed strategies:
+ * Match a target name against a list of named resources using progressively
+ * more relaxed strategies:
  *   1. Exact case-insensitive match
- *   2. Normalized match (separators stripped)
- *   3. Partial/substring match (one contains the other)
+ *   2. Normalized match (lowercase + separators stripped)
+ *   3. Partial/substring match — only when `allowPartial` is set
  *
- * Returns the matched queue or undefined.
+ * Returns the matched resource or undefined.
  */
-export function findQueueByName(
+function fuzzyFindByName<T extends { Name?: string }>(
   targetName: string,
-  liveQueues: QueuedWithTags[],
-): QueuedWithTags | undefined {
+  list: T[],
+  { allowPartial = false }: FuzzyMatchOptions = {},
+): T | undefined {
   const targetLower = targetName.toLowerCase();
   const targetNorm = normalizeQueueName(targetName);
 
   // Strategy 1: exact case-insensitive
-  let match = liveQueues.find((q) => q.Name?.toLowerCase() === targetLower);
+  let match = list.find((r) => r.Name?.toLowerCase() === targetLower);
   if (match) return match;
 
   // Strategy 2: normalized (separators stripped)
-  match = liveQueues.find((q) => normalizeQueueName(q.Name ?? "") === targetNorm);
+  match = list.find((r) => normalizeQueueName(r.Name ?? "") === targetNorm);
   if (match) return match;
 
-  // Strategy 3: one normalized name contains the other (e.g., "KPMA" inside "KPMA-Support")
-  if (targetNorm.length >= 3) {
-    match = liveQueues.find((q) => {
-      const qNorm = normalizeQueueName(q.Name ?? "");
-      return qNorm.includes(targetNorm) || targetNorm.includes(qNorm);
+  // Strategy 3: one normalized name contains the other (e.g. "KPMA" inside
+  // "KPMA-Support"). Opt-in only — never for destructive planning.
+  if (allowPartial && targetNorm.length >= 3) {
+    match = list.find((r) => {
+      const rNorm = normalizeQueueName(r.Name ?? "");
+      return rNorm.includes(targetNorm) || targetNorm.includes(rNorm);
     });
     if (match) return match;
   }
@@ -126,55 +138,26 @@ export function findQueueByName(
   return undefined;
 }
 
-/**
- * Try to match a target HOO name against a list of live HOOs using
- * progressively more relaxed strategies:
- *   1. Exact case-insensitive match
- *   2. Normalized match (separators stripped)
- *   3. Partial/substring match (one contains the other)
- *
- * Returns the matched HOO or undefined.
- */
+export function findQueueByName(
+  targetName: string,
+  liveQueues: QueuedWithTags[],
+  opts: FuzzyMatchOptions = {},
+): QueuedWithTags | undefined {
+  return fuzzyFindByName(targetName, liveQueues, opts);
+}
+
 export function findHooByName(
   targetName: string,
   liveHoos: HooWithTags[],
+  opts: FuzzyMatchOptions = {},
 ): HooWithTags | undefined {
-  const targetLower = targetName.toLowerCase();
-  const targetNorm = normalizeHooName(targetName);
-
-  // Strategy 1: exact case-insensitive
-  let match = liveHoos.find((h) => h.Name?.toLowerCase() === targetLower);
-  if (match) return match;
-
-  // Strategy 2: normalized (separators stripped)
-  match = liveHoos.find((h) => normalizeHooName(h.Name ?? "") === targetNorm);
-  if (match) return match;
-
-  // Strategy 3: one normalized name contains the other
-  if (targetNorm.length >= 3) {
-    match = liveHoos.find((h) => {
-      const hNorm = normalizeHooName(h.Name ?? "");
-      return hNorm.includes(targetNorm) || targetNorm.includes(hNorm);
-    });
-    if (match) return match;
-  }
-
-  return undefined;
+  return fuzzyFindByName(targetName, liveHoos, opts);
 }
 
 // ─── Client builder ──────────────────────────────────────────────────────────
 
-export function buildConnectClient(creds: AwsCredentials): ConnectClient {
-  const cfg: ConnectClientConfig = {
-    region: creds.region || "us-east-1",
-    credentials: {
-      accessKeyId: creds.accessKeyId,
-      secretAccessKey: creds.secretAccessKey,
-      ...(creds.sessionToken ? { sessionToken: creds.sessionToken } : {}),
-    },
-  };
-  return new ConnectClient(cfg);
-}
+// Re-exported for existing call sites; the implementation lives in awsClients.
+export { connectClient as buildConnectClient } from "./awsClients";
 
 // ─── CSV parsing ─────────────────────────────────────────────────────────────
 
@@ -246,13 +229,13 @@ export async function fetchQueuesWithTags(
   } while (nextToken);
 
   // Fetch tags for each queue (parallel)
-  const queueArns = queues.map((q) => q.QueueArn).filter(Boolean) as string[];
+  const queueArns = queues.map((q) => q.Arn).filter(Boolean) as string[];
   const tagPromises = queueArns.map(async (arn) => {
     try {
       const resp = await client.send(
-        new ListTagsForResourceCommand({ ResourceArn: arn }),
+        new ListTagsForResourceCommand({ resourceArn: arn }),
       );
-      return { arn, tags: resp.Tags ?? {} };
+      return { arn, tags: resp.tags ?? {} };
     } catch {
       return { arn, tags: {} };
     }
@@ -263,7 +246,7 @@ export async function fetchQueuesWithTags(
 
   return queues.map((q) => ({
     ...q,
-    tags: tagsByArn.get(q.QueueArn ?? "") ?? {},
+    tags: tagsByArn.get(q.Arn ?? "") ?? {},
   }));
 }
 
@@ -294,9 +277,9 @@ export async function fetchHoosWithTags(
   const tagPromises = hooArns.map(async (arn) => {
     try {
       const resp = await client.send(
-        new ListTagsForResourceCommand({ ResourceArn: arn }),
+        new ListTagsForResourceCommand({ resourceArn: arn }),
       );
-      return { arn, tags: resp.Tags ?? {} };
+      return { arn, tags: resp.tags ?? {} };
     } catch {
       return { arn, tags: {} };
     }
@@ -311,6 +294,74 @@ export async function fetchHoosWithTags(
   }));
 }
 
+// ─── Connect resource operations (shared by the panels) ──────────────────────
+//
+// Thin, correctly-typed wrappers around the single SDK calls that both the
+// Account tab and the Skills & Queues panel were each doing inline (with the
+// QueueId-vs-Id / lowercase-resourceArn bugs). The field-name contract lives
+// here once.
+
+export async function renameQueue(
+  client: ConnectClient,
+  instanceId: string,
+  queueId: string,
+  name: string,
+): Promise<void> {
+  await client.send(
+    new UpdateQueueNameCommand({ InstanceId: instanceId, QueueId: queueId, Name: name }),
+  );
+}
+
+export async function deleteQueue(
+  client: ConnectClient,
+  instanceId: string,
+  queueId: string,
+): Promise<void> {
+  await client.send(
+    new DeleteQueueCommand({ InstanceId: instanceId, QueueId: queueId }),
+  );
+}
+
+export async function createQueue(
+  client: ConnectClient,
+  instanceId: string,
+  opts: {
+    name: string;
+    hoursOfOperationId: string;
+    tags?: Record<string, string>;
+    description?: string;
+  },
+): Promise<{ queueId?: string; queueArn?: string }> {
+  const resp = await client.send(
+    new CreateQueueCommand({
+      InstanceId: instanceId,
+      Name: opts.name,
+      HoursOfOperationId: opts.hoursOfOperationId,
+      Description: opts.description,
+      Tags: opts.tags,
+    }),
+  );
+  return { queueId: resp.QueueId, queueArn: resp.QueueArn };
+}
+
+/** Tag any Connect resource (queue or HOO) by ARN. */
+export async function tagResource(
+  client: ConnectClient,
+  resourceArn: string,
+  tags: Record<string, string>,
+): Promise<void> {
+  await client.send(new TagResourceCommand({ resourceArn, tags }));
+}
+
+/** Remove tags from any Connect resource by ARN. */
+export async function untagResource(
+  client: ConnectClient,
+  resourceArn: string,
+  tagKeys: string[],
+): Promise<void> {
+  await client.send(new UntagResourceCommand({ resourceArn, tagKeys }));
+}
+
 // ─── Sync planning ───────────────────────────────────────────────────────────
 
 /**
@@ -321,7 +372,6 @@ export function planQueueSync(
   skillMapping: Map<string, SkillMappingRow>,
 ): SyncAction[] {
   const actions: SyncAction[] = [];
-  const liveByName = new Map(liveQueues.map((q) => [q.Name?.toLowerCase(), q]));
   const liveBySkillTag = new Map(
     liveQueues
       .filter((q) => q.tags?.cxone_skill_id)
@@ -331,7 +381,12 @@ export function planQueueSync(
   // Check each mapping row
   for (const [skillId, mapping] of skillMapping) {
     const targetName = mapping.queue_name.toLowerCase();
-    const existingByName = liveByName.get(targetName);
+    // Exact + separator/case-normalized match only. No substring matching here:
+    // this plan drives renames/recreates, so a loose match could act on the
+    // wrong queue.
+    const existingByName = findQueueByName(mapping.queue_name, liveQueues, {
+      allowPartial: false,
+    });
     const existingByTag = liveBySkillTag.get(skillId);
 
     // Case 1: Queue exists with correct name and correct tag
@@ -478,16 +533,10 @@ export async function executeQueueSync(
           const queue = queues.find(
             (q) => q.tags?.cxone_skill_id === action.skillId,
           );
-          if (!queue?.QueueId) {
+          if (!queue?.Id) {
             throw new Error(`Queue not found for skill ${action.skillId}`);
           }
-          await client.send(
-            new UpdateQueueNameCommand({
-              InstanceId: instanceId,
-              QueueId: queue.QueueId,
-              Name: action.targetName!,
-            }),
-          );
+          await renameQueue(client, instanceId, queue.Id, action.targetName!);
           result.renamed++;
           result.actions.push({
             ...action,
@@ -502,13 +551,8 @@ export async function executeQueueSync(
           const oldQueue = oldQueues.find(
             (q) => q.Name?.toLowerCase() === action.currentName?.toLowerCase(),
           );
-          if (oldQueue?.QueueId) {
-            await client.send(
-              new DeleteQueueCommand({
-                InstanceId: instanceId,
-                QueueId: oldQueue.QueueId,
-              }),
-            );
+          if (oldQueue?.Id) {
+            await deleteQueue(client, instanceId, oldQueue.Id);
           }
           // Create new queue
           const resp = await client.send(
@@ -533,20 +577,21 @@ export async function executeQueueSync(
         }
 
         case "tag": {
-          // Find queue by name
+          // Locate by the live name captured at plan time (currentName), not the
+          // CSV targetName — they may differ by separators/case. Exact+normalized
+          // only (no substring) since this mutates the queue.
           const queues = await fetchQueuesWithTags(client, instanceId);
-          const queue = queues.find(
-            (q) => q.Name?.toLowerCase() === action.targetName?.toLowerCase(),
+          const queue = findQueueByName(
+            action.currentName ?? action.targetName ?? "",
+            queues,
+            { allowPartial: false },
           );
-          if (!queue?.QueueArn) {
-            throw new Error(`Queue "${action.targetName}" not found`);
+          if (!queue?.Arn) {
+            throw new Error(
+              `Queue "${action.currentName ?? action.targetName}" not found`,
+            );
           }
-          await client.send(
-            new TagResourceCommand({
-              ResourceArn: queue.QueueArn,
-              Tags: { cxone_skill_id: action.skillId! },
-            }),
-          );
+          await tagResource(client, queue.Arn, { cxone_skill_id: action.skillId! });
           result.retagged++;
           result.actions.push({
             ...action,
@@ -560,13 +605,8 @@ export async function executeQueueSync(
           const queue = queues.find(
             (q) => q.Name?.toLowerCase() === action.currentName?.toLowerCase(),
           );
-          if (queue?.QueueArn) {
-            await client.send(
-              new UntagResourceCommand({
-                ResourceArn: queue.QueueArn,
-                TagKeys: ["cxone_skill_id"],
-              }),
-            );
+          if (queue?.Arn) {
+            await untagResource(client, queue.Arn, ["cxone_skill_id"]);
             result.retagged++;
           }
           result.actions.push(action);
@@ -578,13 +618,8 @@ export async function executeQueueSync(
           const queue = queues.find(
             (q) => q.Name?.toLowerCase() === action.currentName?.toLowerCase(),
           );
-          if (queue?.QueueId) {
-            await client.send(
-              new DeleteQueueCommand({
-                InstanceId: instanceId,
-                QueueId: queue.QueueId,
-              }),
-            );
+          if (queue?.Id) {
+            await deleteQueue(client, instanceId, queue.Id);
             result.deleted++;
           }
           result.actions.push({ ...action, reason: "Deleted (orphaned)" });
@@ -613,9 +648,20 @@ export async function syncQueuesWithFlows(
   instanceId: string,
   flowQueues: QueueRecord[],
 ): Promise<QueueRecord[]> {
-  // Fetch live queues with tags
   const liveQueues = await fetchQueuesWithTags(client, instanceId);
-  const liveByName = new Map(liveQueues.map((q) => [q.Name?.toLowerCase(), q]));
+  return reconcileFlowQueues(flowQueues, liveQueues);
+}
+
+/**
+ * Match flow queues against live Connect queues and enrich them with the live
+ * ARN/ID/name. Read-only reconciliation, so substring matching is allowed
+ * (fuzzy name match first, then skill-tag fallback). Pure — separated from the
+ * network fetch so it can be unit-tested.
+ */
+export function reconcileFlowQueues(
+  flowQueues: QueueRecord[],
+  liveQueues: QueuedWithTags[],
+): QueueRecord[] {
   const liveBySkillTag = new Map(
     liveQueues
       .filter((q) => q.tags?.cxone_skill_id)
@@ -623,10 +669,10 @@ export async function syncQueuesWithFlows(
   );
 
   return flowQueues.map((q) => {
-    // Try to match by name first
-    let live = liveByName.get(q.connectName.toLowerCase());
+    // Fuzzy name match first (exact → normalized → substring).
+    let live = findQueueByName(q.connectName, liveQueues, { allowPartial: true });
 
-    // If not found by name, try by skill ID tag
+    // Fall back to skill-ID tag.
     if (!live && q.queueSkill) {
       live = liveBySkillTag.get(q.queueSkill);
     }
@@ -634,8 +680,8 @@ export async function syncQueuesWithFlows(
     if (live) {
       return {
         ...q,
-        queueArn: live.QueueArn ?? q.queueArn,
-        queueId: live.QueueId ?? q.queueId,
+        queueArn: live.Arn ?? q.queueArn,
+        queueId: live.Id ?? q.queueId,
         // Update name if it differs (live source of truth)
         connectName: live.Name ?? q.connectName,
       };
@@ -646,21 +692,22 @@ export async function syncQueuesWithFlows(
 }
 
 /**
- * Check which queues from flows are missing in Connect
+ * Check which queues from flows are missing in Connect. Read-only, so fuzzy
+ * name matching (incl. substring) is used to avoid false "missing" reports for
+ * queues that exist under a separator-different name.
  */
 export function findMissingQueues(
   flowQueues: QueueRecord[],
   liveQueues: QueuedWithTags[],
 ): QueueRecord[] {
-  const liveNames = new Set(
-    liveQueues.map((q) => q.Name?.toLowerCase()).filter(Boolean) as string[],
-  );
   const liveSkillTags = new Set(
     liveQueues.map((q) => q.tags?.cxone_skill_id).filter(Boolean) as string[],
   );
 
   return flowQueues.filter((q) => {
-    const byName = liveNames.has(q.connectName.toLowerCase());
+    const byName = !!findQueueByName(q.connectName, liveQueues, {
+      allowPartial: true,
+    });
     const bySkill = q.queueSkill ? liveSkillTags.has(q.queueSkill) : false;
     return !byName && !bySkill;
   });

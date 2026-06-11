@@ -164,10 +164,24 @@ export function extractQueuesFromIR(
     }
   }
 
-  // Merge with existing to preserve ARNs and customised names
-  const existingMap = new Map(existingQueues.map((q) => [q.skillWhisper, q]));
+  return mergePersistedQueues(Array.from(found.values()), existingQueues);
+}
 
-  return Array.from(found.values()).map(({ queueSkill, skillWhisper }) => {
+/**
+ * Merge freshly-extracted (queueSkill, skillWhisper) pairs with the persisted
+ * queue records, matching by skillWhisper. Preserves the user's edited
+ * connectName plus the resolved ARN/ID/description; takes the fresh queueSkill
+ * when present, else the persisted one.
+ *
+ * Used both by extractQueuesFromIR and by the Skills panel when (re)seeding rows
+ * from a CXone source, so a renamed queue survives a panel close/reopen.
+ */
+export function mergePersistedQueues(
+  extracted: Array<{ queueSkill?: string; skillWhisper: string }>,
+  existingQueues: QueueRecord[] = [],
+): QueueRecord[] {
+  const existingMap = new Map(existingQueues.map((q) => [q.skillWhisper, q]));
+  return extracted.map(({ queueSkill, skillWhisper }) => {
     const existing = existingMap.get(skillWhisper);
     return {
       skillWhisper,

@@ -10,10 +10,6 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import {
   ConnectClient,
   ListQueuesCommand,
-  UpdateQueueNameCommand,
-  DeleteQueueCommand,
-  TagResourceCommand,
-  UntagResourceCommand,
   ListHoursOfOperationsCommand,
   DescribeHoursOfOperationCommand,
   UpdateHoursOfOperationCommand,
@@ -21,15 +17,25 @@ import {
   ListTagsForResourceCommand,
   type QueueSummary,
   type HoursOfOperationSummary,
-  type ConnectClientConfig,
 } from "@aws-sdk/client-connect";
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, ScanCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import type { UseAwsCredentialsReturn, AwsCredentials, ConnectInstance } from "../hooks/useAwsCredentials";
-
-// ── Constants ────────────────────────────────────────────────────────────────
-
-const FLOW_TABLE = "TwilioIVRFlows";
+import { connectClient } from "../utils/awsClients";
+import { renameQueue, deleteQueue as deleteQueueOp, tagResource, createQueue } from "../utils/queueSync";
+import { FLOW_TABLE, loadFlowFromDdb, deleteFlowFromDdb, deleteSteps, editFlowMeta, type DdbState, type DdbFlow, type DdbFlowMeta, type DdbQueueUsage } from "../utils/ddbScan";
+import { unreachableStepIds } from "../utils/flowPrune";
+import {
+  classifyQueue,
+  planMissingQueueCreates,
+  hooIdFromArn,
+  clusterDuplicateQueues,
+  planDuplicateCleanup,
+  type ClusterCleanup,
+  type DuplicateCluster,
+} from "../utils/queueReconcile";
+import { scanQueueDependencies, findQueuesUsingHoo, reassignAndDeleteHoo, type QueueDependency } from "../utils/connectDeps";
+import { executeDuplicateCleanup } from "../utils/duplicateCleanup";
+import { useDdbStore } from "../stores/ddbStore";
+import type { IR, FlowMeta } from "../types";
 
 // ── Styles ───────────────────────────────────────────────────────────────────
 
@@ -48,30 +54,7 @@ const INPUT: React.CSSProperties = {
 // ── Client builders ──────────────────────────────────────────────────────────
 
 function buildConnectClient(creds: AwsCredentials): ConnectClient {
-  const cfg: ConnectClientConfig = {
-    region: creds.region || "us-east-1",
-    credentials: {
-      accessKeyId: creds.accessKeyId,
-      secretAccessKey: creds.secretAccessKey,
-      ...(creds.sessionToken ? { sessionToken: creds.sessionToken } : {}),
-    },
-  };
-  return new ConnectClient(cfg);
-}
-
-function buildDdbClient(creds: AwsCredentials): DynamoDBDocumentClient {
-  const client = new DynamoDBClient({
-    region: creds.region || "us-east-1",
-    credentials: {
-      accessKeyId: creds.accessKeyId,
-      secretAccessKey: creds.secretAccessKey,
-      ...(creds.sessionToken ? { sessionToken: creds.sessionToken } : {}),
-    },
-    ...(creds.endpoint ? { endpoint: creds.endpoint } : {}),
-  });
-  return DynamoDBDocumentClient.from(client, {
-    marshallOptions: { removeUndefinedValues: true },
-  });
+  return connectClient(creds);
 }
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -89,31 +72,6 @@ interface QueueRow extends QueueSummary {
   fuzzyMatchedAs?: string;
 }
 
-/** Per-skillWhisper usage info collected from DDB. */
-interface DdbQueueUsage {
-  skillWhisper: string;
-  queueSkill?: string;
-  flows: DdbFlowMeta[];
-}
-
-/** A META row from TwilioIVRFlows. */
-interface DdbFlowMeta {
-  dialedNumber: string;
-  targetFlowId: string;
-  startStep?: string;
-  hooArn?: string;
-  instanceId?: string;
-  description?: string;
-}
-
-/** Aggregate DDB state. */
-interface DdbState {
-  flows: DdbFlowMeta[];
-  queueUsage: Map<string, DdbQueueUsage>;
-  missingInConnect: string[];
-  scannedAt: Date;
-}
-
 function Tag({ label, color, bg, border }: { label: string; color: string; bg: string; border: string }) {
   return (
     <span style={{
@@ -124,179 +82,6 @@ function Tag({ label, color, bg, border }: { label: string; color: string; bg: s
       {label}
     </span>
   );
-}
-
-// ── DDB scanner ──────────────────────────────────────────────────────────────
-
-async function scanDdb(
-  creds: AwsCredentials,
-  onProgress?: (msg: string) => void,
-): Promise<DdbState> {
-  const ddb = buildDdbClient(creds);
-
-  onProgress?.("Scanning DynamoDB for flow metadata…");
-  const metaItems: any[] = [];
-  let lastKey: any;
-  do {
-    const resp = await ddb.send(new ScanCommand({
-      TableName: FLOW_TABLE,
-      FilterExpression: "step_id = :m",
-      ExpressionAttributeValues: { ":m": "META" },
-      ...(lastKey ? { ExclusiveStartKey: lastKey } : {}),
-    }));
-    metaItems.push(...(resp.Items ?? []));
-    lastKey = resp.LastEvaluatedKey;
-  } while (lastKey);
-
-  const flows: DdbFlowMeta[] = metaItems.map(r => ({
-    dialedNumber: r.flow_id ?? "",
-    targetFlowId: r.target_flow_id ?? "",
-    startStep: r.start_step,
-    hooArn: r.hoo_arn,
-    instanceId: r.instance_id,
-    description: r.description,
-  }));
-
-  onProgress?.(`Found ${flows.length} flow(s). Loading queue references…`);
-
-  const queueUsage = new Map<string, DdbQueueUsage>();
-  const seenFlowIds = new Set<string>();
-  const flowsByTargetId = new Map<string, DdbFlowMeta[]>();
-  for (const f of flows) {
-    if (!f.targetFlowId) continue;
-    if (!flowsByTargetId.has(f.targetFlowId)) flowsByTargetId.set(f.targetFlowId, []);
-    flowsByTargetId.get(f.targetFlowId)!.push(f);
-  }
-
-  let done = 0;
-  for (const [targetFlowId, relatedFlows] of flowsByTargetId.entries()) {
-    if (seenFlowIds.has(targetFlowId)) continue;
-    seenFlowIds.add(targetFlowId);
-    onProgress?.(`Loading flow ${++done}/${flowsByTargetId.size}: ${targetFlowId}`);
-    try {
-      let stepLastKey: any;
-      do {
-        const resp = await ddb.send(new QueryCommand({
-          TableName: FLOW_TABLE,
-          KeyConditionExpression: "flow_id = :fid",
-          FilterExpression: "action_type = :set",
-          ExpressionAttributeValues: { ":fid": targetFlowId, ":set": "SET" },
-          ...(stepLastKey ? { ExclusiveStartKey: stepLastKey } : {}),
-        }));
-        for (const item of (resp.Items ?? [])) {
-          const asgn: Record<string, string> = item.content?.assignments ?? {};
-          const sw = asgn["SkillWhisper"];
-          const qs = asgn["QueueSkill"];
-          if (sw) {
-            if (!queueUsage.has(sw)) {
-              queueUsage.set(sw, { skillWhisper: sw, queueSkill: qs, flows: [] });
-            }
-            const usage = queueUsage.get(sw)!;
-            if (qs && !usage.queueSkill) usage.queueSkill = qs;
-            for (const f of relatedFlows) {
-              if (!usage.flows.find(x => x.dialedNumber === f.dialedNumber)) {
-                usage.flows.push(f);
-              }
-            }
-          }
-        }
-        stepLastKey = resp.LastEvaluatedKey;
-      } while (stepLastKey);
-    } catch (e) {
-      console.warn(`[DDB] Failed to query flow ${targetFlowId}:`, e);
-    }
-  }
-
-  return {
-    flows,
-    queueUsage,
-    missingInConnect: [],
-    scannedAt: new Date(),
-  };
-}
-
-// ── Fuzzy name matching ──────────────────────────────────────────────────────
-
-/**
- * Normalize a queue name for fuzzy comparison:
- * - lowercase
- * - collapse separators (space, dash, underscore) to single space
- * - expand common abbreviations
- * - strip trailing language suffixes to a canonical token
- */
-function normalizeName(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[-_]+/g, " ")          // dash/underscore → space
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-/** Extract a canonical language token from a name, or "" if none. */
-function langToken(name: string): string {
-  const n = normalizeName(name);
-  if (/ (en|eng|english)$/.test(n)) return "en";
-  if (/ (sp|spa|spanish|español)$/.test(n)) return "sp";
-  return "";
-}
-
-/** Strip trailing language token from normalized name. */
-function stripLang(normalized: string): string {
-  return normalized
-    .replace(/ (en|eng|english|sp|spa|spanish|español)$/, "")
-    .trim();
-}
-
-/**
- * Fuzzy score between a Connect queue name and a DDB skillWhisper.
- * Returns 0 (no match) to 3 (strong match).
- *
- * Scoring:
- *   3 — exact name match (case-insensitive)
- *   2 — same base after stripping language suffix + same language
- *   1 — same base after stripping language suffix (language token absent in one)
- *   0 — no match
- *
- * Examples that should score ≥ 2:
- *   "Aetna_WMR SP"  ↔  "Aetna-Health-W-M-R-Spanish"  → both have lang "sp",
- *     normalized base "aetna wmr" vs "aetna health w m r" — score 1 (partial)
- *   "SCAN_Reserv EN" ↔ "SCAN-Reservations-English"
- *     base "scan reserv" vs "scan reservations" — startsWith match → score 2
- */
-function fuzzyScore(connectName: string, skillWhisper: string): number {
-  const cn = normalizeName(connectName);
-  const sw = normalizeName(skillWhisper);
-  if (cn === sw) return 3;
-
-  const cnLang = langToken(connectName);
-  const swLang = langToken(skillWhisper);
-  const cnBase = stripLang(cn);
-  const swBase = stripLang(sw);
-
-  if (cnBase === swBase) {
-    return (cnLang === swLang || !cnLang || !swLang) ? 2 : 1;
-  }
-
-  // Prefix/abbreviation matching — one name's base starts with or contains the other
-  const langsCompatible = !cnLang || !swLang || cnLang === swLang;
-  if (!langsCompatible) return 0;
-
-  if (cnBase.startsWith(swBase) || swBase.startsWith(cnBase)) return 2;
-
-  // Token overlap: split into words, check if ≥ 60% of shorter set appears in longer
-  const cnTokens = new Set(cnBase.split(" ").filter(Boolean));
-  const swTokens = new Set(swBase.split(" ").filter(Boolean));
-  const smaller = cnTokens.size <= swTokens.size ? cnTokens : swTokens;
-  const larger = cnTokens.size <= swTokens.size ? swTokens : cnTokens;
-  let overlap = 0;
-  for (const t of smaller) {
-    // exact token match or substring in longer side
-    if (larger.has(t) || [...larger].some(lt => lt.startsWith(t) || t.startsWith(lt))) overlap++;
-  }
-  const ratio = smaller.size > 0 ? overlap / smaller.size : 0;
-  if (ratio >= 0.6) return 1;
-
-  return 0;
 }
 
 // ── Queue row cross-reference ────────────────────────────────────────────────
@@ -314,42 +99,14 @@ function crossReferenceQueues(
   }
 
   return queues.map(q => {
-    const nameLower = (q.Name ?? "").toLowerCase();
-
-    if ((nameCount.get(nameLower) ?? 0) > 1) {
-      return { ...q, ddbStatus: "duplicate" as const };
-    }
-
-    // 1. Exact match by skillWhisper name or cxone_skill_id tag
-    const exactUsage = ddb.queueUsage.get(q.Name ?? "")
-      ?? [...ddb.queueUsage.values()].find(u =>
-        u.skillWhisper.toLowerCase() === nameLower ||
-        (u.queueSkill && q.tags?.["cxone_skill_id"] === u.queueSkill)
-      );
-    if (exactUsage) {
-      return { ...q, ddbUsage: exactUsage, ddbStatus: "matched" as const };
-    }
-
-    // 2. Fuzzy match — find the best-scoring DDB entry
-    let bestScore = 0;
-    let bestUsage: DdbQueueUsage | undefined;
-    for (const usage of ddb.queueUsage.values()) {
-      const score = fuzzyScore(q.Name ?? "", usage.skillWhisper);
-      if (score > bestScore) {
-        bestScore = score;
-        bestUsage = usage;
-      }
-    }
-    if (bestScore >= 1 && bestUsage) {
-      return {
-        ...q,
-        ddbUsage: bestUsage,
-        ddbStatus: "matched" as const,
-        fuzzyMatchedAs: bestUsage.skillWhisper,
-      };
-    }
-
-    return { ...q, ddbStatus: "orphan" as const };
+    const isDuplicate = (nameCount.get((q.Name ?? "").toLowerCase()) ?? 0) > 1;
+    const c = classifyQueue(q, ddb, isDuplicate);
+    return {
+      ...q,
+      ddbStatus: c.status,
+      ddbUsage: c.ddbUsage,
+      fuzzyMatchedAs: c.fuzzyMatchedAs,
+    };
   });
 }
 
@@ -422,6 +179,134 @@ function QueueBrowser({
   const [opError, setOpError] = useState<Record<string, string>>({});
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkOp, setBulkOp] = useState<"idle" | "deleting" | "tagging">("idle");
+  const [creatingMissing, setCreatingMissing] = useState(false);
+  const [createMsg, setCreateMsg] = useState("");
+  // Duplicate-queue cleanup
+  const [dupPlans, setDupPlans] = useState<ClusterCleanup[] | null>(null);
+  const [dupManual, setDupManual] = useState<DuplicateCluster[]>([]);
+  const [dupScanning, setDupScanning] = useState(false);
+  const [dupApplying, setDupApplying] = useState(false);
+  const [dupMsg, setDupMsg] = useState("");
+
+  const findDuplicates = async () => {
+    if (!ddb) { setDupMsg("Scan DynamoDB first — it determines which queue your flows actually use."); return; }
+    setDupScanning(true); setDupMsg(""); setDupPlans(null); setDupManual([]);
+    try {
+      const clusters = clusterDuplicateQueues(queues, ddb);
+      if (clusters.length === 0) { setDupPlans([]); setDupMsg("No duplicate queues found."); return; }
+      const deps = await scanQueueDependencies(buildConnectClient(creds), instanceId);
+      setDupPlans(planDuplicateCleanup(clusters, deps));
+      setDupManual(clusters.filter(c => c.needsManualPick));
+    } catch (e: any) {
+      setDupMsg(e?.message ?? "Duplicate scan failed");
+    } finally {
+      setDupScanning(false);
+    }
+  };
+
+  const applyCleanup = async () => {
+    if (!dupPlans?.length) return;
+    const repoints = dupPlans.reduce((n, p) => n + p.repoints.length, 0);
+    const deletes = dupPlans.reduce((n, p) => n + p.duplicates.length, 0);
+    if (!window.confirm(
+      `Repoint ${repoints} dependenc${repoints !== 1 ? "ies" : "y"} to the canonical queues and delete ${deletes} duplicate queue${deletes !== 1 ? "s" : ""}?\n\nThis cannot be undone.`,
+    )) return;
+    setDupApplying(true); setDupMsg("");
+    try {
+      const r = await executeDuplicateCleanup(buildConnectClient(creds), instanceId, dupPlans);
+      setDupMsg(`Repointed ${r.repointed} · deleted ${r.deleted}${r.errors.length ? ` · ${r.errors.length} couldn't be removed (still referenced)` : ""}`);
+      setDupPlans(null); setDupManual([]);
+      await fetchQueues();
+    } catch (e: any) {
+      setDupMsg(e?.message ?? "Cleanup failed");
+    } finally {
+      setDupApplying(false);
+    }
+  };
+
+  // Manual "reassign dependencies & delete" for a single queue — you pick the
+  // redirect target rather than relying on the automatic canonical match.
+  const [reassign, setReassign] = useState<{ queue: QueueRow; deps: QueueDependency[] } | null>(null);
+  const [reassignTarget, setReassignTarget] = useState("");
+  const [reassignBusy, setReassignBusy] = useState(false);
+  const [reassignMsg, setReassignMsg] = useState("");
+
+  const startReassignDelete = async (queue: QueueRow) => {
+    setReassign({ queue, deps: [] }); setReassignTarget(""); setReassignBusy(true);
+    setReassignMsg("Scanning routing profiles & quick connects…");
+    try {
+      const all = await scanQueueDependencies(buildConnectClient(creds), instanceId);
+      const deps = (queue.Id && all.get(queue.Id)) || [];
+      setReassign({ queue, deps });
+      setReassignMsg(deps.length ? "" : "No routing-profile / quick-connect dependencies — safe to delete.");
+    } catch (e: any) {
+      setReassignMsg(e?.message ?? "Dependency scan failed");
+    } finally {
+      setReassignBusy(false);
+    }
+  };
+
+  const confirmReassignDelete = async () => {
+    if (!reassign) return;
+    const { queue, deps } = reassign;
+    const target = queues.find(x => x.Id === reassignTarget);
+    if (deps.length > 0 && !target) { setReassignMsg("Choose a queue to repoint these dependencies to."); return; }
+    setReassignBusy(true); setReassignMsg("");
+    try {
+      const plan: ClusterCleanup = {
+        normalized: "manual",
+        canonical: target ?? queue, // unused when there are no repoints
+        duplicates: [queue],
+        repoints: deps.map(d => ({ duplicate: queue, dependency: d })),
+      };
+      const r = await executeDuplicateCleanup(buildConnectClient(creds), instanceId, [plan]);
+      setReassign(null); setReassignTarget("");
+      if (r.errors.length) setError(`Could not fully delete: ${r.errors.map(e => e.error).join("; ")}`);
+      await fetchQueues();
+    } catch (e: any) {
+      setReassignMsg(e?.message ?? "Failed");
+    } finally {
+      setReassignBusy(false);
+    }
+  };
+
+  // Create the queues that DDB flows reference but Connect doesn't have, each
+  // with its referencing flow's HOO. Queues with no resolvable HOO are skipped
+  // and surfaced; the batch continues.
+  const createMissingQueues = async () => {
+    if (!ddb) return;
+    const missingUsages = ddb.missingInConnect
+      .map(sw => ddb.queueUsage.get(sw))
+      .filter(Boolean) as DdbQueueUsage[];
+    const plans = planMissingQueueCreates(missingUsages);
+    setCreatingMissing(true); setCreateMsg("");
+    const client = buildConnectClient(creds);
+    const createdWhispers: string[] = []; const skipped: string[] = []; const failed: string[] = [];
+    for (const p of plans) {
+      if (!p.hooId) { skipped.push(p.skillWhisper); continue; }
+      try {
+        await createQueue(client, instanceId, {
+          name: p.skillWhisper, hoursOfOperationId: p.hooId,
+          tags: p.tags, description: `IVR queue for ${p.skillWhisper}`,
+        });
+        createdWhispers.push(p.skillWhisper);
+      } catch (e: any) {
+        failed.push(`${p.skillWhisper}: ${e.message}`);
+      }
+    }
+    setCreatingMissing(false);
+    setCreateMsg(
+      `Created ${createdWhispers.length}` +
+      (skipped.length ? ` · skipped ${skipped.length} (no HOO)` : "") +
+      (failed.length ? ` · ${failed.length} failed` : ""),
+    );
+    // Drop the now-created queues from the missing banner so a re-click can't
+    // attempt to create them again (which would DuplicateResource-fail).
+    if (createdWhispers.length && onMissingQueues) {
+      onMissingQueues(ddb.missingInConnect.filter(sw => !createdWhispers.includes(sw)));
+    }
+    await fetchQueues();
+  };
 
   const fetchQueues = async () => {
     setLoading(true); setError(""); setSelected(new Set());
@@ -501,9 +386,7 @@ function QueueBrowser({
     setRenaming(null);
     if (!newName || newName === displayName(q)) return;
     try {
-      await buildConnectClient(creds).send(new UpdateQueueNameCommand({
-        InstanceId: instanceId, Id: q.Id!, Name: newName,
-      }));
+      await renameQueue(buildConnectClient(creds), instanceId, q.Id!, newName);
       setQueues(prev => prev.map(r => r.Id === q.Id ? { ...r, Name: newName } : r));
       setOpError(e => { const n = { ...e }; delete n[q.Id!]; return n; });
     } catch (e: any) {
@@ -515,9 +398,7 @@ function QueueBrowser({
     if (!window.confirm(`Delete queue "${displayName(q)}"?\n\nThis cannot be undone.`)) return;
     setDeleting(prev => new Set([...prev, q.Id!]));
     try {
-      await buildConnectClient(creds).send(new DeleteQueueCommand({
-        InstanceId: instanceId, Id: q.Id!,
-      }));
+      await deleteQueueOp(buildConnectClient(creds), instanceId, q.Id!);
       setQueues(prev => prev.filter(r => r.Id !== q.Id));
       setSelected(prev => { const n = new Set(prev); n.delete(q.Id!); return n; });
       if (expanded === q.Id) setExpanded(null);
@@ -534,9 +415,7 @@ function QueueBrowser({
     if (Object.keys(toApply).length === 0) return;
     setTagging(prev => new Set([...prev, q.Id!]));
     try {
-      await buildConnectClient(creds).send(new TagResourceCommand({
-        resourceArn: q.Arn, tags: toApply,
-      }));
+      await tagResource(buildConnectClient(creds), q.Arn, toApply);
       const newTags = { ...(q.tags ?? {}), ...toApply };
       setQueues(prev => prev.map(r => r.Id === q.Id ? { ...r, tags: newTags, tagsLoaded: true } : r));
       setOpError(e => { const n = { ...e }; delete n[q.Id!]; return n; });
@@ -558,9 +437,7 @@ function QueueBrowser({
       const q = queues.find(r => r.Id === qid);
       if (!q) continue;
       try {
-        await buildConnectClient(creds).send(new DeleteQueueCommand({
-          InstanceId: instanceId, Id: qid,
-        }));
+        await deleteQueueOp(buildConnectClient(creds), instanceId, qid);
         setQueues(prev => prev.filter(r => r.Id !== qid));
       } catch (e: any) {
         setOpError(prev => ({ ...prev, [qid]: e.message }));
@@ -578,9 +455,7 @@ function QueueBrowser({
       const toApply = missingTags(q);
       if (Object.keys(toApply).length === 0) continue;
       try {
-        await buildConnectClient(creds).send(new TagResourceCommand({
-          resourceArn: q.Arn, tags: toApply,
-        }));
+        await tagResource(buildConnectClient(creds), q.Arn, toApply);
         const newTags = { ...(q.tags ?? {}), ...toApply };
         setQueues(prev => prev.map(r => r.Id === q.Id ? { ...r, tags: newTags, tagsLoaded: true } : r));
       } catch (e: any) {
@@ -703,7 +578,7 @@ function QueueBrowser({
           </button>
           <span style={{ fontSize: 10, color: "var(--text-3)", ...MONO, alignSelf: "center" }}>
             DDB synced at {ddb.scannedAt.toLocaleTimeString()}
-            {" · "}{ddb.queueUsage.size} queue refs in {ddb.flows.length} flow{ddb.flows.length !== 1 ? "s" : ""}
+            {" · "}{ddb.queueUsage.size} queue refs in {ddb.flowDefs.length} flow{ddb.flowDefs.length !== 1 ? "s" : ""}
           </span>
         </div>
       )}
@@ -715,10 +590,86 @@ function QueueBrowser({
           border: "1px solid rgba(224,90,90,0.25)", borderRadius: "var(--radius)",
           fontSize: 10, color: "var(--red)", ...MONO, flexShrink: 0,
         }}>
-          ✕ {ddb.missingInConnect.length} DDB queue ref{ddb.missingInConnect.length !== 1 ? "s" : ""} missing from Connect:
-          {" "}{ddb.missingInConnect.slice(0, 5).join(", ")}{ddb.missingInConnect.length > 5 ? "…" : ""}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <span style={{ flex: 1, minWidth: 0 }}>
+              ✕ {ddb.missingInConnect.length} DDB queue ref{ddb.missingInConnect.length !== 1 ? "s" : ""} missing from Connect:
+              {" "}{ddb.missingInConnect.slice(0, 5).join(", ")}{ddb.missingInConnect.length > 5 ? "…" : ""}
+            </span>
+            <button className="btn" style={{ fontSize: 9, padding: "1px 8px", height: 20, flexShrink: 0 }}
+              disabled={creatingMissing}
+              onClick={createMissingQueues}
+              title="Create these queues in Connect, each with its referencing flow's HOO">
+              {creatingMissing ? "Creating…" : "＋ Create in Connect"}
+            </button>
+          </div>
+          {createMsg && <div style={{ marginTop: 4, color: "var(--text-2)" }}>{createMsg}</div>}
         </div>
       )}
+
+      {/* Duplicate-queue cleanup */}
+      <div style={{
+        padding: "6px 10px", background: "var(--bg-0)", border: "1px solid var(--border)",
+        borderRadius: "var(--radius)", fontSize: 10, ...MONO, flexShrink: 0,
+        display: "flex", flexDirection: "column", gap: 6,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <span style={{ color: "var(--text-2)", flex: 1 }}>
+            Duplicate cleanup — find <code style={{ color: "var(--cyan)" }}>-</code>/<code style={{ color: "var(--cyan)" }}>_</code>/space variants, repoint routing profiles &amp; quick connects to the queue your flows use, then delete the extras.
+          </span>
+          <button className="btn" style={{ fontSize: 9, padding: "1px 8px", height: 20, flexShrink: 0 }}
+            disabled={dupScanning || dupApplying}
+            onClick={findDuplicates}>
+            {dupScanning ? "Scanning deps…" : "⧉ Find duplicates"}
+          </button>
+        </div>
+
+        {dupPlans && dupPlans.length > 0 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            {dupPlans.map(p => (
+              <div key={p.canonical.Id} style={{
+                padding: "4px 6px", background: "var(--bg-3)", border: "1px solid var(--border)",
+                borderRadius: "var(--radius)", display: "flex", flexDirection: "column", gap: 2,
+              }}>
+                <div>
+                  <span style={{ color: "var(--green)" }}>✓ keep</span>{" "}
+                  <span style={{ color: "var(--text-0)" }}>{p.canonical.Name}</span>
+                </div>
+                {p.duplicates.map(d => (
+                  <div key={d.Id} style={{ color: "var(--text-3)", paddingLeft: 12 }}>
+                    <span style={{ color: "var(--red)" }}>✕ delete</span> {d.Name}
+                  </div>
+                ))}
+                <div style={{ color: "var(--text-3)", paddingLeft: 12 }}>
+                  {p.repoints.length} dependenc{p.repoints.length !== 1 ? "ies" : "y"} to repoint
+                  {p.repoints.length > 0 && (
+                    <> ({[...new Set(p.repoints.map(r => r.dependency.kind))].join(", ")})</>
+                  )}
+                </div>
+              </div>
+            ))}
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <button className="btn btn-danger" style={{ fontSize: 9, padding: "1px 8px", height: 20 }}
+                disabled={dupApplying}
+                onClick={applyCleanup}>
+                {dupApplying ? "Applying…" : `Apply cleanup (${dupPlans.length} cluster${dupPlans.length !== 1 ? "s" : ""})`}
+              </button>
+              <button className="btn btn-ghost" style={{ fontSize: 9, padding: "1px 8px", height: 20 }}
+                disabled={dupApplying} onClick={() => { setDupPlans(null); setDupManual([]); setDupMsg(""); }}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {dupManual.length > 0 && (
+          <div style={{ color: "var(--orange)" }}>
+            ⚠ {dupManual.length} duplicate cluster{dupManual.length !== 1 ? "s" : ""} need a manual canonical pick (no queue matches a flow):{" "}
+            {dupManual.map(c => c.queues.map(q => q.Name).join(" / ")).join("; ")}
+          </div>
+        )}
+
+        {dupMsg && <div style={{ color: "var(--text-2)" }}>{dupMsg}</div>}
+      </div>
 
       {error && <div style={{ fontSize: 11, color: "var(--red)", ...MONO, flexShrink: 0 }}>{error}</div>}
 
@@ -811,9 +762,15 @@ function QueueBrowser({
                     {isTagging ? "…" : "⚐"}
                   </button>
                 )}
+                <button className="btn btn-ghost"
+                  style={{ fontSize: 11, padding: "1px 5px", height: 20, flexShrink: 0 }}
+                  onClick={() => startReassignDelete(q)} disabled={isDeleting}
+                  title="Reassign dependencies to another queue, then delete">
+                  ⤳
+                </button>
                 <button className="btn btn-ghost btn-danger"
                   style={{ fontSize: 12, padding: "1px 5px", height: 20, flexShrink: 0 }}
-                  onClick={() => deleteQueue(q)} disabled={isDeleting} title="Delete queue">
+                  onClick={() => deleteQueue(q)} disabled={isDeleting} title="Delete queue (fails if still referenced)">
                   {isDeleting ? "…" : "×"}
                 </button>
                 <span style={{ fontSize: 10, color: "var(--text-3)", ...MONO, cursor: "pointer", flexShrink: 0 }}
@@ -959,6 +916,56 @@ function QueueBrowser({
           {selected.size > 0 && ` · ${selected.size} selected`}
         </div>
       )}
+
+      {/* Reassign-dependencies-&-delete modal */}
+      {reassign && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }}
+          onClick={() => !reassignBusy && setReassign(null)}>
+          <div style={{ background: "var(--bg-2)", border: "1px solid var(--border-hi)", borderRadius: "var(--radius-lg)", width: 460, maxHeight: "80vh", overflow: "auto", padding: 16, display: "flex", flexDirection: "column", gap: 10 }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-0)" }}>
+              Delete <span style={{ ...MONO }}>{reassign.queue.Name}</span>
+            </div>
+
+            {reassign.deps.length > 0 ? (
+              <>
+                <div style={{ fontSize: 11, color: "var(--text-2)" }}>
+                  {reassign.deps.length} dependenc{reassign.deps.length !== 1 ? "ies" : "y"} reference this queue. Repoint them to:
+                </div>
+                <select className="input" style={{ fontSize: 12 }} value={reassignTarget}
+                  onChange={e => setReassignTarget(e.target.value)}>
+                  <option value="">— Choose a queue —</option>
+                  {queues.filter(x => x.Id !== reassign.queue.Id).map(x => (
+                    <option key={x.Id} value={x.Id}>{x.Name}</option>
+                  ))}
+                </select>
+                <div style={{ display: "flex", flexDirection: "column", gap: 3, maxHeight: 160, overflow: "auto" }}>
+                  {reassign.deps.map((d, i) => (
+                    <div key={i} style={{ fontSize: 10, ...MONO, color: "var(--text-3)", padding: "2px 6px", background: "var(--bg-0)", borderRadius: "var(--radius)" }}>
+                      {d.kind === "routing-profile" ? "▣ routing profile" : "↪ quick connect"}: <span style={{ color: "var(--text-1)" }}>{d.name}</span>
+                      {d.channel ? ` (${d.channel})` : ""}
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div style={{ fontSize: 11, color: "var(--text-2)" }}>{reassignMsg || "Checking dependencies…"}</div>
+            )}
+
+            {reassignMsg && reassign.deps.length > 0 && (
+              <div style={{ fontSize: 10, color: "var(--red)", ...MONO }}>{reassignMsg}</div>
+            )}
+
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <button className="btn btn-ghost" disabled={reassignBusy} onClick={() => setReassign(null)}>Cancel</button>
+              <button className="btn btn-danger" disabled={reassignBusy}
+                onClick={confirmReassignDelete}>
+                {reassignBusy ? "Working…" : reassign.deps.length > 0 ? "Repoint & delete" : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -978,6 +985,48 @@ function HooBrowser({ creds, instanceId }: { creds: AwsCredentials; instanceId: 
   const [deleting, setDeleting] = useState<string | null>(null);
   const [opError, setOpError] = useState<Record<string, string>>({});
   const [tagging, setTagging] = useState<string | null>(null);
+
+  // Manual "reassign queues & delete" for a HOO.
+  const [reassign, setReassign] = useState<{ hoo: HoursOfOperationSummary; queues: { queueId: string; queueName: string }[] } | null>(null);
+  const [reassignTarget, setReassignTarget] = useState("");
+  const [reassignBusy, setReassignBusy] = useState(false);
+  const [reassignMsg, setReassignMsg] = useState("");
+
+  const startReassignHoo = async (h: HoursOfOperationSummary) => {
+    if (!h.Id) return;
+    setReassign({ hoo: h, queues: [] }); setReassignTarget(""); setReassignBusy(true);
+    setReassignMsg("Finding queues that use this HOO…");
+    try {
+      const qs = await findQueuesUsingHoo(buildConnectClient(creds), instanceId, h.Id, m => setReassignMsg(m));
+      setReassign({ hoo: h, queues: qs });
+      setReassignMsg(qs.length ? "" : "No queues use this HOO — safe to delete.");
+    } catch (e: any) {
+      setReassignMsg(e?.message ?? "Scan failed");
+    } finally {
+      setReassignBusy(false);
+    }
+  };
+
+  const confirmReassignHoo = async () => {
+    if (!reassign?.hoo.Id) return;
+    const { hoo, queues } = reassign;
+    if (queues.length > 0 && !reassignTarget) { setReassignMsg("Choose a HOO to repoint these queues to."); return; }
+    setReassignBusy(true); setReassignMsg("");
+    try {
+      const r = await reassignAndDeleteHoo(buildConnectClient(creds), instanceId, hoo.Id!, queues, reassignTarget || hoo.Id!, m => setReassignMsg(m));
+      if (r.errors.length) {
+        setReassignMsg(`${r.errors.length} repoint(s) failed — HOO not deleted: ${r.errors.map(e => e.error).join("; ")}`);
+        setReassignBusy(false);
+        return;
+      }
+      setHoos(prev => prev.filter(x => x.Id !== hoo.Id));
+      setReassign(null); setReassignTarget("");
+    } catch (e: any) {
+      setReassignMsg(e?.message ?? "Failed");
+    } finally {
+      setReassignBusy(false);
+    }
+  };
 
   const fetchHoos = async () => {
     setLoading(true); setError("");
@@ -1009,7 +1058,7 @@ function HooBrowser({ creds, instanceId }: { creds: AwsCredentials; instanceId: 
   };
 
   const loadHooTags = (h: HoursOfOperationSummary) => {
-    const hid = h.HoursOfOperationId!;
+    const hid = h.Id!;
     if (hooTags[hid] !== undefined || !h.Arn) return;
     buildConnectClient(creds).send(new ListTagsForResourceCommand({ resourceArn: h.Arn }))
       .then(r => setHooTags(prev => ({ ...prev, [hid]: r.tags ?? {} })))
@@ -1017,15 +1066,13 @@ function HooBrowser({ creds, instanceId }: { creds: AwsCredentials; instanceId: 
   };
 
   const applySourceTag = async (h: HoursOfOperationSummary) => {
-    const hid = h.HoursOfOperationId!;
+    const hid = h.Id!;
     if (!h.Arn) return;
     const current = hooTags[hid] ?? {};
     if (current["source"] === "ivr-editor") return;
     setTagging(hid);
     try {
-      await buildConnectClient(creds).send(new TagResourceCommand({
-        resourceArn: h.Arn, tags: { source: "ivr-editor" },
-      }));
+      await tagResource(buildConnectClient(creds), h.Arn, { source: "ivr-editor" });
       setHooTags(prev => ({ ...prev, [hid]: { ...current, source: "ivr-editor" } }));
     } catch (e: any) {
       setOpError(prev => ({ ...prev, [hid]: e.message }));
@@ -1033,13 +1080,13 @@ function HooBrowser({ creds, instanceId }: { creds: AwsCredentials; instanceId: 
   };
 
   const startRename = (h: HoursOfOperationSummary) => {
-    setRenameDraft(prev => ({ ...prev, [h.HoursOfOperationId!]: h.Name ?? "" }));
-    setRenaming(h.HoursOfOperationId!);
-    fetchDetail(h.HoursOfOperationId!);
+    setRenameDraft(prev => ({ ...prev, [h.Id!]: h.Name ?? "" }));
+    setRenaming(h.Id!);
+    fetchDetail(h.Id!);
   };
 
   const commitRename = async (h: HoursOfOperationSummary) => {
-    const hid = h.HoursOfOperationId!;
+    const hid = h.Id!;
     const newName = renameDraft[hid]?.trim();
     setRenaming(null);
     if (!newName || newName === h.Name) return;
@@ -1050,21 +1097,21 @@ function HooBrowser({ creds, instanceId }: { creds: AwsCredentials; instanceId: 
         InstanceId: instanceId, HoursOfOperationId: hid, Name: newName,
         TimeZone: det.TimeZone ?? "UTC", Config: det.Config ?? [],
       }));
-      setHoos(prev => prev.map(r => r.HoursOfOperationId === hid ? { ...r, Name: newName } : r));
+      setHoos(prev => prev.map(r => r.Id === hid ? { ...r, Name: newName } : r));
       setDetail(prev => ({ ...prev, [hid]: { ...prev[hid], Name: newName } }));
       setOpError(e => { const n = { ...e }; delete n[hid]; return n; });
     } catch (e: any) { setOpError(prev => ({ ...prev, [hid]: e.message })); }
   };
 
   const deleteHoo = async (h: HoursOfOperationSummary) => {
-    const hid = h.HoursOfOperationId!;
+    const hid = h.Id!;
     if (!window.confirm(`Delete HOO "${h.Name}"?\n\nThis will break any queues referencing it.`)) return;
     setDeleting(hid);
     try {
       await buildConnectClient(creds).send(new DeleteHoursOfOperationCommand({
         InstanceId: instanceId, HoursOfOperationId: hid,
       }));
-      setHoos(prev => prev.filter(r => r.HoursOfOperationId !== hid));
+      setHoos(prev => prev.filter(r => r.Id !== hid));
       if (expanded === hid) setExpanded(null);
     } catch (e: any) { setOpError(prev => ({ ...prev, [hid]: e.message })); }
     finally { setDeleting(null); }
@@ -1096,7 +1143,7 @@ function HooBrowser({ creds, instanceId }: { creds: AwsCredentials; instanceId: 
       <div style={{ flex: 1, minHeight: 0, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4, paddingRight: 2 }}>
         {/* FIX: added _hi index, replaced `d` with `detail[hid]` in JSX */}
         {filtered.map((h, _hi) => {
-          const hid = h.HoursOfOperationId ?? h.Arn ?? `hoo-${_hi}`;
+          const hid = h.Id ?? h.Arn ?? `hoo-${_hi}`;
           const isOpen = expanded === hid;
           const isRenaming = renaming === hid;
           const isDeleting = deleting === hid;
@@ -1135,9 +1182,12 @@ function HooBrowser({ creds, instanceId }: { creds: AwsCredentials; instanceId: 
                 )}
                 <button className="btn btn-ghost" style={{ fontSize: 10, padding: "1px 6px", height: 20, flexShrink: 0 }}
                   onClick={() => startRename(h)} title="Rename">✎</button>
+                <button className="btn btn-ghost" style={{ fontSize: 11, padding: "1px 5px", height: 20, flexShrink: 0 }}
+                  onClick={() => startReassignHoo(h)} disabled={isDeleting}
+                  title="Reassign queues to another HOO, then delete">⤳</button>
                 <button className="btn btn-ghost btn-danger"
                   style={{ fontSize: 12, padding: "1px 5px", height: 20, flexShrink: 0 }}
-                  onClick={() => deleteHoo(h)} disabled={isDeleting}>
+                  onClick={() => deleteHoo(h)} disabled={isDeleting} title="Delete HOO (fails if queues use it)">
                   {isDeleting ? "…" : "×"}
                 </button>
                 <span style={{ fontSize: 10, color: "var(--text-3)", ...MONO, cursor: "pointer", flexShrink: 0 }}
@@ -1233,6 +1283,54 @@ function HooBrowser({ creds, instanceId }: { creds: AwsCredentials; instanceId: 
           {filtered.length} of {hoos.length} HOOs
         </div>
       )}
+
+      {/* Reassign-queues-&-delete-HOO modal */}
+      {reassign && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }}
+          onClick={() => !reassignBusy && setReassign(null)}>
+          <div style={{ background: "var(--bg-2)", border: "1px solid var(--border-hi)", borderRadius: "var(--radius-lg)", width: 460, maxHeight: "80vh", overflow: "auto", padding: 16, display: "flex", flexDirection: "column", gap: 10 }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-0)" }}>
+              Delete HOO <span style={{ ...MONO }}>{reassign.hoo.Name}</span>
+            </div>
+
+            {reassign.queues.length > 0 ? (
+              <>
+                <div style={{ fontSize: 11, color: "var(--text-2)" }}>
+                  {reassign.queues.length} queue{reassign.queues.length !== 1 ? "s" : ""} use this HOO. Repoint them to:
+                </div>
+                <select className="input" style={{ fontSize: 12 }} value={reassignTarget}
+                  onChange={e => setReassignTarget(e.target.value)}>
+                  <option value="">— Choose a HOO —</option>
+                  {hoos.filter(x => x.Id !== reassign.hoo.Id).map(x => (
+                    <option key={x.Id} value={x.Id}>{x.Name}</option>
+                  ))}
+                </select>
+                <div style={{ display: "flex", flexDirection: "column", gap: 3, maxHeight: 160, overflow: "auto" }}>
+                  {reassign.queues.map(q => (
+                    <div key={q.queueId} style={{ fontSize: 10, ...MONO, color: "var(--text-1)", padding: "2px 6px", background: "var(--bg-0)", borderRadius: "var(--radius)" }}>
+                      {q.queueName}
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div style={{ fontSize: 11, color: "var(--text-2)" }}>{reassignMsg || "Checking…"}</div>
+            )}
+
+            {reassignMsg && reassign.queues.length > 0 && (
+              <div style={{ fontSize: 10, color: "var(--red)", ...MONO }}>{reassignMsg}</div>
+            )}
+
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <button className="btn btn-ghost" disabled={reassignBusy} onClick={() => setReassign(null)}>Cancel</button>
+              <button className="btn btn-danger" disabled={reassignBusy} onClick={confirmReassignHoo}>
+                {reassignBusy ? "Working…" : reassign.queues.length > 0 ? "Repoint & delete" : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1245,15 +1343,104 @@ function DdbFlowsPanel({
   onScan,
   loading,
   progressMsg,
+  onLoadFlow,
+  hooNames,
 }: {
   creds: AwsCredentials;
   ddb: DdbState | null;
   onScan: () => void;
   loading: boolean;
   progressMsg: string;
+  onLoadFlow?: (ir: IR, meta?: Partial<FlowMeta>) => void;
+  /** id → name for the instance's HOOs, to resolve flow.hooArn to a real name. */
+  hooNames?: Map<string, string>;
 }) {
   const [filter, setFilter] = useState("");
   const [expandedFlow, setExpandedFlow] = useState<string | null>(null);
+  const [loadingFlow, setLoadingFlow] = useState<string | null>(null);
+  const [loadErr, setLoadErr] = useState<string>("");
+  const [deletingFlow, setDeletingFlow] = useState<string | null>(null);
+  const [pruningFlow, setPruningFlow] = useState<string | null>(null);
+
+  const handlePruneSteps = async (flow: DdbFlow) => {
+    setPruningFlow(flow.targetFlowId);
+    setLoadErr("");
+    try {
+      const { ir } = await loadFlowFromDdb(creds, flow.targetFlowId);
+      const dead = unreachableStepIds(ir.nodes, ir.start_step ?? flow.startStep);
+      if (dead.length === 0) { window.alert("No unreachable steps in this flow."); return; }
+      if (!window.confirm(
+        `Delete ${dead.length} unreachable step${dead.length !== 1 ? "s" : ""} from "${flow.targetFlowId}"?\n\n${dead.slice(0, 12).join(", ")}${dead.length > 12 ? "…" : ""}\n\nThis cannot be undone.`,
+      )) return;
+      await deleteSteps(creds, flow.targetFlowId, dead);
+      onScan();
+    } catch (e: any) {
+      setLoadErr(e?.message ?? "Prune failed");
+    } finally {
+      setPruningFlow(null);
+    }
+  };
+
+  const handleDeleteFlow = async (flow: DdbFlow) => {
+    const phones = flow.metas.map(m => m.dialedNumber).filter(Boolean);
+    if (!window.confirm(
+      `Delete flow "${flow.targetFlowId}" (${flow.stepCount} steps${phones.length ? ` + ${phones.length} phone META row(s)` : ""}) from DynamoDB?\n\nThis cannot be undone.`,
+    )) return;
+    setDeletingFlow(flow.targetFlowId);
+    try {
+      await deleteFlowFromDdb(creds, flow);
+      onScan(); // re-scan so the list reflects the deletion
+    } catch (e: any) {
+      setLoadErr(e?.message ?? "Delete failed");
+    } finally {
+      setDeletingFlow(null);
+    }
+  };
+
+  // Inline META editing (per phone row).
+  const [editMeta, setEditMeta] = useState<{ original: DdbFlowMeta; draft: DdbFlowMeta } | null>(null);
+  const [savingMeta, setSavingMeta] = useState(false);
+  const saveMeta = async () => {
+    if (!editMeta) return;
+    if (!editMeta.draft.dialedNumber.trim()) { setLoadErr("Dialed number is required."); return; }
+    setSavingMeta(true);
+    try {
+      await editFlowMeta(creds, editMeta.original, editMeta.draft);
+      setEditMeta(null);
+      onScan();
+    } catch (e: any) {
+      setLoadErr(e?.message ?? "Save failed");
+    } finally {
+      setSavingMeta(false);
+    }
+  };
+
+  const handleLoadFlow = async (flow: DdbFlow) => {
+    if (!onLoadFlow) return;
+    setLoadingFlow(flow.targetFlowId);
+    setLoadErr("");
+    try {
+      const { ir } = await loadFlowFromDdb(creds, flow.targetFlowId);
+      const m0 = flow.metas[0];
+      // META often lives only under the dialed number, so enrich from the scan.
+      const meta: Partial<FlowMeta> = {
+        dialed_number: m0?.dialedNumber ?? "",
+        target_flow_id: flow.targetFlowId,
+        start_step: ir.start_step ?? flow.startStep ?? "",
+        hoo_arn: ir.hoo_arn ?? flow.hooArn,
+        instance_id: flow.instanceId,
+        description: m0?.description,
+      };
+      onLoadFlow(
+        { ...ir, start_step: ir.start_step ?? flow.startStep, hoo_arn: ir.hoo_arn ?? flow.hooArn, meta },
+        meta,
+      );
+    } catch (e: any) {
+      setLoadErr(e?.message ?? "Load failed");
+    } finally {
+      setLoadingFlow(null);
+    }
+  };
 
   if (!ddb && !loading) {
     return (
@@ -1288,20 +1475,13 @@ function DdbFlowsPanel({
     );
   }
 
-  const filteredFlows = (ddb?.flows ?? []).filter(f =>
+  const q = filter.toLowerCase();
+  const filteredFlows = (ddb?.flowDefs ?? []).filter(f =>
     !filter ||
-    f.dialedNumber.includes(filter) ||
-    f.targetFlowId.toLowerCase().includes(filter.toLowerCase()) ||
-    (f.description ?? "").toLowerCase().includes(filter.toLowerCase())
+    f.targetFlowId.toLowerCase().includes(q) ||
+    f.metas.some(m => m.dialedNumber.includes(filter) || (m.description ?? "").toLowerCase().includes(q)) ||
+    f.queues.some(qu => qu.skillWhisper.toLowerCase().includes(q))
   );
-
-  const queuesByFlow = new Map<string, DdbQueueUsage[]>();
-  for (const usage of (ddb?.queueUsage.values() ?? [])) {
-    for (const flow of usage.flows) {
-      if (!queuesByFlow.has(flow.dialedNumber)) queuesByFlow.set(flow.dialedNumber, []);
-      queuesByFlow.get(flow.dialedNumber)!.push(usage);
-    }
-  }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10, height: "100%", minHeight: 0 }}>
@@ -1322,7 +1502,7 @@ function DdbFlowsPanel({
       }}>
         {(
           [
-            ["Flows", ddb?.flows.length ?? 0, "var(--text-1)"],
+            ["Flows", ddb?.flowDefs.length ?? 0, "var(--text-1)"],
             ["Queue refs", ddb?.queueUsage.size ?? 0, "var(--cyan)"],
             ["Missing in Connect", ddb?.missingInConnect.length ?? 0,
               (ddb?.missingInConnect.length ?? 0) > 0 ? "var(--red)" : "var(--green)"],
@@ -1350,28 +1530,33 @@ function DdbFlowsPanel({
       )}
 
       <div style={{ flex: 1, minHeight: 0, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4, paddingRight: 2 }}>
-        {filteredFlows.map((flow, _fi) => {
-          const isOpen = expandedFlow === flow.dialedNumber;
-          const flowQueues = queuesByFlow.get(flow.dialedNumber) ?? [];
+        {filteredFlows.map((flow) => {
+          const isOpen = expandedFlow === flow.targetFlowId;
+          const phones = flow.metas.map(m => m.dialedNumber).filter(Boolean);
+          const hooId = flow.hooArn ? hooIdFromArn(flow.hooArn) : "";
+          const hooName = hooId ? hooNames?.get(hooId) : undefined;
           return (
-            <div key={flow.dialedNumber || `flow-${_fi}`} style={{
+            <div key={flow.targetFlowId} style={{
               background: "var(--bg-3)", border: "1px solid var(--border)",
               borderRadius: "var(--radius)", overflow: "hidden", flexShrink: 0,
             }}>
               <div style={{ padding: "7px 10px", display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}
-                onClick={() => setExpandedFlow(isOpen ? null : flow.dialedNumber)}>
+                onClick={() => setExpandedFlow(isOpen ? null : flow.targetFlowId)}>
                 <Tag label="FLOW" color="var(--purple)" bg="rgba(162,90,232,0.1)" border="rgba(162,90,232,0.3)" />
                 <span style={{ fontSize: 11, ...MONO, color: "var(--text-0)", flex: 1 }}>
-                  {flow.dialedNumber}
+                  {flow.targetFlowId}
                 </span>
-                {flow.description && (
-                  <span style={{ fontSize: 10, color: "var(--text-3)", fontFamily: "'IBM Plex Sans', sans-serif", flex: 1 }}>
-                    {flow.description}
+                {phones.length > 0 ? (
+                  <span style={{ fontSize: 9, color: "var(--text-2)", ...MONO }} title={phones.join(", ")}>
+                    {phones.length === 1 ? phones[0] : `${phones.length} ☎`}
                   </span>
+                ) : (
+                  <span style={{ fontSize: 9, color: "var(--orange)", ...MONO }}>no phone</span>
                 )}
                 <span style={{ fontSize: 9, color: "var(--text-3)", ...MONO }}>
-                  {flowQueues.length} queue{flowQueues.length !== 1 ? "s" : ""}
+                  {flow.queues.length} queue{flow.queues.length !== 1 ? "s" : ""}
                 </span>
+                <span style={{ fontSize: 9, color: "var(--text-3)", ...MONO }}>{flow.stepCount} steps</span>
                 <span style={{ fontSize: 10, color: "var(--text-3)", ...MONO }}>
                   {isOpen ? "▲" : "▼"}
                 </span>
@@ -1384,9 +1569,6 @@ function DdbFlowsPanel({
                 }}>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                     <div style={{ fontSize: 10, color: "var(--text-3)", ...MONO }}>
-                      <span style={{ color: "var(--text-2)" }}>Flow ID:</span> {flow.targetFlowId}
-                    </div>
-                    <div style={{ fontSize: 10, color: "var(--text-3)", ...MONO }}>
                       <span style={{ color: "var(--text-2)" }}>Start:</span> {flow.startStep ?? "—"}
                     </div>
                     {flow.instanceId && (
@@ -1395,36 +1577,60 @@ function DdbFlowsPanel({
                       </div>
                     )}
                     {flow.hooArn && (
-                      <div style={{ fontSize: 10, color: "var(--text-3)", ...MONO, wordBreak: "break-all" }}>
-                        <span style={{ color: "var(--text-2)" }}>HOO:</span> …{flow.hooArn.slice(-20)}
+                      <div style={{ fontSize: 10, color: "var(--text-3)", ...MONO, wordBreak: "break-all", gridColumn: "1 / -1" }}>
+                        <span style={{ color: "var(--text-2)" }}>HOO:</span>{" "}
+                        {hooName ?? `…${flow.hooArn.slice(-12)}`}{" "}
+                        {hooNames && (hooName
+                          ? <span style={{ color: "var(--green)" }}>✓</span>
+                          : <span style={{ color: "var(--red)" }}>✕ no matching HOO</span>)}
                       </div>
                     )}
                   </div>
 
-                  {flowQueues.length > 0 && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                    {flow.metas.map((m, i) => (
+                      <div key={i} style={{ fontSize: 10, color: "var(--text-3)", ...MONO, display: "flex", alignItems: "center", gap: 6 }}>
+                        <span style={{ color: "var(--text-2)" }}>☎</span> {m.dialedNumber}
+                        {m.description && <span style={{ color: "var(--text-3)" }}>— {m.description}</span>}
+                        <button className="btn btn-ghost" style={{ fontSize: 9, padding: "0 5px", height: 18 }}
+                          onClick={() => setEditMeta({ original: m, draft: { ...m } })} title="Edit META">✎</button>
+                      </div>
+                    ))}
+                    {flow.metas.length === 0 && (
+                      <button className="btn btn-ghost" style={{ fontSize: 9, padding: "1px 8px", height: 20, alignSelf: "flex-start" }}
+                        onClick={() => setEditMeta({
+                          original: { dialedNumber: "", targetFlowId: flow.targetFlowId },
+                          draft: { dialedNumber: "", targetFlowId: flow.targetFlowId, hooArn: flow.hooArn, startStep: flow.startStep },
+                        })}>
+                        ＋ Add phone / META
+                      </button>
+                    )}
+                  </div>
+
+                  {flow.queues.length > 0 && (
                     <div>
                       <div style={{
                         fontSize: 9, fontWeight: 600, letterSpacing: "0.08em",
                         textTransform: "uppercase", color: "var(--text-3)", ...MONO, marginBottom: 4
                       }}>
-                        Queues ({flowQueues.length})
+                        Queues ({flow.queues.length})
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                        {flowQueues.map(usage => (
-                          <div key={usage.skillWhisper} style={{
+                        {flow.queues.map(qu => (
+                          <div key={qu.skillWhisper} style={{
                             display: "flex", alignItems: "center", gap: 8,
                             padding: "3px 6px", background: "var(--bg-3)",
                             borderRadius: "var(--radius)", border: "1px solid var(--border)",
                           }}>
                             <span style={{ fontSize: 10, ...MONO, color: "var(--text-1)", flex: 1 }}>
-                              {usage.skillWhisper}
+                              {qu.skillWhisper}
                             </span>
-                            {usage.queueSkill && (
+                            {qu.queueSkill && (
                               <span style={{ fontSize: 9, ...MONO, color: "var(--orange)" }}>
-                                #{usage.queueSkill}
+                                #{qu.queueSkill}
                               </span>
                             )}
-                            {ddb?.missingInConnect.includes(usage.skillWhisper) ? (
+                            {ddb?.missingInConnect.includes(qu.skillWhisper) ? (
                               <span style={{ fontSize: 9, ...MONO, color: "var(--red)" }}>✕ missing</span>
                             ) : (
                               <span style={{ fontSize: 9, ...MONO, color: "var(--green)" }}>✓</span>
@@ -1435,15 +1641,39 @@ function DdbFlowsPanel({
                     </div>
                   )}
 
-                  <div style={{ display: "flex", gap: 6 }}>
-                    <button className="btn btn-ghost" style={{ fontSize: 9, padding: "1px 8px", height: 20 }}
-                      onClick={() => navigator.clipboard.writeText(flow.dialedNumber)}>
-                      Copy number
-                    </button>
+                  <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                    {onLoadFlow && (
+                      <button className="btn btn-primary" style={{ fontSize: 9, padding: "1px 8px", height: 20 }}
+                        disabled={loadingFlow === flow.targetFlowId}
+                        onClick={() => handleLoadFlow(flow)}>
+                        {loadingFlow === flow.targetFlowId ? "Loading…" : "↪ Load flow"}
+                      </button>
+                    )}
                     <button className="btn btn-ghost" style={{ fontSize: 9, padding: "1px 8px", height: 20 }}
                       onClick={() => navigator.clipboard.writeText(flow.targetFlowId)}>
                       Copy flow ID
                     </button>
+                    {phones.length > 0 && (
+                      <button className="btn btn-ghost" style={{ fontSize: 9, padding: "1px 8px", height: 20 }}
+                        onClick={() => navigator.clipboard.writeText(phones.join(","))}>
+                        Copy phone{phones.length !== 1 ? "s" : ""}
+                      </button>
+                    )}
+                    <button className="btn btn-ghost" style={{ fontSize: 9, padding: "1px 8px", height: 20, marginLeft: "auto" }}
+                      disabled={pruningFlow === flow.targetFlowId}
+                      onClick={() => handlePruneSteps(flow)}
+                      title="Delete steps unreachable from the start step">
+                      {pruningFlow === flow.targetFlowId ? "Pruning…" : "✂ Prune unused steps"}
+                    </button>
+                    <button className="btn btn-ghost btn-danger" style={{ fontSize: 9, padding: "1px 8px", height: 20 }}
+                      disabled={deletingFlow === flow.targetFlowId}
+                      onClick={() => handleDeleteFlow(flow)}
+                      title="Delete this flow's rows from DynamoDB">
+                      {deletingFlow === flow.targetFlowId ? "Deleting…" : "🗑 Delete flow"}
+                    </button>
+                    {loadErr && loadingFlow === null && (
+                      <span style={{ fontSize: 9, ...MONO, color: "var(--red)" }}>{loadErr}</span>
+                    )}
                   </div>
                 </div>
               )}
@@ -1459,9 +1689,50 @@ function DdbFlowsPanel({
 
       {filteredFlows.length > 0 && (
         <div style={{ fontSize: 10, color: "var(--text-3)", ...MONO, flexShrink: 0 }}>
-          {filteredFlows.length} of {ddb?.flows.length ?? 0} flows
+          {filteredFlows.length} of {ddb?.flowDefs.length ?? 0} flows
         </div>
       )}
+
+      {/* META edit modal */}
+      {editMeta && (() => {
+        const d = editMeta.draft;
+        const set = (patch: Partial<DdbFlowMeta>) => setEditMeta(em => em ? { ...em, draft: { ...em.draft, ...patch } } : em);
+        const field = (label: string, value: string, onChange: (v: string) => void, ph?: string) => (
+          <label style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <span style={{ fontSize: 9, color: "var(--text-3)", ...MONO }}>{label}</span>
+            <input className="input" style={{ fontSize: 12 }} value={value} placeholder={ph}
+              onChange={e => onChange(e.target.value)} spellCheck={false} />
+          </label>
+        );
+        return (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }}
+            onClick={() => !savingMeta && setEditMeta(null)}>
+            <div style={{ background: "var(--bg-2)", border: "1px solid var(--border-hi)", borderRadius: "var(--radius-lg)", width: 460, maxHeight: "85vh", overflow: "auto", padding: 16, display: "flex", flexDirection: "column", gap: 10 }}
+              onClick={e => e.stopPropagation()}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-0)" }}>
+                {editMeta.original.dialedNumber ? "Edit META" : "Add META"}
+              </div>
+              {field("Dialed number (phone) — partition key", d.dialedNumber, v => set({ dialedNumber: v }), "+18005551234")}
+              {field("Target flow id", d.targetFlowId, v => set({ targetFlowId: v }))}
+              {field("Start step", d.startStep ?? "", v => set({ startStep: v }), "start")}
+              {field("HOO ARN / id", d.hooArn ?? "", v => set({ hooArn: v }))}
+              {field("Instance id", d.instanceId ?? "", v => set({ instanceId: v }))}
+              {field("Description", d.description ?? "", v => set({ description: v }))}
+              {editMeta.original.dialedNumber && editMeta.original.dialedNumber !== d.dialedNumber && (
+                <div style={{ fontSize: 9, color: "var(--orange)", ...MONO }}>
+                  ⚠ Changing the phone number rewrites the key (delete old + write new).
+                </div>
+              )}
+              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                <button className="btn btn-ghost" disabled={savingMeta} onClick={() => setEditMeta(null)}>Cancel</button>
+                <button className="btn btn-primary" disabled={savingMeta} onClick={saveMeta}>
+                  {savingMeta ? "Saving…" : "Save"}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
@@ -1470,25 +1741,29 @@ function DdbFlowsPanel({
 
 interface Props {
   auth: UseAwsCredentialsReturn;
+  onLoadFlow?: (ir: IR, meta?: Partial<FlowMeta>) => void;
 }
 
 type PanelTab = "queues" | "hoo" | "ddb";
 
-export default function AccountPanel({ auth }: Props) {
+export default function AccountPanel({ auth, onLoadFlow }: Props) {
   const { credentials, instances, instancesLoading, fetchInstances } = auth;
   const [selectedInstanceId, setSelectedInstanceId] = useState<string>(
     () => credentials?.instance_id ?? ""
   );
   const [activePanel, setActivePanel] = useState<PanelTab>("queues");
 
-  const [ddb, setDdb] = useState<DdbState | null>(null);
-  const [ddbLoading, setDdbLoading] = useState(false);
-  const [ddbError, setDdbError] = useState("");
-  const [ddbProgress, setDdbProgress] = useState("");
+  // DDB scan is cached app-wide (scanned once per login) — read from the store.
+  const ddb = useDdbStore(s => s.ddb);
+  const ddbLoading = useDdbStore(s => s.status === "scanning");
+  const ddbError = useDdbStore(s => s.error);
+  const ddbProgress = useDdbStore(s => s.progress);
+  const ddbScan = useDdbStore(s => s.scan);
+  const ddbPatch = useDdbStore(s => s.patch);
 
   const handleMissingQueues = useCallback((missing: string[]) => {
-    setDdb(prev => prev ? { ...prev, missingInConnect: missing } : prev);
-  }, []);
+    ddbPatch(prev => prev ? { ...prev, missingInConnect: missing } : prev);
+  }, [ddbPatch]);
 
   useEffect(() => {
     if (!selectedInstanceId && instances.length > 0) {
@@ -1506,22 +1781,33 @@ export default function AccountPanel({ auth }: Props) {
 
   const selectedInstance = instances.find(i => i.id === selectedInstanceId);
 
+  // HOO id → name, so the Flows panel can resolve hoo_arn to a real HOO name.
+  const [hooNames, setHooNames] = useState<Map<string, string>>(new Map());
+  useEffect(() => {
+    if (!credentials || !selectedInstanceId) { setHooNames(new Map()); return; }
+    let cancelled = false;
+    (async () => {
+      try {
+        const client = buildConnectClient(credentials);
+        const m = new Map<string, string>();
+        let next: string | undefined;
+        do {
+          const resp = await client.send(new ListHoursOfOperationsCommand({
+            InstanceId: selectedInstanceId, ...(next ? { NextToken: next } : {}),
+          }));
+          for (const h of resp.HoursOfOperationSummaryList ?? []) if (h.Id) m.set(h.Id, h.Name ?? h.Id);
+          next = resp.NextToken;
+        } while (next);
+        if (!cancelled) setHooNames(m);
+      } catch { /* non-fatal — flow panel falls back to the raw id */ }
+    })();
+    return () => { cancelled = true; };
+  }, [credentials, selectedInstanceId]);
+
   const handleDdbScan = useCallback(async () => {
     if (!credentials) return;
-    setDdbLoading(true);
-    setDdbError("");
-    setDdbProgress("Starting scan…");
-    try {
-      const result = await scanDdb(credentials, setDdbProgress);
-      setDdb(result);
-      setDdbProgress("");
-    } catch (e: any) {
-      setDdbError(e.message ?? "DDB scan failed");
-      setDdbProgress("");
-    } finally {
-      setDdbLoading(false);
-    }
-  }, [credentials]);
+    await ddbScan(credentials, true); // manual refresh → force re-scan
+  }, [credentials, ddbScan]);
 
   if (!credentials) {
     return (
@@ -1568,7 +1854,7 @@ export default function AccountPanel({ auth }: Props) {
             background: "rgba(61,142,240,0.08)", border: "1px solid rgba(61,142,240,0.2)",
             borderRadius: "var(--radius)", padding: "3px 8px"
           }}>
-            ⬡ {ddb.flows.length} DDB flows · {ddb.queueUsage.size} queue refs
+            ⬡ {ddb.flowDefs.length} DDB flows · {ddb.queueUsage.size} queue refs
           </div>
         )}
 
@@ -1639,7 +1925,7 @@ export default function AccountPanel({ auth }: Props) {
                 {label}
                 {tab === "ddb" && ddb && (
                   <span style={{ marginLeft: "auto", fontSize: 9, ...MONO, color: "var(--accent)" }}>
-                    {ddb.flows.length}
+                    {ddb.flowDefs.length}
                   </span>
                 )}
                 {tab === "ddb" && !ddb && !ddbLoading && (
@@ -1729,6 +2015,8 @@ export default function AccountPanel({ auth }: Props) {
                   onScan={handleDdbScan}
                   loading={ddbLoading}
                   progressMsg={ddbProgress}
+                  onLoadFlow={onLoadFlow}
+                  hooNames={hooNames}
                 />
               </div>
             )}

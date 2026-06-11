@@ -58,7 +58,11 @@ export interface IVRContent {
   agentSkill?: string;
   /** Resolved queue ARN — injected by Skills & Queues after provisioning */
   queueArn?: string;
-  /** SIP header overrides for SIP-type transfers */
+  /**
+   * @deprecated SIP headers are now stored as top-level X- content keys (the
+   * lambda/converter convention). Read/write via utils/sipHeaders; this sub-dict
+   * is only consumed when migrating older saved flows.
+   */
   sipHeaders?: Record<string, string>;
 
   // WAIT

@@ -8,7 +8,6 @@ import {
   CreateHoursOfOperationCommand,
   DescribeHoursOfOperationCommand,
   ListHoursOfOperationsCommand,
-  type ConnectClientConfig,
   type HoursOfOperationConfig as AwsHooConfig,
 } from "@aws-sdk/client-connect";
 import type { IR, FlowMeta } from "../types";
@@ -16,6 +15,7 @@ import type { AwsCredentials, ConnectInstance } from "../hooks/useAwsCredentials
 import { extractSkillWhispers } from "../converter/convertCXJson";
 import {
   extractQueuesFromIR,
+  mergePersistedQueues,
   patchTransferArns,
   validateFlow,
   type QueueRecord,
@@ -23,6 +23,8 @@ import {
   type FlowWarning,
 } from "../project";
 import { parseSkillsCSV, reconcileQueueNames } from "../utils/skillsCSV";
+import { findHooByName } from "../utils/queueSync";
+import { connectClient } from "../utils/awsClients";
 
 // ─── Props ───────────────────────────────────────────────────────────────────
 
@@ -48,15 +50,7 @@ interface Props {
 // ─── Connect client ──────────────────────────────────────────────────────────
 
 function buildClient(creds: AwsCredentials): ConnectClient {
-  const cfg: ConnectClientConfig = {
-    region: creds.region || "us-east-1",
-    credentials: {
-      accessKeyId: creds.accessKeyId,
-      secretAccessKey: creds.secretAccessKey,
-      ...(creds.sessionToken ? { sessionToken: creds.sessionToken } : {}),
-    },
-  };
-  return new ConnectClient(cfg);
+  return connectClient(creds);
 }
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -238,28 +232,32 @@ function HooSection({ hoo, setHoo, metaHooArn, credentials, onHooCreated }: {
     if (!credentials?.instance_id || !name.trim()) return;
     patch({ liveStatus: "checking", errMsg: undefined });
     try {
+      // Collect every HOO across pages, then fuzzy-match (exact → normalized →
+      // substring) so separator/case differences (e.g. "Care-First Hours" vs
+      // "Care First Hours") still resolve.
+      const all: { Name?: string; Arn?: string; Id?: string }[] = [];
       let nextToken: string | undefined;
       do {
         const resp = await buildClient(credentials).send(new ListHoursOfOperationsCommand({
           InstanceId: credentials.instance_id,
           ...(nextToken ? { NextToken: nextToken } : {}),
         }));
-        const match = (resp.HoursOfOperationSummaryList ?? []).find(
-          h => h.Name?.toLowerCase() === name.trim().toLowerCase()
-        );
-        if (match?.Arn) {
-          const detail = await buildClient(credentials).send(new DescribeHoursOfOperationCommand({
-            InstanceId: credentials.instance_id,
-            HoursOfOperationId: match.Arn,
-          }));
-          const resolvedArn = detail.HoursOfOperation?.HoursOfOperationArn ?? match.Arn;
-          patch({ liveStatus: "exists", hooArn: resolvedArn, hooId: detail.HoursOfOperation?.HoursOfOperationId ?? match.Id ?? "", name: detail.HoursOfOperation?.Name ?? name, errMsg: undefined });
-          setArnDraft(resolvedArn);
-          onHooCreated?.(resolvedArn);
-          return;
-        }
+        all.push(...(resp.HoursOfOperationSummaryList ?? []));
         nextToken = resp.NextToken;
       } while (nextToken);
+
+      const match = findHooByName(name.trim(), all, { allowPartial: true });
+      if (match?.Arn) {
+        const detail = await buildClient(credentials).send(new DescribeHoursOfOperationCommand({
+          InstanceId: credentials.instance_id,
+          HoursOfOperationId: match.Arn,
+        }));
+        const resolvedArn = detail.HoursOfOperation?.HoursOfOperationArn ?? match.Arn;
+        patch({ liveStatus: "exists", hooArn: resolvedArn, hooId: detail.HoursOfOperation?.HoursOfOperationId ?? match.Id ?? "", name: detail.HoursOfOperation?.Name ?? name, errMsg: undefined });
+        setArnDraft(resolvedArn);
+        onHooCreated?.(resolvedArn);
+        return;
+      }
       patch({ liveStatus: "missing", errMsg: `No HOO named "${name.trim()}" found in Connect` });
     } catch (e: any) {
       patch({ liveStatus: "err", errMsg: e.message });
@@ -738,7 +736,10 @@ export default function SkillsPanel({
 
   const [queueRows, setQueueRows] = useState<QueueRowState[]>(() => {
     const extracted = rawCx
-      ? extractSkillWhispers(rawCx).map(s => ({ skillWhisper: s.skillWhisper, queueSkill: s.queueSkill, connectName: s.skillWhisper }))
+      ? mergePersistedQueues(
+          extractSkillWhispers(rawCx).map(s => ({ skillWhisper: s.skillWhisper, queueSkill: s.queueSkill })),
+          propQueues,
+        )
       : extractQueuesFromIR(ir, propQueues);
     return extracted.map(q => ({
       ...q,
@@ -783,7 +784,10 @@ export default function SkillsPanel({
 
   useEffect(() => {
     const extracted = rawCx
-      ? extractSkillWhispers(rawCx).map(s => ({ skillWhisper: s.skillWhisper, queueSkill: s.queueSkill, connectName: s.skillWhisper }))
+      ? mergePersistedQueues(
+          extractSkillWhispers(rawCx).map(s => ({ skillWhisper: s.skillWhisper, queueSkill: s.queueSkill })),
+          propQueues,
+        )
       : extractQueuesFromIR(ir, propQueues);
     setQueueRows(prev => {
       const existingMap = new Map(prev.map(r => [r.skillWhisper, r]));

@@ -5,6 +5,7 @@ import {
   ListInstancesCommand,
   type InstanceSummary,
 } from "@aws-sdk/client-connect";
+import { connectClient } from "../utils/awsClients";
 
 export interface AwsCredentials {
   accessKeyId: string;
@@ -103,14 +104,7 @@ function clearStorage(): void {
 }
 
 function buildConnectClient(creds: AwsCredentials): ConnectClient {
-  return new ConnectClient({
-    region: creds.region || "us-east-1",
-    credentials: {
-      accessKeyId: creds.accessKeyId,
-      secretAccessKey: creds.secretAccessKey,
-      ...(creds.sessionToken ? { sessionToken: creds.sessionToken } : {}),
-    },
-  });
+  return connectClient(creds);
 }
 
 export interface UseAwsCredentialsReturn {

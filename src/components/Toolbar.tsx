@@ -1,12 +1,15 @@
 // src/components/Toolbar.tsx
 import { useState } from "react";
-import { DynamoDBClient, type DynamoDBClientConfig } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
 import type { IR, FlowMeta, IVRNode } from "../types";
 import { exportCSV, importCSV, expandAllMenus } from "../utils/csv";
 import { convertCxJson } from "../converter/convertCXJson";
 import { type AwsCredentials, type UseAwsCredentialsReturn } from "../hooks/useAwsCredentials";
 import { downloadProject, parseProject, type IVRProject } from "../project";
+import { buildMetaItems } from "../utils/flowUpload";
+import { readSipHeaders, writeSipHeaders } from "../utils/sipHeaders";
+import { ddbDocClient } from "../utils/awsClients";
+import { loadFlowFromDdb } from "../utils/ddbScan";
 import AwsAuthModal from "./AwsAuthModal";
 import type { TabData } from "../App";
 import { ACCOUNT_TAB_ID } from "../App";
@@ -50,46 +53,15 @@ interface Props {
 // ── DynamoDB helpers ─────────────────────────────────────────────────────────
 
 function buildDocClient(creds: AwsCredentials): DynamoDBDocumentClient {
-  const cfg: DynamoDBClientConfig = {
-    region: creds.region || "us-east-1",
-    credentials: {
-      accessKeyId: creds.accessKeyId,
-      secretAccessKey: creds.secretAccessKey,
-      ...(creds.sessionToken ? { sessionToken: creds.sessionToken } : {}),
-    },
-    ...(creds.endpoint ? { endpoint: creds.endpoint } : {}),
-  };
-  return DynamoDBDocumentClient.from(new DynamoDBClient(cfg), {
-    marshallOptions: { removeUndefinedValues: true, convertEmptyValues: false },
-  });
+  return ddbDocClient(creds);
 }
 
 async function writeMeta(client: DynamoDBDocumentClient, meta: FlowMeta): Promise<void> {
-  // Write META under dialed_number (primary key)
-  const item: Record<string, any> = {
-    flow_id: meta.dialed_number,
-    step_id: "META",
-    target_flow_id: meta.target_flow_id,
-    start_step: meta.start_step,
-  };
-  if (meta.hoo_arn) item.hoo_arn = meta.hoo_arn;
-  if (meta.instance_id) item.instance_id = meta.instance_id;
-  if (meta.description) item.description = meta.description;
-  await client.send(new PutCommand({ TableName: FLOW_TABLE, Item: item }));
-
-  // Also write META under target_flow_id for easier loading
-  if (meta.target_flow_id !== meta.dialed_number) {
-    const targetItem: Record<string, any> = {
-      flow_id: meta.target_flow_id,
-      step_id: "META",
-      dialed_number: meta.dialed_number,
-      target_flow_id: meta.target_flow_id,
-      start_step: meta.start_step,
-    };
-    if (meta.hoo_arn) targetItem.hoo_arn = meta.hoo_arn;
-    if (meta.instance_id) targetItem.instance_id = meta.instance_id;
-    if (meta.description) targetItem.description = meta.description;
-    await client.send(new PutCommand({ TableName: FLOW_TABLE, Item: targetItem }));
+  // META is keyed only by dialed_number (phone). It is NOT written under
+  // target_flow_id — that partition holds the step rows, and a stray META row
+  // there breaks the engine's by-flow step load. See buildMetaItems.
+  for (const item of buildMetaItems(meta)) {
+    await client.send(new PutCommand({ TableName: FLOW_TABLE, Item: item }));
   }
 }
 
@@ -101,70 +73,23 @@ async function writeSteps(
 ): Promise<void> {
   for (let i = 0; i < steps.length; i++) {
     const n = steps[i];
+    // SIP transfers must reach the lambda as top-level X- header keys (no legacy
+    // sipHeaders sub-dict, no leak-prone keys). Migrate at the upload boundary.
+    const content =
+      n.action_type === "TRANSFER" && n.content?.transferType === "SIP"
+        ? writeSipHeaders(n.content, readSipHeaders(n.content))
+        : (n.content ?? {});
     const item: Record<string, any> = {
       flow_id: flowId,
       step_id: n.step_id,
       action_type: n.action_type,
       label: n.label ?? "",
-      content: n.content ?? {},
+      content,
     };
     if (n.default_next) item.default_next = n.default_next;
     await client.send(new PutCommand({ TableName: FLOW_TABLE, Item: item }));
     onProgress?.(i + 1, steps.length);
   }
-}
-
-async function loadFlowFromDynamoDB(client: DynamoDBDocumentClient, flowId: string): Promise<{ ir: IR; meta?: FlowMeta }> {
-  const result = await client.send(new QueryCommand({
-    TableName: FLOW_TABLE,
-    KeyConditionExpression: "flow_id = :flowId",
-    ExpressionAttributeValues: { ":flowId": flowId },
-  }));
-
-  if (!result.Items || result.Items.length === 0) {
-    throw new Error(`No flow found with ID: ${flowId}`);
-  }
-
-  const nodes: Record<string, IVRNode> = {};
-  let meta: FlowMeta | undefined;
-  let startStep: string | undefined;
-  let hooArn: string | undefined;
-
-  for (const item of result.Items) {
-    if (item.step_id === "META") {
-      meta = {
-        dialed_number: item.dialed_number || item.flow_id,
-        target_flow_id: item.target_flow_id,
-        start_step: item.start_step,
-        hoo_arn: item.hoo_arn,
-        instance_id: item.instance_id,
-        description: item.description,
-      };
-      startStep = item.start_step;
-      hooArn = item.hoo_arn;
-    } else {
-      // Regular step
-      const node: IVRNode = {
-        step_id: item.step_id,
-        action_type: item.action_type,
-        label: item.label || "",
-        content: item.content || {},
-        flow_id: item.flow_id,
-      };
-      if (item.default_next) node.default_next = item.default_next;
-      nodes[item.step_id] = node;
-    }
-  }
-
-  const ir: IR = {
-    flow_id: flowId,
-    nodes,
-    start_step: startStep,
-    hoo_arn: hooArn,
-    meta,
-  };
-
-  return { ir, meta };
 }
 
 // ── Validation ───────────────────────────────────────────────────────────────
@@ -402,8 +327,7 @@ function LoadFlowModal({ creds, onClose, onLoad }: {
     if (!flowId.trim()) { setStatus("err"); setStatusMsg("Flow ID is required"); return; }
     setLoading(true); setStatus("idle");
     try {
-      const client = buildDocClient(creds);
-      const { ir, meta } = await loadFlowFromDynamoDB(client, flowId.trim());
+      const { ir } = await loadFlowFromDdb(creds, flowId.trim());
       setStatus("ok");
       setStatusMsg(`Loaded ${Object.keys(ir.nodes).length} steps for ${flowId}`);
       setTimeout(() => {

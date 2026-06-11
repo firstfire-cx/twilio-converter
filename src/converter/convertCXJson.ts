@@ -30,7 +30,7 @@
  *        Also strips inline CXone comments (// …) from assignment values.
  *   [P6] PolyAI handoff normalisation: the old PolyReason/PolyNote assign chain
  *        after SPAWN is replaced by the correct pattern:
- *          SET Handoff = {{DialSipHeader_X-Handoff}}
+ *          SET Handoff = DialSipHeader_X-Handoff
  *          CHECK Handoff == "Yes" → True: SET HandoffReason + REQAGENT, False: HANGUP
  */
 
@@ -49,7 +49,7 @@ export const LANG_CODE_MAP: Record<string, string> = {
   DE: "deu",  DEU: "deu",
   IT: "ita",  ITA: "ita",
   PT: "por",  POR: "por",
-  ZH: "zho",  ZHO: "zho",
+  ZH: "zho",  ZHO: "zho",  MD: "zho",  // MD = Mandarin (CXone custom code)
   JA: "jpn",  JP:  "jpn",  JPN: "jpn",
   KO: "kor",  KOR: "kor",
   RU: "rus",  RUS: "rus",
@@ -165,7 +165,28 @@ interface AssignOp {
 interface SnipCase {
   switchVar?: string;
   switchVal?: string;
+  /** Full boolean expression for SELECT-style cases (CASE <expr> { … }). */
+  caseExpr?: string;
   ops: AssignOp[];
+}
+
+// ─── CASE-expression normalizer (SELECT blocks) ───────────────────────────────
+/**
+ * Normalises a CXone SELECT-case boolean expression for the Python engine:
+ *   1. normalizeExpr — single = → ==, Lang short codes → ISO 639-2.
+ *   2. & / && → `and`, | / || → `or`  (Python logical ops with correct
+ *      precedence; bare `&` binds tighter than `==` and would mis-parse).
+ *   3. Bare numeric operands get quoted (skillRES == 1 → skillRES == '1') so
+ *      they compare as strings, matching the SWITCH path (langRES == '3') and
+ *      how digit/menu variables are stored.
+ * Scoped to CASE expressions only — global normalizeExpr must stay number-safe
+ * for checks like BlockCall == 1 and counter < 3.
+ */
+function normalizeCaseExpr(expr: string): string {
+  let out = normalizeExpr(expr);
+  out = out.replace(/&&?/g, " and ").replace(/\|\|?/g, " or ");
+  out = out.replace(/(==|!=)\s*(\d+)\b/g, "$1 '$2'");
+  return out.replace(/\s+/g, " ").trim();
 }
 
 function parseSnippet(data: string): SnipCase[] {
@@ -175,6 +196,7 @@ function parseSnippet(data: string): SnipCase[] {
     .map((l) => l.trim());
   const cases: SnipCase[] = [];
   let switchVar: string | undefined;
+  let selectMode = false;
   let currentCond: string | undefined;
   let inElse = false;
 
@@ -188,12 +210,27 @@ function parseSnippet(data: string): SnipCase[] {
     const sw = line.match(/^SWITCH\s+(\w+)/i);
     if (sw) {
       switchVar = sw[1];
+      selectMode = false;
       continue;
     }
 
-    const cs = line.match(/^CASE\s+(\S+)/i);
+    // SELECT { CASE <bool expr> { … } } — switch-less, compound conditions.
+    if (/^SELECT\b/i.test(line)) {
+      selectMode = true;
+      switchVar = undefined;
+      continue;
+    }
+
+    const cs = line.match(/^CASE\s+(.+)/i);
     if (cs) {
-      cases.push({ switchVar, switchVal: cs[1], ops: [] });
+      const rest = cs[1].trim();
+      if (selectMode && !switchVar) {
+        // Whole remainder is the case's boolean expression.
+        cases.push({ caseExpr: rest, ops: [] });
+      } else {
+        // SWITCH mode: value is the first token (e.g. "1" from "1 DEFAULT").
+        cases.push({ switchVar, switchVal: rest.split(/\s+/)[0], ops: [] });
+      }
       currentCond = undefined;
       inElse = false;
       continue;
@@ -311,15 +348,25 @@ function expandSnippet(
     }
 
     let caseIfId = "";
-    if (c.switchVar && c.switchVal !== undefined) {
+    let caseExpression = "";
+    let caseLabel = "";
+    if (c.caseExpr) {
+      // SELECT case: full compound condition (lang == 'eng' and skillRES == '1')
+      caseExpression = normalizeCaseExpr(c.caseExpr);
+      caseLabel = `${label}: ${caseExpression}`;
+    } else if (c.switchVar && c.switchVal !== undefined) {
+      // SWITCH case: [Fix #1/#2] normalizeExpr handles = → == and Lang rewriting
+      caseExpression = normalizeExpr(`${c.switchVar} == '${c.switchVal}'`);
+      caseLabel = `${label}: Case ${c.switchVal}`;
+    }
+    if (caseExpression) {
       caseIfId = `${prefix}_sw`;
-      // [Fix #1/#2] normalizeExpr handles = → == and Lang value rewriting
       nodes[caseIfId] = {
         step_id: caseIfId,
         action_type: "CHECK",
-        label: `${label}: Case ${c.switchVal}`,
+        label: caseLabel,
         content: {
-          expression: normalizeExpr(`${c.switchVar} == '${c.switchVal}'`),
+          expression: caseExpression,
           branches: { True: "", False: snippetNextId },
         },
       };
@@ -1416,9 +1463,9 @@ function _p5_mergeSequentialSets(nodes: Record<string, IVRNode>): void {
  *   PLAY (empty) → SET PolyReason={SP2} → SET PolyNote={SP3} → REQAGENT
  *
  * Replace that chain with the correct engine pattern:
- *   SIP TRANSFER  → SET Handoff={{DialSipHeader_X-Handoff}}
+ *   SIP TRANSFER  → SET Handoff=DialSipHeader_X-Handoff
  *                 → CHECK Handoff == "Yes"
- *                      True  → SET HandoffReason={{DialSipHeader_X-HandoffReason}} → REQAGENT
+ *                      True  → SET HandoffReason=DialSipHeader_X-HandoffReason → REQAGENT
  *                      False → HANGUP
  *
  * The REQAGENT node already exists in the flow; we reuse it.
@@ -1496,13 +1543,16 @@ function _p6_normalisePolyHandoff(nodes: Record<string, IVRNode>): void {
       };
     }
 
-    // SET Handoff = {{DialSipHeader_X-Handoff}}
+    // SET Handoff = DialSipHeader_X-Handoff
+    // Bare reference, NOT {{…}}: the engine's eval_value resolves a SET value by
+    // direct vars_map lookup (handles the hyphen), whereas its {{(\w+)}} template
+    // can't match the hyphen and would store the literal string.
     nodes[setHandoffId] = {
       step_id: setHandoffId,
       action_type: "SET",
       label: "Set Handoff",
       content: {
-        assignments: { Handoff: "{{DialSipHeader_X-Handoff}}" },
+        assignments: { Handoff: "DialSipHeader_X-Handoff" },
         branches: {},
       },
       default_next: checkHandoffId,
@@ -1522,13 +1572,13 @@ function _p6_normalisePolyHandoff(nodes: Record<string, IVRNode>): void {
       },
     };
 
-    // SET HandoffReason = {{DialSipHeader_X-HandoffReason}}
+    // SET HandoffReason = DialSipHeader_X-HandoffReason  (bare ref — see above)
     nodes[setHandoffReasonId] = {
       step_id: setHandoffReasonId,
       action_type: "SET",
       label: "Set HandoffReason",
       content: {
-        assignments: { HandoffReason: "{{DialSipHeader_X-HandoffReason}}" },
+        assignments: { HandoffReason: "DialSipHeader_X-HandoffReason" },
         branches: {},
       },
       default_next: reqagentId,
@@ -2177,7 +2227,11 @@ function _p7b_convertExprChainToVarCheck(nodes: Record<string, IVRNode>): void {
   const parseEqExpr = (
     expr: string,
   ): { varName: string; value: string } | null => {
-    const m = expr.trim().match(/^(\w+)\s*==\s*['"]([^'"]*)['"]/);
+    // Anchored at end: only PURE single-equality expressions collapse.
+    // Compound conditions (e.g. "Lang == 'eng' and skillRES == '1'") must NOT
+    // match — collapsing on the first variable alone drops the second condition
+    // and makes distinct cases collide.
+    const m = expr.trim().match(/^(\w+)\s*==\s*['"]([^'"]*)['"]\s*$/);
     if (!m) return null;
     return { varName: m[1], value: m[2] };
   };
@@ -2273,6 +2327,162 @@ function _p7b_convertExprChainToVarCheck(nodes: Record<string, IVRNode>): void {
   }
   if (pruned > 0)
     console.log(`[P7b] Pruned ${pruned} now-unreachable expression node(s)`);
+}
+
+// ─── P11: Nest compound menu-check chains into per-digit inner checks ─────────
+/**
+ * Refactors a flat chain of two-variable compound CHECKs
+ * (e.g. "Lang == 'eng' and skillRES == '1'") fed by a var-mode menu CHECK into
+ * the nested two-level form authored natively by flows like CareFirst:
+ *
+ *   CHECK var=skillRES { "1" -> CHECK var=Lang {…}, "2" -> CHECK var=Lang {…} }
+ *
+ * The outer var is the conjunct variable an existing var-mode CHECK already
+ * branches on (the menu); the inner var is the other. The pass adds the inner
+ * checks and repoints the menu's digit branches; the old compound chain is left
+ * orphaned for P9 to sweep (matching the P7/P7b convention).
+ */
+function _p11_nestCompoundMenuChecks(nodes: Record<string, IVRNode>): void {
+  // Parse "A == 'a' and B == 'b' [and …]" into its equality conjuncts.
+  const parseConjunction = (
+    expr: string,
+  ): Array<{ varName: string; value: string }> | null => {
+    const out: Array<{ varName: string; value: string }> = [];
+    for (const part of expr.trim().split(/\s+and\s+/i)) {
+      const m = part.trim().match(/^(\w+)\s*==\s*['"]([^'"]*)['"]$/);
+      if (!m) return null;
+      out.push({ varName: m[1], value: m[2] });
+    }
+    return out.length >= 2 ? out : null;
+  };
+
+  // A compound CHECK is an expression CHECK with exactly two equality conjuncts.
+  const asCompound = (node: IVRNode | undefined) => {
+    if (!node || node.action_type !== "CHECK" || !node.content?.expression)
+      return null;
+    const conj = parseConjunction(node.content.expression);
+    return conj && conj.length === 2 ? { a: conj[0], b: conj[1] } : null;
+  };
+  const varPair = (c: { a: { varName: string }; b: { varName: string } }) =>
+    [c.a.varName, c.b.varName].sort().join("|");
+
+  // Interior chain nodes = the False target of another compound CHECK with the
+  // same variable pair. These are never chain heads.
+  const interior = new Set<string>();
+  for (const node of Object.values(nodes)) {
+    const c = asCompound(node);
+    if (!c) continue;
+    const f = node.content.branches?.["False"];
+    const fc = asCompound(f ? nodes[f] : undefined);
+    if (fc && varPair(c) === varPair(fc)) interior.add(f!);
+  }
+
+  for (const [headId, headNode] of Object.entries(nodes)) {
+    const head = asCompound(headNode);
+    if (!head || interior.has(headId)) continue;
+    const pairKey = varPair(head);
+
+    // Walk the False-chain collecting compound checks + the terminal fallthrough.
+    const chain: string[] = [];
+    let fallthrough: string | undefined;
+    let cur: string | undefined = headId;
+    const seen = new Set<string>();
+    while (cur && !seen.has(cur)) {
+      seen.add(cur);
+      const c = asCompound(nodes[cur]);
+      if (!c || varPair(c) !== pairKey) {
+        fallthrough = cur;
+        break;
+      }
+      chain.push(cur);
+      fallthrough = nodes[cur].content.branches?.["False"];
+      cur = fallthrough;
+    }
+    if (chain.length < 2) continue;
+
+    // Outer var = the conjunct variable an existing var-mode CHECK branches on.
+    const [v1, v2] = pairKey.split("|");
+    const menuFor = (v: string) =>
+      Object.values(nodes).find(
+        (n) => n.action_type === "CHECK" && n.content?.var === v,
+      );
+    const m1 = menuFor(v1);
+    const m2 = menuFor(v2);
+    let menu: IVRNode | undefined;
+    let outerVar: string | undefined;
+    if (m1 && !m2) {
+      menu = m1;
+      outerVar = v1;
+    } else if (m2 && !m1) {
+      menu = m2;
+      outerVar = v2;
+    } else continue; // ambiguous (both) or no menu → skip
+    const innerVar = outerVar === v1 ? v2 : v1;
+
+    // The menu must actually reach the chain head. This also guarantees
+    // idempotency: after the rewrite the menu points at inner checks, not chain.
+    const reaches = (start: string | undefined): boolean => {
+      const stack = start ? [start] : [];
+      const vis = new Set<string>();
+      let hops = 0;
+      while (stack.length && hops++ < 50) {
+        const id = stack.pop()!;
+        if (!id || vis.has(id) || !nodes[id]) continue;
+        vis.add(id);
+        if (id === headId) return true;
+        const n = nodes[id];
+        if (n.default_next) stack.push(n.default_next);
+        for (const t of Object.values(n.content?.branches ?? {}))
+          if (t) stack.push(t as string);
+      }
+      return false;
+    };
+    if (
+      !Object.values(menu!.content?.branches ?? {}).some((t) =>
+        reaches(t as string),
+      )
+    )
+      continue;
+
+    // Group chain checks by outer-var value.
+    const groups: Record<string, Array<{ inner: string; target: string }>> = {};
+    for (const cid of chain) {
+      const c = asCompound(nodes[cid])!;
+      const outerCon = c.a.varName === outerVar ? c.a : c.b;
+      const innerCon = c.a.varName === outerVar ? c.b : c.a;
+      const target = nodes[cid].content.branches?.["True"];
+      if (!target) continue;
+      (groups[outerCon.value] ??= []).push({ inner: innerCon.value, target });
+    }
+
+    // Safety: never silently drop a case — every group must map to a menu branch.
+    const menuBranches = { ...(menu!.content?.branches ?? {}) };
+    if (!Object.keys(groups).every((d) => d in menuBranches)) continue;
+
+    // Build the inner checks and repoint the menu's digit branches.
+    const menuId = menu!.step_id;
+    for (const [d, cases] of Object.entries(groups)) {
+      const innerId = `${menuId}__${innerVar}_${d}`;
+      const branches: Record<string, string> = {};
+      for (const { inner, target } of cases) branches[inner] = target;
+      if (fallthrough) branches["null"] = fallthrough;
+      nodes[innerId] = {
+        step_id: innerId,
+        action_type: "CHECK",
+        label: `${innerVar} (${outerVar}=${d})`,
+        content: { var: innerVar, branches },
+      };
+      menuBranches[d] = innerId;
+    }
+    nodes[menuId] = {
+      ...menu!,
+      content: { ...menu!.content, branches: menuBranches },
+    };
+
+    console.log(
+      `[P11] Nested ${chain.length}-case compound chain at ${headId} under menu ${menuId} (outer=${outerVar}, inner=${innerVar})`,
+    );
+  }
 }
 
 // ─── P8: Promote null branches to default_next ────────────────────────────────
@@ -2614,6 +2824,22 @@ export function applyP10AutoRename(ir: IR): { ir: IR; log: string[] } {
   return { ir: { ...ir, nodes }, log: captured };
 }
 
+export function applyP11NestCompoundChecks(ir: IR): { ir: IR; log: string[] } {
+  const nodes = { ...ir.nodes };
+  const captured: string[] = [];
+  const orig = console.log;
+  console.log = (...a) => {
+    captured.push(a.map(String).join(" "));
+    orig(...a);
+  };
+  try {
+    _p11_nestCompoundMenuChecks(nodes);
+  } finally {
+    console.log = orig;
+  }
+  return { ir: { ...ir, nodes }, log: captured };
+}
+
 export function applyAllPostProcessing(ir: IR): { ir: IR; log: string[] } {
   const nodes = { ...ir.nodes };
   const captured: string[] = [];
@@ -2627,6 +2853,7 @@ export function applyAllPostProcessing(ir: IR): { ir: IR; log: string[] } {
     applyLandingTransforms(nodes);
     _p7_collapseExprChains(nodes);
     _p7b_convertExprChainToVarCheck(nodes);
+    _p11_nestCompoundMenuChecks(nodes);
     _p8_nullBranchToDefaultNext(nodes);
     _p9_removeUnreachableNodes(nodes, ir.start_step);
   } finally {

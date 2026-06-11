@@ -16,6 +16,7 @@ import {
   applyP6NormalisePolyHandoff,
   applyP7CollapseExprChains,
   applyP7bConvertExprChains,
+  applyP11NestCompoundChecks,
   applyP8NullToDefaultNext,
   applyP9RemoveUnreachable,
   applyP10AutoRename,
@@ -130,6 +131,15 @@ const PASSES: PassDef[] = [
     description:
       "Finds standalone chains of expression CHECKs on the same variable (e.g. QueueSkill == '18556549' → False → QueueSkill == '18556551') and collapses them into a single var-mode CHECK with direct branches per value.",
     apply: applyP7bConvertExprChains,
+  },
+  {
+    id: "p11-nest-compound",
+    label: "Nest Compound Menu Checks",
+    badge: "P11",
+    badgeColor: "var(--cyan)",
+    description:
+      "Refactors a flat chain of two-variable compound CHECKs (e.g. \"Lang == 'eng' and skillRES == '1'\") into the nested CareFirst shape: the menu CHECK branches per digit into a per-digit inner Lang check, dropping the redundant menu-variable conjunct.",
+    apply: applyP11NestCompoundChecks,
   },
   {
     id: "p8-null-to-default",

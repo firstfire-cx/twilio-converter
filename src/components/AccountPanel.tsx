@@ -1623,10 +1623,12 @@ function DdbFlowsPanel({
                 const f = filter.trim().toLowerCase();
                 if (!f) return true;
                 const e = r.envs.sandbox;
+                const def = ddb!.flowDefs.find((d) => d.targetFlowId === e?.rawFlowId);
                 return (
                   (r.healthPlan ?? "").toLowerCase().includes(f) ||
                   (e?.rawFlowId ?? "").toLowerCase().includes(f) ||
-                  (e?.dialedNumbers ?? []).some((n) => n.includes(f))
+                  (e?.dialedNumbers ?? []).some((n) => n.includes(f)) ||
+                  (def?.queues ?? []).some((qu) => qu.skillWhisper.toLowerCase().includes(f))
                 );
               })
               .map((row: FlowRow) => {

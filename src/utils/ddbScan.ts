@@ -329,6 +329,9 @@ export async function renameFlow(
     lastKey = resp.LastEvaluatedKey;
   } while (lastKey);
 
+  // NOTE: step rows are enumerated live above, but METAs come from the caller's
+  // last scan snapshot; a META added since that scan won't be repointed here.
+  // Consistent with the app's scan-before-act model.
   const plan = planRenameFlow(oldFlowId, target, stepRows, metas);
 
   let i = 0;

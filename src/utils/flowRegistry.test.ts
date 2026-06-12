@@ -68,6 +68,20 @@ describe("buildFlowRegistry — single env", () => {
       inSync: 0, numberDrift: 0, nameFuzzy: 0, sandboxOnly: 0, prodOnly: 0,
     });
   });
+
+  it("keeps both flows when two names in one env normalize to the same key", () => {
+    const reg = buildFlowRegistry([
+      sandbox([
+        flow({ targetFlowId: "Landing_Aetna", metas: [meta({ dialedNumber: "+1A", targetFlowId: "Landing_Aetna" })] }),
+        flow({ targetFlowId: "landing-aetna", metas: [] }),
+      ]),
+    ]);
+    // both near-duplicate flows survive (neither silently dropped)
+    const raws = reg.rows.map((r) => r.envs.sandbox.rawFlowId).sort();
+    expect(raws).toEqual(["Landing_Aetna", "landing-aetna"]);
+    // each gets a distinct flowKey so it is independently actionable
+    expect(new Set(reg.rows.map((r) => r.flowKey)).size).toBe(2);
+  });
 });
 
 function meta(partial: Partial<DdbFlowMeta> & { dialedNumber: string; targetFlowId: string }): DdbFlowMeta {

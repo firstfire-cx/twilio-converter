@@ -98,8 +98,8 @@ export function buildFlowRegistry(envs: EnvScan[]): FlowRegistry {
 
   for (const env of envs) {
     for (const def of env.ddb.flowDefs) {
-      const key = normalizeName(def.targetFlowId);
-      if (!key) continue;
+      const baseKey = normalizeName(def.targetFlowId);
+      if (!baseKey) continue;
       const dialedNumbers = def.metas.map((m) => m.dialedNumber).filter(Boolean);
       const m0 = def.metas[0];
       const hooArn = def.hooArn;
@@ -115,7 +115,16 @@ export function buildFlowRegistry(envs: EnvScan[]): FlowRegistry {
         liveStatus: dialedNumbers.length > 0 ? "live" : "not-yet",
       };
 
+      // Normally one row per normalized name (so the same flow joins across envs).
+      // But two flows in the SAME env that normalize to the same key are distinct
+      // near-duplicates the user must still see/act on — give the colliding one
+      // its own row rather than overwriting.
+      let key = baseKey;
       let row = byKey.get(key);
+      if (row && row.envs[env.label]) {
+        key = `${baseKey} (${def.targetFlowId})`;
+        row = byKey.get(key);
+      }
       if (!row) {
         row = { flowKey: key, envs: {}, joinStatus: "single-env" };
         byKey.set(key, row);

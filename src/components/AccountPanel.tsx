@@ -1639,7 +1639,30 @@ function DdbFlowsPanel({
                     <td style={{ padding: "4px 6px" }}>{row.healthPlan ?? "—"}</td>
                     <td style={{ padding: "4px 6px", ...MONO }}>{e?.rawFlowId}</td>
                     <td style={{ padding: "4px 6px", ...MONO }}>
-                      {e && e.dialedNumbers.length ? e.dialedNumbers.join(", ") : <span style={{ color: "var(--text-3)" }}>—</span>}
+                      {def && def.metas.length > 0 ? (
+                        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                          {def.metas.map((m, i) => (
+                            <span key={m.dialedNumber || i} style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                              {m.dialedNumber || <span style={{ color: "var(--text-3)" }}>(no number)</span>}
+                              <button className="btn btn-ghost" style={{ fontSize: 9, padding: "0 5px", height: 18 }}
+                                disabled={busy} title="Edit META"
+                                onClick={() => setEditMeta({ original: m, draft: { ...m } })}>✎</button>
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                          <span style={{ color: "var(--text-3)" }}>—</span>
+                          {def && (
+                            <button className="btn btn-ghost" style={{ fontSize: 9, padding: "0 6px", height: 18 }}
+                              disabled={busy} title="Add phone / META"
+                              onClick={() => setEditMeta({
+                                original: { dialedNumber: "", targetFlowId: def.targetFlowId },
+                                draft: { dialedNumber: "", targetFlowId: def.targetFlowId, hooArn: def.hooArn, startStep: def.startStep },
+                              })}>＋ add</button>
+                          )}
+                        </span>
+                      )}
                     </td>
                     <td style={{ padding: "4px 6px" }}>{e?.hooName ?? e?.hooArn ?? "—"}</td>
                     <td style={{ padding: "4px 6px" }}>
@@ -1655,9 +1678,6 @@ function DdbFlowsPanel({
                         <>
                           <button className="btn btn-ghost" style={{ fontSize: 9, padding: "1px 6px", height: 20 }}
                             disabled={busy} onClick={() => startRename(def)}>rename</button>
-                          <button className="btn btn-ghost" style={{ fontSize: 9, padding: "1px 6px", height: 20 }}
-                            disabled={busy || !def.metas.length}
-                            onClick={() => def.metas[0] && setEditMeta({ original: def.metas[0], draft: { ...def.metas[0] } })}>edit META</button>
                           {onLoadFlow && (
                             <button className="btn btn-ghost" style={{ fontSize: 9, padding: "1px 6px", height: 20 }}
                               disabled={busy} onClick={() => handleLoadFlow(def)}>load</button>

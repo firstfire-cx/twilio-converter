@@ -15,6 +15,9 @@ export interface EnvScan {
   ddb: DdbState;
   /** HOO id → friendly name (from ListHoursOfOperations) for this env. */
   hooNames: Map<string, string>;
+  /** Browser-local, documentation-only overrides for not-yet-live flows,
+   *  keyed by flow name. */
+  annotations?: Map<string, { healthPlan?: string; hooId?: string }>;
 }
 
 export type JoinStatus =
@@ -29,9 +32,11 @@ export interface EnvFlowState {
   rawFlowId: string;
   dialedNumbers: string[]; // empty = "not yet live"
   hooArn?: string;
+  hooId?: string;          // resolved HOO id (from arn or annotation) for the dropdown
   hooName?: string;
   instanceId?: string;
-  description?: string;
+  description?: string;    // effective plan name: META description ?? local annotation
+  queues?: string[];       // SkillWhisper names
   liveStatus: "live" | "not-yet";
 }
 
@@ -100,18 +105,22 @@ export function buildFlowRegistry(envs: EnvScan[]): FlowRegistry {
     for (const def of env.ddb.flowDefs) {
       const baseKey = normalizeName(def.targetFlowId);
       if (!baseKey) continue;
+      const annotation = env.annotations?.get(def.targetFlowId);
       const dialedNumbers = def.metas.map((m) => m.dialedNumber).filter(Boolean);
       const m0 = def.metas[0];
       const hooArn = def.hooArn;
-      const hooName = hooArn ? env.hooNames.get(hooIdFromArn(hooArn)) : undefined;
+      const hooId = hooArn ? hooIdFromArn(hooArn) : annotation?.hooId;
+      const hooName = hooId ? env.hooNames.get(hooId) : undefined;
 
       const state: EnvFlowState = {
         rawFlowId: def.targetFlowId,
         dialedNumbers,
         hooArn,
+        hooId,
         hooName,
         instanceId: def.instanceId,
-        description: m0?.description,
+        description: m0?.description ?? annotation?.healthPlan,
+        queues: def.queues.map((q) => q.skillWhisper),
         liveStatus: dialedNumbers.length > 0 ? "live" : "not-yet",
       };
 

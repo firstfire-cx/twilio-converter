@@ -139,3 +139,68 @@ describe("buildFlowRegistry — two envs", () => {
     });
   });
 });
+
+describe("buildFlowRegistry — queues + annotations", () => {
+  it("surfaces the flow's SkillWhisper queue names", () => {
+    const reg = buildFlowRegistry([
+      sandbox([
+        flow({
+          targetFlowId: "landing_aetna",
+          queues: [{ skillWhisper: "Aetna-EN" }, { skillWhisper: "Aetna-SP", queueSkill: "9" }],
+          metas: [meta({ dialedNumber: "+1A", targetFlowId: "landing_aetna" })],
+        }),
+      ]),
+    ]);
+    expect(reg.rows[0].envs.sandbox.queues).toEqual(["Aetna-EN", "Aetna-SP"]);
+  });
+
+  it("falls back to a local annotation for a not-yet-live flow's plan name + HOO", () => {
+    const reg = buildFlowRegistry([
+      {
+        label: "sandbox",
+        ddb: ddbState([flow({ targetFlowId: "landing_kp_co", metas: [] })]),
+        hooNames: new Map([["hoo-1", "KP Hours"]]),
+        annotations: new Map([["landing_kp_co", { healthPlan: "KP Colorado", hooId: "hoo-1" }]]),
+      },
+    ]);
+    const r = reg.rows[0];
+    expect(r.healthPlan).toBe("KP Colorado");
+    expect(r.envs.sandbox.hooId).toBe("hoo-1");
+    expect(r.envs.sandbox.hooName).toBe("KP Hours");
+    expect(r.envs.sandbox.liveStatus).toBe("not-yet");
+  });
+
+  it("prefers the DynamoDB META description over a local annotation", () => {
+    const reg = buildFlowRegistry([
+      {
+        label: "sandbox",
+        ddb: ddbState([
+          flow({
+            targetFlowId: "landing_aetna",
+            metas: [meta({ dialedNumber: "+1A", targetFlowId: "landing_aetna", description: "Aetna (DDB)" })],
+          }),
+        ]),
+        hooNames: new Map(),
+        annotations: new Map([["landing_aetna", { healthPlan: "Aetna (local)" }]]),
+      },
+    ]);
+    expect(reg.rows[0].healthPlan).toBe("Aetna (DDB)");
+  });
+
+  it("resolves hooId from the ARN for a numbered flow", () => {
+    const reg = buildFlowRegistry([
+      sandbox(
+        [
+          flow({
+            targetFlowId: "landing_aetna",
+            hooArn: "arn:aws:connect:us-east-1:1:instance/x/operating-hours/hoo-9",
+            metas: [meta({ dialedNumber: "+1A", targetFlowId: "landing_aetna" })],
+          }),
+        ],
+        new Map([["hoo-9", "Aetna Hours"]]),
+      ),
+    ]);
+    expect(reg.rows[0].envs.sandbox.hooId).toBe("hoo-9");
+    expect(reg.rows[0].envs.sandbox.hooName).toBe("Aetna Hours");
+  });
+});

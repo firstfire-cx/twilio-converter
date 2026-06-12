@@ -99,3 +99,27 @@ describe("planRenameFlow", () => {
     ]);
   });
 });
+
+import { planSetFlowMetaFields } from "./ddbScan";
+
+describe("planSetFlowMetaFields", () => {
+  it("updates the patched fields on every META row, preserving the rest", () => {
+    const metas = [
+      { dialedNumber: "+1A", targetFlowId: "F", hooArn: "old", description: "old-desc", startStep: "s" },
+      { dialedNumber: "+1B", targetFlowId: "F", hooArn: "old" },
+    ];
+    const rows = planSetFlowMetaFields(metas, { description: "Aetna", hooArn: "new-arn" });
+    expect(rows).toEqual([
+      { flow_id: "+1A", step_id: "META", target_flow_id: "F", start_step: "s", hoo_arn: "new-arn", description: "Aetna" },
+      { flow_id: "+1B", step_id: "META", target_flow_id: "F", hoo_arn: "new-arn", description: "Aetna" },
+    ]);
+  });
+
+  it("only touches fields present in the patch", () => {
+    const rows = planSetFlowMetaFields(
+      [{ dialedNumber: "+1A", targetFlowId: "F", hooArn: "keep", description: "keep" }],
+      { description: "New" },
+    );
+    expect(rows[0]).toEqual({ flow_id: "+1A", step_id: "META", target_flow_id: "F", hoo_arn: "keep", description: "New" });
+  });
+});

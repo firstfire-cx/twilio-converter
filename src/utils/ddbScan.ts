@@ -349,6 +349,45 @@ export async function renameFlow(
   }
 }
 
+/**
+ * Pure: build the META rows that set `patch`'s fields on every META of a flow.
+ * Each row is a full META item (a Put replaces the whole item), so untouched
+ * fields are preserved from the existing meta. Empty-string values clear a field
+ * (metaToRow omits falsy optionals).
+ */
+export function planSetFlowMetaFields(
+  metas: DdbFlowMeta[],
+  patch: { description?: string; hooArn?: string },
+): Record<string, any>[] {
+  return metas.map((m) =>
+    metaToRow({
+      ...m,
+      ...(patch.description !== undefined ? { description: patch.description } : {}),
+      ...(patch.hooArn !== undefined ? { hooArn: patch.hooArn } : {}),
+    }),
+  );
+}
+
+/**
+ * Set `patch`'s fields (description and/or hoo_arn) on every META row of a flow.
+ * One plain Put per META (PK = dialed_number unchanged). Used by the registry's
+ * inline plan-name / HOO edits for flows that have a phone number.
+ */
+export async function setFlowMetaFields(
+  creds: AwsCredentials,
+  flow: DdbFlow,
+  patch: { description?: string; hooArn?: string },
+  onProgress?: (msg: string) => void,
+): Promise<void> {
+  const ddb = ddbDocClient(creds);
+  const rows = planSetFlowMetaFields(flow.metas, patch);
+  let i = 0;
+  for (const Item of rows) {
+    onProgress?.(`Updating META ${++i}/${rows.length}…`);
+    await ddb.send(new PutCommand({ TableName: FLOW_TABLE, Item }));
+  }
+}
+
 /** Delete specific step rows from a flow (used to prune unreachable steps). */
 export async function deleteSteps(
   creds: AwsCredentials,

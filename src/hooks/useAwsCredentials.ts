@@ -76,7 +76,8 @@ function loadFromStorage(): AwsCredentials | null {
   try {
     const expiryStr = localStorage.getItem(EXPIRY_KEY);
     if (expiryStr && Date.now() > parseInt(expiryStr, 10)) {
-      localStorage.clear();
+      // Only clear the credential keys — preserve local flow annotations etc.
+      clearStorage();
       return null;
     }
     const raw = localStorage.getItem(STORAGE_KEY);

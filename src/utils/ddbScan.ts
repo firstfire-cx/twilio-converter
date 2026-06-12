@@ -255,6 +255,97 @@ export async function editFlowMeta(
   }
 }
 
+/** The ordered DynamoDB operations a flow rename performs. */
+export interface RenameFlowPlan {
+  /** Step rows re-keyed under the new flow id (write first). */
+  stepPuts: Record<string, any>[];
+  /** META rows repointed to the new target (PK = dialed_number unchanged). */
+  metaPuts: Record<string, any>[];
+  /** Old step-row keys to delete last. */
+  stepDeletes: { flow_id: string; step_id: string }[];
+}
+
+/**
+ * Pure: build the rename cascade. `target_flow_id` is the partition key for
+ * every step row, so a rename copies the step rows under the new id, repoints
+ * each META that targets the old id, and deletes the old step rows. Returned as
+ * three ordered groups so the executor can apply them crash-safely.
+ */
+export function planRenameFlow(
+  oldFlowId: string,
+  newFlowId: string,
+  stepRows: any[],
+  metas: DdbFlowMeta[],
+): RenameFlowPlan {
+  const stepPuts = stepRows.map((r) => ({ ...r, flow_id: newFlowId }));
+  const stepDeletes = stepRows.map((r) => ({ flow_id: oldFlowId, step_id: r.step_id }));
+  const metaPuts = metas
+    .filter((m) => m.targetFlowId === oldFlowId)
+    .map((m) => metaToRow({ ...m, targetFlowId: newFlowId }));
+  return { stepPuts, metaPuts, stepDeletes };
+}
+
+/**
+ * Rename a flow (its target_flow_id). Crash-safe order: 1) copy step rows under
+ * the new id, 2) repoint METAs, 3) delete old step rows. A failure after step 2
+ * leaves the flow fully loadable under the new id; the worst case is orphan old
+ * step rows (recoverable), never a flow that loads to nothing. Rejects if the
+ * target id already has rows (collision).
+ */
+export async function renameFlow(
+  creds: AwsCredentials,
+  oldFlowId: string,
+  newFlowId: string,
+  metas: DdbFlowMeta[],
+  onProgress?: (msg: string) => void,
+): Promise<void> {
+  const target = newFlowId.trim();
+  if (!target) throw new Error("New flow id is required.");
+  if (target === oldFlowId) return;
+  const ddb = ddbDocClient(creds);
+
+  // Collision guard — the target id must not already exist.
+  const existing = await ddb.send(new QueryCommand({
+    TableName: FLOW_TABLE,
+    KeyConditionExpression: "flow_id = :f",
+    ExpressionAttributeValues: { ":f": target },
+    Limit: 1,
+  }));
+  if ((existing.Items?.length ?? 0) > 0) {
+    throw new Error(`A flow named "${target}" already exists.`);
+  }
+
+  // Enumerate the old flow's step rows (skip any META under the flow id).
+  const stepRows: any[] = [];
+  let lastKey: any;
+  do {
+    const resp = await ddb.send(new QueryCommand({
+      TableName: FLOW_TABLE,
+      KeyConditionExpression: "flow_id = :f",
+      ExpressionAttributeValues: { ":f": oldFlowId },
+      ...(lastKey ? { ExclusiveStartKey: lastKey } : {}),
+    }));
+    for (const it of resp.Items ?? []) if (it.step_id !== "META") stepRows.push(it);
+    lastKey = resp.LastEvaluatedKey;
+  } while (lastKey);
+
+  const plan = planRenameFlow(oldFlowId, target, stepRows, metas);
+
+  let i = 0;
+  for (const item of plan.stepPuts) {
+    onProgress?.(`Copying step ${++i}/${plan.stepPuts.length}…`);
+    await ddb.send(new PutCommand({ TableName: FLOW_TABLE, Item: item }));
+  }
+  for (const item of plan.metaPuts) {
+    onProgress?.(`Repointing ${item.flow_id}…`);
+    await ddb.send(new PutCommand({ TableName: FLOW_TABLE, Item: item }));
+  }
+  for (const key of plan.stepDeletes) {
+    onProgress?.(`Removing old ${key.step_id}…`);
+    await ddb.send(new DeleteCommand({ TableName: FLOW_TABLE, Key: key }));
+  }
+}
+
 /** Delete specific step rows from a flow (used to prune unreachable steps). */
 export async function deleteSteps(
   creds: AwsCredentials,

@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { groupDdbRows, metaToRow } from "./ddbScan";
+import { planRenameFlow } from "./ddbScan";
 
 describe("metaToRow", () => {
   it("serializes a DdbFlowMeta to the snake_case META row, omitting empties", () => {
@@ -62,5 +63,39 @@ describe("groupDdbRows", () => {
     const x = flowDefs.find((f) => f.targetFlowId === "Flow_X")!;
     expect(x.metas.map((m) => m.dialedNumber).sort()).toEqual(["+1800AAA", "+1800BBB"]);
     expect(x.stepCount).toBe(1);
+  });
+});
+
+describe("planRenameFlow", () => {
+  it("re-keys step rows to the new flow id, repoints METAs, and deletes old steps in order", () => {
+    const stepRows = [
+      { flow_id: "Old_Flow", step_id: "start", action_type: "START" },
+      { flow_id: "Old_Flow", step_id: "s1", action_type: "PLAY" },
+    ];
+    const metas = [
+      { dialedNumber: "+1800AAA", targetFlowId: "Old_Flow", hooArn: "arn:hoo" },
+      { dialedNumber: "+1800BBB", targetFlowId: "Old_Flow" },
+      { dialedNumber: "+1800CCC", targetFlowId: "Other_Flow" }, // must be ignored
+    ];
+
+    const plan = planRenameFlow("Old_Flow", "New_Flow", stepRows, metas);
+
+    // 1) step rows copied under the new flow id (other fields preserved)
+    expect(plan.stepPuts).toEqual([
+      { flow_id: "New_Flow", step_id: "start", action_type: "START" },
+      { flow_id: "New_Flow", step_id: "s1", action_type: "PLAY" },
+    ]);
+
+    // 2) only METAs pointing at the old flow are repointed (PK = dialed_number unchanged)
+    expect(plan.metaPuts).toEqual([
+      { flow_id: "+1800AAA", step_id: "META", target_flow_id: "New_Flow", hoo_arn: "arn:hoo" },
+      { flow_id: "+1800BBB", step_id: "META", target_flow_id: "New_Flow" },
+    ]);
+
+    // 3) old step rows deleted (by the original key)
+    expect(plan.stepDeletes).toEqual([
+      { flow_id: "Old_Flow", step_id: "start" },
+      { flow_id: "Old_Flow", step_id: "s1" },
+    ]);
   });
 });

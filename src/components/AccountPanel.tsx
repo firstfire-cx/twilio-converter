@@ -6,7 +6,7 @@
 //   HOO        — Hours-of-Operation browser with tagging
 //   DDB Flows  — Scan TwilioIVRFlows table; show flows, queue needs, and sync status
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import {
   ConnectClient,
   ListQueuesCommand,
@@ -21,12 +21,11 @@ import {
 import type { UseAwsCredentialsReturn, AwsCredentials, ConnectInstance } from "../hooks/useAwsCredentials";
 import { connectClient } from "../utils/awsClients";
 import { renameQueue, deleteQueue as deleteQueueOp, tagResource, createQueue } from "../utils/queueSync";
-import { FLOW_TABLE, loadFlowFromDdb, deleteFlowFromDdb, deleteSteps, editFlowMeta, type DdbState, type DdbFlow, type DdbFlowMeta, type DdbQueueUsage } from "../utils/ddbScan";
+import { FLOW_TABLE, loadFlowFromDdb, deleteFlowFromDdb, deleteSteps, editFlowMeta, renameFlow, type DdbState, type DdbFlow, type DdbFlowMeta, type DdbQueueUsage } from "../utils/ddbScan";
 import { unreachableStepIds } from "../utils/flowPrune";
 import {
   classifyQueue,
   planMissingQueueCreates,
-  hooIdFromArn,
   clusterDuplicateQueues,
   planDuplicateCleanup,
   type ClusterCleanup,
@@ -36,6 +35,21 @@ import { scanQueueDependencies, findQueuesUsingHoo, reassignAndDeleteHoo, type Q
 import { executeDuplicateCleanup } from "../utils/duplicateCleanup";
 import { useDdbStore } from "../stores/ddbStore";
 import type { IR, FlowMeta } from "../types";
+import { buildFlowRegistry, type FlowRegistry, type FlowRow } from "../utils/flowRegistry";
+import { toMarkdown, toCsv, toJson } from "../utils/flowRegistryExport";
+
+// ── Download helper ──────────────────────────────────────────────────────────
+
+/** Trigger a client-side text download (used by the registry exporters). */
+function downloadText(filename: string, text: string, mime = "text/plain"): void {
+  const blob = new Blob([text], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 // ── Styles ───────────────────────────────────────────────────────────────────
 
@@ -1356,7 +1370,6 @@ function DdbFlowsPanel({
   hooNames?: Map<string, string>;
 }) {
   const [filter, setFilter] = useState("");
-  const [expandedFlow, setExpandedFlow] = useState<string | null>(null);
   const [loadingFlow, setLoadingFlow] = useState<string | null>(null);
   const [loadErr, setLoadErr] = useState<string>("");
   const [deletingFlow, setDeletingFlow] = useState<string | null>(null);
@@ -1414,6 +1427,48 @@ function DdbFlowsPanel({
       setSavingMeta(false);
     }
   };
+
+  const registry: FlowRegistry | null = useMemo(
+    () => (ddb ? buildFlowRegistry([{ label: "sandbox", ddb, hooNames: hooNames ?? new Map() }]) : null),
+    [ddb, hooNames],
+  );
+
+  // Inline flow rename (sandbox only).
+  const [renameTarget, setRenameTarget] = useState<DdbFlow | null>(null);
+  const [renameDraft, setRenameDraft] = useState("");
+  const [renaming, setRenaming] = useState(false);
+
+  const startRename = (flow: DdbFlow) => {
+    setRenameTarget(flow);
+    setRenameDraft(flow.targetFlowId);
+    setLoadErr("");
+  };
+
+  const confirmRename = async () => {
+    if (!renameTarget) return;
+    const next = renameDraft.trim();
+    if (!next || next === renameTarget.targetFlowId) { setRenameTarget(null); return; }
+    if (!window.confirm(
+      `Rename flow "${renameTarget.targetFlowId}" → "${next}"?\n\n` +
+      `This re-keys ${renameTarget.stepCount} step row(s) and repoints ` +
+      `${renameTarget.metas.length} phone META row(s). This cannot be undone.`,
+    )) return;
+    setRenaming(true);
+    try {
+      await renameFlow(creds, renameTarget.targetFlowId, next, renameTarget.metas);
+      setRenameTarget(null);
+      onScan();
+    } catch (e: any) {
+      setLoadErr(e?.message ?? "Rename failed");
+    } finally {
+      setRenaming(false);
+    }
+  };
+
+  const stamp = () => new Date().toISOString().slice(0, 10);
+  const exportMd = () => { if (registry) downloadText(`flows-registry-${stamp()}.md`, toMarkdown(registry), "text/markdown"); };
+  const exportCsvFile = () => { if (registry) downloadText(`flows-registry-${stamp()}.csv`, toCsv(registry), "text/csv"); };
+  const exportJsonFile = () => { if (registry) downloadText(`flows-registry-${stamp()}.json`, toJson(registry), "application/json"); };
 
   const handleLoadFlow = async (flow: DdbFlow) => {
     if (!onLoadFlow) return;
@@ -1475,14 +1530,6 @@ function DdbFlowsPanel({
     );
   }
 
-  const q = filter.toLowerCase();
-  const filteredFlows = (ddb?.flowDefs ?? []).filter(f =>
-    !filter ||
-    f.targetFlowId.toLowerCase().includes(q) ||
-    f.metas.some(m => m.dialedNumber.includes(filter) || (m.description ?? "").toLowerCase().includes(q)) ||
-    f.queues.some(qu => qu.skillWhisper.toLowerCase().includes(q))
-  );
-
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10, height: "100%", minHeight: 0 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
@@ -1529,169 +1576,105 @@ function DdbFlowsPanel({
         </div>
       )}
 
-      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4, paddingRight: 2 }}>
-        {filteredFlows.map((flow) => {
-          const isOpen = expandedFlow === flow.targetFlowId;
-          const phones = flow.metas.map(m => m.dialedNumber).filter(Boolean);
-          const hooId = flow.hooArn ? hooIdFromArn(flow.hooArn) : "";
-          const hooName = hooId ? hooNames?.get(hooId) : undefined;
-          return (
-            <div key={flow.targetFlowId} style={{
-              background: "var(--bg-3)", border: "1px solid var(--border)",
-              borderRadius: "var(--radius)", overflow: "hidden", flexShrink: 0,
-            }}>
-              <div style={{ padding: "7px 10px", display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}
-                onClick={() => setExpandedFlow(isOpen ? null : flow.targetFlowId)}>
-                <Tag label="FLOW" color="var(--purple)" bg="rgba(162,90,232,0.1)" border="rgba(162,90,232,0.3)" />
-                <span style={{ fontSize: 11, ...MONO, color: "var(--text-0)", flex: 1 }}>
-                  {flow.targetFlowId}
-                </span>
-                {phones.length > 0 ? (
-                  <span style={{ fontSize: 9, color: "var(--text-2)", ...MONO }} title={phones.join(", ")}>
-                    {phones.length === 1 ? phones[0] : `${phones.length} ☎`}
-                  </span>
-                ) : (
-                  <span style={{ fontSize: 9, color: "var(--orange)", ...MONO }}>no phone</span>
-                )}
-                <span style={{ fontSize: 9, color: "var(--text-3)", ...MONO }}>
-                  {flow.queues.length} queue{flow.queues.length !== 1 ? "s" : ""}
-                </span>
-                <span style={{ fontSize: 9, color: "var(--text-3)", ...MONO }}>{flow.stepCount} steps</span>
-                <span style={{ fontSize: 10, color: "var(--text-3)", ...MONO }}>
-                  {isOpen ? "▲" : "▼"}
-                </span>
-              </div>
-
-              {isOpen && (
-                <div style={{
-                  borderTop: "1px solid var(--border)", padding: "8px 10px",
-                  background: "var(--bg-0)", display: "flex", flexDirection: "column", gap: 6
-                }}>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                    <div style={{ fontSize: 10, color: "var(--text-3)", ...MONO }}>
-                      <span style={{ color: "var(--text-2)" }}>Start:</span> {flow.startStep ?? "—"}
-                    </div>
-                    {flow.instanceId && (
-                      <div style={{ fontSize: 10, color: "var(--text-3)", ...MONO }}>
-                        <span style={{ color: "var(--text-2)" }}>Instance:</span> {flow.instanceId}
-                      </div>
-                    )}
-                    {flow.hooArn && (
-                      <div style={{ fontSize: 10, color: "var(--text-3)", ...MONO, wordBreak: "break-all", gridColumn: "1 / -1" }}>
-                        <span style={{ color: "var(--text-2)" }}>HOO:</span>{" "}
-                        {hooName ?? `…${flow.hooArn.slice(-12)}`}{" "}
-                        {hooNames && (hooName
-                          ? <span style={{ color: "var(--green)" }}>✓</span>
-                          : <span style={{ color: "var(--red)" }}>✕ no matching HOO</span>)}
-                      </div>
-                    )}
-                  </div>
-
-                  <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                    {flow.metas.map((m, i) => (
-                      <div key={i} style={{ fontSize: 10, color: "var(--text-3)", ...MONO, display: "flex", alignItems: "center", gap: 6 }}>
-                        <span style={{ color: "var(--text-2)" }}>☎</span> {m.dialedNumber}
-                        {m.description && <span style={{ color: "var(--text-3)" }}>— {m.description}</span>}
-                        <button className="btn btn-ghost" style={{ fontSize: 9, padding: "0 5px", height: 18 }}
-                          onClick={() => setEditMeta({ original: m, draft: { ...m } })} title="Edit META">✎</button>
-                      </div>
-                    ))}
-                    {flow.metas.length === 0 && (
-                      <button className="btn btn-ghost" style={{ fontSize: 9, padding: "1px 8px", height: 20, alignSelf: "flex-start" }}
-                        onClick={() => setEditMeta({
-                          original: { dialedNumber: "", targetFlowId: flow.targetFlowId },
-                          draft: { dialedNumber: "", targetFlowId: flow.targetFlowId, hooArn: flow.hooArn, startStep: flow.startStep },
-                        })}>
-                        ＋ Add phone / META
-                      </button>
-                    )}
-                  </div>
-
-                  {flow.queues.length > 0 && (
-                    <div>
-                      <div style={{
-                        fontSize: 9, fontWeight: 600, letterSpacing: "0.08em",
-                        textTransform: "uppercase", color: "var(--text-3)", ...MONO, marginBottom: 4
-                      }}>
-                        Queues ({flow.queues.length})
-                      </div>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                        {flow.queues.map(qu => (
-                          <div key={qu.skillWhisper} style={{
-                            display: "flex", alignItems: "center", gap: 8,
-                            padding: "3px 6px", background: "var(--bg-3)",
-                            borderRadius: "var(--radius)", border: "1px solid var(--border)",
-                          }}>
-                            <span style={{ fontSize: 10, ...MONO, color: "var(--text-1)", flex: 1 }}>
-                              {qu.skillWhisper}
-                            </span>
-                            {qu.queueSkill && (
-                              <span style={{ fontSize: 9, ...MONO, color: "var(--orange)" }}>
-                                #{qu.queueSkill}
-                              </span>
-                            )}
-                            {ddb?.missingInConnect.includes(qu.skillWhisper) ? (
-                              <span style={{ fontSize: 9, ...MONO, color: "var(--red)" }}>✕ missing</span>
-                            ) : (
-                              <span style={{ fontSize: 9, ...MONO, color: "var(--green)" }}>✓</span>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                    {onLoadFlow && (
-                      <button className="btn btn-primary" style={{ fontSize: 9, padding: "1px 8px", height: 20 }}
-                        disabled={loadingFlow === flow.targetFlowId}
-                        onClick={() => handleLoadFlow(flow)}>
-                        {loadingFlow === flow.targetFlowId ? "Loading…" : "↪ Load flow"}
-                      </button>
-                    )}
-                    <button className="btn btn-ghost" style={{ fontSize: 9, padding: "1px 8px", height: 20 }}
-                      onClick={() => navigator.clipboard.writeText(flow.targetFlowId)}>
-                      Copy flow ID
-                    </button>
-                    {phones.length > 0 && (
-                      <button className="btn btn-ghost" style={{ fontSize: 9, padding: "1px 8px", height: 20 }}
-                        onClick={() => navigator.clipboard.writeText(phones.join(","))}>
-                        Copy phone{phones.length !== 1 ? "s" : ""}
-                      </button>
-                    )}
-                    <button className="btn btn-ghost" style={{ fontSize: 9, padding: "1px 8px", height: 20, marginLeft: "auto" }}
-                      disabled={pruningFlow === flow.targetFlowId}
-                      onClick={() => handlePruneSteps(flow)}
-                      title="Delete steps unreachable from the start step">
-                      {pruningFlow === flow.targetFlowId ? "Pruning…" : "✂ Prune unused steps"}
-                    </button>
-                    <button className="btn btn-ghost btn-danger" style={{ fontSize: 9, padding: "1px 8px", height: 20 }}
-                      disabled={deletingFlow === flow.targetFlowId}
-                      onClick={() => handleDeleteFlow(flow)}
-                      title="Delete this flow's rows from DynamoDB">
-                      {deletingFlow === flow.targetFlowId ? "Deleting…" : "🗑 Delete flow"}
-                    </button>
-                    {loadErr && loadingFlow === null && (
-                      <span style={{ fontSize: 9, ...MONO, color: "var(--red)" }}>{loadErr}</span>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
-        {filteredFlows.length === 0 && ddb && (
-          <div style={{ fontSize: 11, color: "var(--text-3)", ...MONO, textAlign: "center", padding: 24 }}>
-            No flows match filter
-          </div>
+      {/* Export bar */}
+      <div style={{ display: "flex", gap: 6, alignItems: "center", flexShrink: 0, marginBottom: 6 }}>
+        <button className="btn btn-ghost" style={{ fontSize: 10 }} disabled={!registry} onClick={exportMd}>⬇ MD</button>
+        <button className="btn btn-ghost" style={{ fontSize: 10 }} disabled={!registry} onClick={exportCsvFile}>⬇ CSV</button>
+        <button className="btn btn-ghost" style={{ fontSize: 10 }} disabled={!registry} onClick={exportJsonFile}>⬇ JSON</button>
+        {loadErr && (
+          <span style={{ fontSize: 9, ...MONO, color: "var(--red)", marginLeft: 8 }}>{loadErr}</span>
         )}
       </div>
 
-      {filteredFlows.length > 0 && (
-        <div style={{ fontSize: 10, color: "var(--text-3)", ...MONO, flexShrink: 0 }}>
-          {filteredFlows.length} of {ddb?.flowDefs.length ?? 0} flows
+      {renameTarget && (
+        <div style={{
+          display: "flex", gap: 6, alignItems: "center", flexShrink: 0,
+          padding: "6px 8px", marginBottom: 6, background: "var(--bg-2)",
+          border: "1px solid var(--border)", borderRadius: "var(--radius)",
+        }}>
+          <span style={{ fontSize: 10, color: "var(--text-3)", ...MONO }}>Rename:</span>
+          <input
+            autoFocus
+            value={renameDraft}
+            onChange={(ev) => setRenameDraft(ev.target.value)}
+            onKeyDown={(ev) => { if (ev.key === "Enter") confirmRename(); if (ev.key === "Escape") setRenameTarget(null); }}
+            style={{ flex: 1, fontSize: 11, padding: "3px 8px", ...MONO }}
+          />
+          <button className="btn btn-primary" style={{ fontSize: 10 }} disabled={renaming} onClick={confirmRename}>Save</button>
+          <button className="btn btn-ghost" style={{ fontSize: 10 }} disabled={renaming} onClick={() => setRenameTarget(null)}>Cancel</button>
         </div>
       )}
+
+      <div style={{ flex: 1, overflow: "auto", minHeight: 0 }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
+          <thead>
+            <tr style={{ textAlign: "left", color: "var(--text-3)", ...MONO }}>
+              <th style={{ padding: "4px 6px" }}>Health Plan</th>
+              <th style={{ padding: "4px 6px" }}>Flow</th>
+              <th style={{ padding: "4px 6px" }}>Number(s)</th>
+              <th style={{ padding: "4px 6px" }}>HOO</th>
+              <th style={{ padding: "4px 6px" }}>Status</th>
+              <th style={{ padding: "4px 6px" }} />
+            </tr>
+          </thead>
+          <tbody>
+            {(registry?.rows ?? [])
+              .filter((r) => {
+                const f = filter.trim().toLowerCase();
+                if (!f) return true;
+                const e = r.envs.sandbox;
+                return (
+                  (r.healthPlan ?? "").toLowerCase().includes(f) ||
+                  (e?.rawFlowId ?? "").toLowerCase().includes(f) ||
+                  (e?.dialedNumbers ?? []).some((n) => n.includes(f))
+                );
+              })
+              .map((row: FlowRow) => {
+                const e = row.envs.sandbox;
+                const def = ddb!.flowDefs.find((d) => d.targetFlowId === e?.rawFlowId);
+                const busy = loadingFlow === e?.rawFlowId || deletingFlow === e?.rawFlowId
+                  || pruningFlow === e?.rawFlowId || renaming;
+                return (
+                  <tr key={row.flowKey} style={{ borderTop: "1px solid var(--border)" }}>
+                    <td style={{ padding: "4px 6px" }}>{row.healthPlan ?? "—"}</td>
+                    <td style={{ padding: "4px 6px", ...MONO }}>{e?.rawFlowId}</td>
+                    <td style={{ padding: "4px 6px", ...MONO }}>
+                      {e && e.dialedNumbers.length ? e.dialedNumbers.join(", ") : <span style={{ color: "var(--text-3)" }}>—</span>}
+                    </td>
+                    <td style={{ padding: "4px 6px" }}>{e?.hooName ?? e?.hooArn ?? "—"}</td>
+                    <td style={{ padding: "4px 6px" }}>
+                      <span style={{
+                        fontSize: 9, ...MONO,
+                        color: e?.liveStatus === "live" ? "var(--green, #4caf50)" : "var(--text-3)",
+                      }}>
+                        {e?.liveStatus === "live" ? "● live" : "○ not yet"}
+                      </span>
+                    </td>
+                    <td style={{ padding: "4px 6px", whiteSpace: "nowrap", textAlign: "right" }}>
+                      {def && (
+                        <>
+                          <button className="btn btn-ghost" style={{ fontSize: 9, padding: "1px 6px", height: 20 }}
+                            disabled={busy} onClick={() => startRename(def)}>rename</button>
+                          <button className="btn btn-ghost" style={{ fontSize: 9, padding: "1px 6px", height: 20 }}
+                            disabled={busy || !def.metas.length}
+                            onClick={() => def.metas[0] && setEditMeta({ original: def.metas[0], draft: { ...def.metas[0] } })}>edit META</button>
+                          {onLoadFlow && (
+                            <button className="btn btn-ghost" style={{ fontSize: 9, padding: "1px 6px", height: 20 }}
+                              disabled={busy} onClick={() => handleLoadFlow(def)}>load</button>
+                          )}
+                          <button className="btn btn-ghost" style={{ fontSize: 9, padding: "1px 6px", height: 20 }}
+                            disabled={busy} onClick={() => handlePruneSteps(def)}>prune</button>
+                          <button className="btn btn-ghost btn-danger" style={{ fontSize: 9, padding: "1px 6px", height: 20 }}
+                            disabled={busy} onClick={() => handleDeleteFlow(def)}>delete</button>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+          </tbody>
+        </table>
+      </div>
 
       {/* META edit modal */}
       {editMeta && (() => {
@@ -1912,7 +1895,7 @@ export default function AccountPanel({ auth, onLoadFlow }: Props) {
             {([
               ["queues", "Queues & Skills"],
               ["hoo", "Hours of Operation"],
-              ["ddb", "DynamoDB Flows"],
+              ["ddb", "Flows Registry"],
             ] as [PanelTab, string][]).map(([tab, label]) => (
               <button key={tab} onClick={() => setActivePanel(tab)} style={{
                 display: "flex", alignItems: "center", gap: 10,
@@ -1995,9 +1978,9 @@ export default function AccountPanel({ auth, onLoadFlow }: Props) {
             {activePanel === "ddb" && (
               <div style={{ display: "flex", flexDirection: "column", gap: 8, height: "100%", minHeight: 0 }}>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexShrink: 0 }}>
-                  <h2 style={{ fontSize: 14, fontWeight: 600, color: "var(--text-0)", margin: 0 }}>DynamoDB Flows</h2>
+                  <h2 style={{ fontSize: 14, fontWeight: 600, color: "var(--text-0)", margin: 0 }}>Flows Registry</h2>
                   <span style={{ fontSize: 10, color: "var(--text-3)", ...MONO }}>
-                    {FLOW_TABLE} · all META rows + queue references
+                    {FLOW_TABLE} · consolidated flow table · export MD/CSV/JSON
                   </span>
                 </div>
                 {ddbError && (

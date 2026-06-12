@@ -1444,6 +1444,7 @@ function DdbFlowsPanel({
   const [editingPlanFor, setEditingPlanFor] = useState<string | null>(null);
   const [planDraft, setPlanDraft] = useState("");
   const [savingField, setSavingField] = useState<string | null>(null);
+  const planCommitRef = useRef(true); // false = the pending blur should cancel, not save
 
   const savePlan = async (def: DdbFlow) => {
     const value = planDraft.trim();
@@ -1695,10 +1696,17 @@ function DdbFlowsPanel({
                           autoFocus
                           value={planDraft}
                           onChange={(ev) => setPlanDraft(ev.target.value)}
-                          onBlur={() => savePlan(def)}
+                          onBlur={() => {
+                            if (planCommitRef.current) {
+                              savePlan(def);
+                            } else {
+                              planCommitRef.current = true;
+                              setEditingPlanFor(null);
+                            }
+                          }}
                           onKeyDown={(ev) => {
-                            if (ev.key === "Enter") savePlan(def);
-                            if (ev.key === "Escape") setEditingPlanFor(null);
+                            if (ev.key === "Enter") { ev.currentTarget.blur(); }
+                            if (ev.key === "Escape") { planCommitRef.current = false; ev.currentTarget.blur(); }
                           }}
                           style={{ fontSize: 11, padding: "2px 6px", width: "100%", boxSizing: "border-box" }}
                         />

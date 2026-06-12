@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { buildFlowRegistry, type EnvScan } from "./flowRegistry";
-import type { DdbState, DdbFlow } from "./ddbScan";
+import type { DdbState, DdbFlow, DdbFlowMeta } from "./ddbScan";
 
 function flow(partial: Partial<DdbFlow> & { targetFlowId: string }): DdbFlow {
   return {
@@ -66,6 +66,62 @@ describe("buildFlowRegistry — single env", () => {
     // Single-env: drift counts are all zero.
     expect(reg.drift).toEqual({
       inSync: 0, numberDrift: 0, nameFuzzy: 0, sandboxOnly: 0, prodOnly: 0,
+    });
+  });
+});
+
+function meta(partial: Partial<DdbFlowMeta> & { dialedNumber: string; targetFlowId: string }): DdbFlowMeta {
+  return { ...partial };
+}
+
+function env(label: string, flowDefs: DdbFlow[], hooNames = new Map<string, string>()): EnvScan {
+  return { label, ddb: ddbState(flowDefs), hooNames };
+}
+
+describe("buildFlowRegistry — two envs", () => {
+  it("classifies in-sync, number-drift, name-fuzzy, sandbox-only, prod-only", () => {
+    const sb = [
+      // identical to prod → in-sync
+      flow({ targetFlowId: "landing_aetna", hooArn: "arn/hoo-1",
+             metas: [meta({ dialedNumber: "+1A", targetFlowId: "landing_aetna", hooArn: "arn/hoo-1", description: "Aetna" })] }),
+      // same name, different number → number-drift
+      flow({ targetFlowId: "landing_bcbs", hooArn: "arn/hoo-2",
+             metas: [meta({ dialedNumber: "+1SB", targetFlowId: "landing_bcbs", hooArn: "arn/hoo-2" })] }),
+      // normalized-equal but raw differs from prod → name-fuzzy
+      flow({ targetFlowId: "landing_carefirst",
+             metas: [meta({ dialedNumber: "+1C", targetFlowId: "landing_carefirst" })] }),
+      // only in sandbox → sandbox-only
+      flow({ targetFlowId: "landing_kp_co",
+             metas: [meta({ dialedNumber: "+1K", targetFlowId: "landing_kp_co" })] }),
+    ];
+    const pr = [
+      flow({ targetFlowId: "landing_aetna", hooArn: "arn/hoo-1",
+             metas: [meta({ dialedNumber: "+1A", targetFlowId: "landing_aetna", hooArn: "arn/hoo-1", description: "Aetna" })] }),
+      flow({ targetFlowId: "landing_bcbs", hooArn: "arn/hoo-2",
+             metas: [meta({ dialedNumber: "+1PR", targetFlowId: "landing_bcbs", hooArn: "arn/hoo-2" })] }),
+      flow({ targetFlowId: "Landing-CareFirst",
+             metas: [meta({ dialedNumber: "+1C", targetFlowId: "Landing-CareFirst" })] }),
+      // only in prod → prod-only
+      flow({ targetFlowId: "landing_kp_ga",
+             metas: [meta({ dialedNumber: "+1G", targetFlowId: "landing_kp_ga" })] }),
+    ];
+
+    const reg = buildFlowRegistry([env("sandbox", sb), env("prod", pr)]);
+    const status = (key: string) => reg.rows.find((r) => r.flowKey === key)!.joinStatus;
+
+    expect(status("landing aetna")).toBe("in-sync");
+    expect(status("landing bcbs")).toBe("number-drift");
+    expect(status("landing carefirst")).toBe("name-fuzzy");
+    expect(status("landing kp co")).toBe("sandbox-only");
+    expect(status("landing kp ga")).toBe("prod-only");
+
+    // name-fuzzy row preserves both raw ids so the user sees the mismatch.
+    const cf = reg.rows.find((r) => r.flowKey === "landing carefirst")!;
+    expect(cf.envs.sandbox.rawFlowId).toBe("landing_carefirst");
+    expect(cf.envs.prod.rawFlowId).toBe("Landing-CareFirst");
+
+    expect(reg.drift).toEqual({
+      inSync: 1, numberDrift: 1, nameFuzzy: 1, sandboxOnly: 1, prodOnly: 1,
     });
   });
 });

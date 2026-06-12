@@ -21,7 +21,8 @@ import {
 import type { UseAwsCredentialsReturn, AwsCredentials, ConnectInstance } from "../hooks/useAwsCredentials";
 import { connectClient } from "../utils/awsClients";
 import { renameQueue, deleteQueue as deleteQueueOp, tagResource, createQueue } from "../utils/queueSync";
-import { FLOW_TABLE, loadFlowFromDdb, deleteFlowFromDdb, deleteSteps, editFlowMeta, renameFlow, type DdbState, type DdbFlow, type DdbFlowMeta, type DdbQueueUsage } from "../utils/ddbScan";
+import { FLOW_TABLE, loadFlowFromDdb, deleteFlowFromDdb, deleteSteps, editFlowMeta, renameFlow, setFlowMetaFields, type DdbState, type DdbFlow, type DdbFlowMeta, type DdbQueueUsage } from "../utils/ddbScan";
+import { annotationsToMap, setAnnotation, type FlowAnnotation } from "../stores/flowAnnotations";
 import { unreachableStepIds } from "../utils/flowPrune";
 import {
   classifyQueue,
@@ -1359,6 +1360,7 @@ function DdbFlowsPanel({
   progressMsg,
   onLoadFlow,
   hooNames,
+  hooArns,
 }: {
   creds: AwsCredentials;
   ddb: DdbState | null;
@@ -1368,6 +1370,8 @@ function DdbFlowsPanel({
   onLoadFlow?: (ir: IR, meta?: Partial<FlowMeta>) => void;
   /** id → name for the instance's HOOs, to resolve flow.hooArn to a real name. */
   hooNames?: Map<string, string>;
+  /** id → arn for the instance's HOOs, to write a selected HOO. */
+  hooArns?: Map<string, string>;
 }) {
   const [filter, setFilter] = useState("");
   const [loadingFlow, setLoadingFlow] = useState<string | null>(null);
@@ -1428,10 +1432,56 @@ function DdbFlowsPanel({
     }
   };
 
+  const [annotations, setAnnotations] = useState<Map<string, FlowAnnotation>>(() => annotationsToMap());
+  const refreshAnnotations = () => setAnnotations(annotationsToMap());
+
   const registry: FlowRegistry | null = useMemo(
-    () => (ddb ? buildFlowRegistry([{ label: "sandbox", ddb, hooNames: hooNames ?? new Map() }]) : null),
-    [ddb, hooNames],
+    () => (ddb ? buildFlowRegistry([{ label: "sandbox", ddb, hooNames: hooNames ?? new Map(), annotations }]) : null),
+    [ddb, hooNames, annotations],
   );
+
+  // Inline plan-name + HOO editing (DDB for numbered flows, local for not-yet-live).
+  const [editingPlanFor, setEditingPlanFor] = useState<string | null>(null);
+  const [planDraft, setPlanDraft] = useState("");
+  const [savingField, setSavingField] = useState<string | null>(null);
+
+  const savePlan = async (def: DdbFlow) => {
+    const value = planDraft.trim();
+    setEditingPlanFor(null);
+    setSavingField(def.targetFlowId);
+    setLoadErr("");
+    try {
+      if (def.metas.length > 0) {
+        await setFlowMetaFields(creds, def, { description: value });
+        onScan();
+      } else {
+        setAnnotation(def.targetFlowId, { healthPlan: value });
+        refreshAnnotations();
+      }
+    } catch (e: any) {
+      setLoadErr(e?.message ?? "Save failed");
+    } finally {
+      setSavingField(null);
+    }
+  };
+
+  const changeHoo = async (def: DdbFlow, hooId: string) => {
+    setSavingField(def.targetFlowId);
+    setLoadErr("");
+    try {
+      if (def.metas.length > 0) {
+        await setFlowMetaFields(creds, def, { hooArn: hooId ? (hooArns?.get(hooId) ?? "") : "" });
+        onScan();
+      } else {
+        setAnnotation(def.targetFlowId, { hooId });
+        refreshAnnotations();
+      }
+    } catch (e: any) {
+      setLoadErr(e?.message ?? "HOO update failed");
+    } finally {
+      setSavingField(null);
+    }
+  };
 
   // Inline flow rename (sandbox only).
   const [renameTarget, setRenameTarget] = useState<DdbFlow | null>(null);
@@ -1613,6 +1663,7 @@ function DdbFlowsPanel({
               <th style={{ padding: "4px 6px" }}>Flow</th>
               <th style={{ padding: "4px 6px" }}>Number(s)</th>
               <th style={{ padding: "4px 6px" }}>HOO</th>
+              <th style={{ padding: "4px 6px" }}>Queues</th>
               <th style={{ padding: "4px 6px" }}>Status</th>
               <th style={{ padding: "4px 6px" }} />
             </tr>
@@ -1635,10 +1686,32 @@ function DdbFlowsPanel({
                 const e = row.envs.sandbox;
                 const def = ddb!.flowDefs.find((d) => d.targetFlowId === e?.rawFlowId);
                 const busy = loadingFlow === e?.rawFlowId || deletingFlow === e?.rawFlowId
-                  || pruningFlow === e?.rawFlowId || renaming;
+                  || pruningFlow === e?.rawFlowId || renaming || savingField === e?.rawFlowId;
                 return (
                   <tr key={row.flowKey} style={{ borderTop: "1px solid var(--border)" }}>
-                    <td style={{ padding: "4px 6px" }}>{row.healthPlan ?? "—"}</td>
+                    <td style={{ padding: "4px 6px" }}>
+                      {def && editingPlanFor === e?.rawFlowId ? (
+                        <input
+                          autoFocus
+                          value={planDraft}
+                          onChange={(ev) => setPlanDraft(ev.target.value)}
+                          onBlur={() => savePlan(def)}
+                          onKeyDown={(ev) => {
+                            if (ev.key === "Enter") savePlan(def);
+                            if (ev.key === "Escape") setEditingPlanFor(null);
+                          }}
+                          style={{ fontSize: 11, padding: "2px 6px", width: "100%", boxSizing: "border-box" }}
+                        />
+                      ) : (
+                        <span
+                          style={{ cursor: def ? "text" : "default" }}
+                          title={def ? "Click to edit plan name" : undefined}
+                          onClick={() => { if (def && e) { setEditingPlanFor(e.rawFlowId); setPlanDraft(row.healthPlan ?? ""); } }}
+                        >
+                          {row.healthPlan ?? <span style={{ color: "var(--text-3)" }}>＋ name</span>}
+                        </span>
+                      )}
+                    </td>
                     <td style={{ padding: "4px 6px", ...MONO }}>{e?.rawFlowId}</td>
                     <td style={{ padding: "4px 6px", ...MONO }}>
                       {def && def.metas.length > 0 ? (
@@ -1666,7 +1739,26 @@ function DdbFlowsPanel({
                         </span>
                       )}
                     </td>
-                    <td style={{ padding: "4px 6px" }}>{e?.hooName ?? e?.hooArn ?? "—"}</td>
+                    <td style={{ padding: "4px 6px" }}>
+                      {def ? (
+                        <select
+                          value={e?.hooId ?? ""}
+                          disabled={busy}
+                          onChange={(ev) => changeHoo(def, ev.target.value)}
+                          style={{ fontSize: 10, padding: "1px 4px", maxWidth: 160 }}
+                        >
+                          <option value="">— none —</option>
+                          {[...(hooNames ?? new Map()).entries()].map(([id, name]) => (
+                            <option key={id} value={id}>{name}</option>
+                          ))}
+                        </select>
+                      ) : (e?.hooName ?? "—")}
+                    </td>
+                    <td style={{ padding: "4px 6px", ...MONO, fontSize: 10 }}>
+                      {def && def.queues.length
+                        ? def.queues.map((q) => q.skillWhisper).join(", ")
+                        : <span style={{ color: "var(--text-3)" }}>—</span>}
+                    </td>
                     <td style={{ padding: "4px 6px" }}>
                       <span style={{
                         fontSize: 9, ...MONO,
@@ -1786,24 +1878,28 @@ export default function AccountPanel({ auth, onLoadFlow }: Props) {
 
   const selectedInstance = instances.find(i => i.id === selectedInstanceId);
 
-  // HOO id → name, so the Flows panel can resolve hoo_arn to a real HOO name.
+  // HOO id → name (and id → arn) so the Flows panel can resolve + change HOOs.
   const [hooNames, setHooNames] = useState<Map<string, string>>(new Map());
+  const [hooArns, setHooArns] = useState<Map<string, string>>(new Map());
   useEffect(() => {
-    if (!credentials || !selectedInstanceId) { setHooNames(new Map()); return; }
+    if (!credentials || !selectedInstanceId) { setHooNames(new Map()); setHooArns(new Map()); return; }
     let cancelled = false;
     (async () => {
       try {
         const client = buildConnectClient(credentials);
         const m = new Map<string, string>();
+        const arns = new Map<string, string>();
         let next: string | undefined;
         do {
           const resp = await client.send(new ListHoursOfOperationsCommand({
             InstanceId: selectedInstanceId, ...(next ? { NextToken: next } : {}),
           }));
-          for (const h of resp.HoursOfOperationSummaryList ?? []) if (h.Id) m.set(h.Id, h.Name ?? h.Id);
+          for (const h of resp.HoursOfOperationSummaryList ?? []) {
+            if (h.Id) { m.set(h.Id, h.Name ?? h.Id); if (h.Arn) arns.set(h.Id, h.Arn); }
+          }
           next = resp.NextToken;
         } while (next);
-        if (!cancelled) setHooNames(m);
+        if (!cancelled) { setHooNames(m); setHooArns(arns); }
       } catch { /* non-fatal — flow panel falls back to the raw id */ }
     })();
     return () => { cancelled = true; };
@@ -2022,6 +2118,7 @@ export default function AccountPanel({ auth, onLoadFlow }: Props) {
                   progressMsg={ddbProgress}
                   onLoadFlow={onLoadFlow}
                   hooNames={hooNames}
+                  hooArns={hooArns}
                 />
               </div>
             )}

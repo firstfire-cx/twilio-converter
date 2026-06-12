@@ -21,6 +21,7 @@ function flatRow(reg: FlowRegistry, row: FlowRow): Record<string, string> {
     out[`${p} Flow`] = e?.rawFlowId ?? "";
     out[`${p} Numbers`] = e ? e.dialedNumbers.join("; ") : "";
     out[`${p} HOO`] = e?.hooName ?? e?.hooArn ?? "";
+    out[`${p} Queues`] = e ? (e.queues ?? []).join("; ") : "";
     out[`${p} Status`] = e ? e.liveStatus : "—";
   }
   return out;
@@ -32,7 +33,7 @@ function columns(reg: FlowRegistry): string[] {
   if (reg.envLabels.length > 1) out.push("Join Status");
   for (const label of reg.envLabels) {
     const p = cap(label);
-    out.push(`${p} Flow`, `${p} Numbers`, `${p} HOO`, `${p} Status`);
+    out.push(`${p} Flow`, `${p} Numbers`, `${p} HOO`, `${p} Queues`, `${p} Status`);
   }
   return out;
 }

@@ -19,6 +19,7 @@ const reg: FlowRegistry = {
           hooName: "Aetna Hours",
           liveStatus: "live",
           description: "Aetna",
+          queues: ["Aetna-EN", "Aetna-SP"],
         },
       },
     },
@@ -42,10 +43,10 @@ describe("flow registry exporters (single env)", () => {
     const md = toMarkdown(reg);
     expect(md).toBe(
       [
-        "| Health Plan | Sandbox Flow | Sandbox Numbers | Sandbox HOO | Sandbox Status |",
-        "| --- | --- | --- | --- | --- |",
-        "| Aetna | landing_aetna | +18005551234 | Aetna Hours | live |",
-        "|  | landing_kp_colorado |  |  | not-yet |",
+        "| Health Plan | Sandbox Flow | Sandbox Numbers | Sandbox HOO | Sandbox Queues | Sandbox Status |",
+        "| --- | --- | --- | --- | --- | --- |",
+        "| Aetna | landing_aetna | +18005551234 | Aetna Hours | Aetna-EN; Aetna-SP | live |",
+        "|  | landing_kp_colorado |  |  |  | not-yet |",
       ].join("\n"),
     );
   });
@@ -53,8 +54,8 @@ describe("flow registry exporters (single env)", () => {
   it("renders CSV with a header row + one row per flow", () => {
     const csv = toCsv(reg);
     const lines = csv.trim().split(/\r?\n/);
-    expect(lines[0]).toBe("Health Plan,Sandbox Flow,Sandbox Numbers,Sandbox HOO,Sandbox Status");
-    expect(lines[1]).toBe("Aetna,landing_aetna,+18005551234,Aetna Hours,live");
+    expect(lines[0]).toBe("Health Plan,Sandbox Flow,Sandbox Numbers,Sandbox HOO,Sandbox Queues,Sandbox Status");
+    expect(lines[1]).toBe("Aetna,landing_aetna,+18005551234,Aetna Hours,Aetna-EN; Aetna-SP,live");
     expect(lines).toHaveLength(3);
   });
 
@@ -87,10 +88,10 @@ describe("flow registry exporters (two envs)", () => {
     };
     const md = toMarkdown(two);
     expect(md.split("\n")[0]).toBe(
-      "| Health Plan | Join Status | Sandbox Flow | Sandbox Numbers | Sandbox HOO | Sandbox Status | Prod Flow | Prod Numbers | Prod HOO | Prod Status |",
+      "| Health Plan | Join Status | Sandbox Flow | Sandbox Numbers | Sandbox HOO | Sandbox Queues | Sandbox Status | Prod Flow | Prod Numbers | Prod HOO | Prod Queues | Prod Status |",
     );
     expect(md.split("\n")[2]).toBe(
-      "| Aetna | number-drift | landing_aetna | +1SB |  | live | landing_aetna | +1PR |  | live |",
+      "| Aetna | number-drift | landing_aetna | +1SB |  |  | live | landing_aetna | +1PR |  |  | live |",
     );
   });
 });

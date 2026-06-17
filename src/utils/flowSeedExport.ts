@@ -7,7 +7,8 @@
 // separators, ensure_ascii (non-ASCII escaped). This keeps the converter's
 // seed.jsonl byte-compatible with the Python exporter for clean git diffs.
 
-import { metaToRow, type DdbFlowMeta } from "./ddbScan";
+import { metaToRow, type DdbFlowMeta, type DdbFlow } from "./ddbScan";
+import { hooIdFromArn } from "./queueReconcile";
 
 /** A raw DynamoDB row as stored/exported (content is a nested object). */
 export type SeedRow = Record<string, unknown>;
@@ -65,4 +66,53 @@ export function buildSeedJsonl(flows: FlowSeedInput[]): string {
     for (const m of metas) lines.push(pythonJsonDumps(metaToRow(m)));
   }
   return lines.map((l) => l + "\n").join("");
+}
+
+export interface ManifestPhone {
+  target_flow_id: string;
+  start_step: string;
+  hoo: { sandbox: string; prod: string };
+}
+
+export interface FlowRegistryManifest {
+  accounts: { sandbox: string; prod: string };
+  instances: { sandbox: string; prod: string };
+  region: string;
+  flows: string[];
+  phones: Record<string, ManifestPhone>;
+}
+
+/** Merge selected flows into a manifest: register each target_flow_id and each
+ *  phone's META, deriving the sandbox HOO UUID from the meta's hooArn. A new
+ *  prod HOO is defaulted to "REPLACE" (the transform's fail-fast guard); an
+ *  existing filled prod HOO is preserved. Pure: returns a new manifest. */
+export function mergeFlowIntoManifest(base: FlowRegistryManifest, flows: DdbFlow[]): FlowRegistryManifest {
+  const out: FlowRegistryManifest = {
+    ...base,
+    flows: [...base.flows],
+    phones: { ...base.phones },
+  };
+  for (const flow of flows) {
+    if (!out.flows.includes(flow.targetFlowId)) out.flows.push(flow.targetFlowId);
+    for (const m of flow.metas) {
+      if (!m.dialedNumber) continue;
+      const sandboxHoo = m.hooArn ? hooIdFromArn(m.hooArn) : "";
+      const existing = out.phones[m.dialedNumber];
+      out.phones[m.dialedNumber] = {
+        target_flow_id: m.targetFlowId,
+        start_step: m.startStep ?? "start",
+        hoo: {
+          sandbox: sandboxHoo,
+          prod: existing?.hoo.prod && existing.hoo.prod !== "REPLACE" ? existing.hoo.prod : "REPLACE",
+        },
+      };
+    }
+  }
+  out.flows.sort();
+  return out;
+}
+
+/** Serialize a manifest for download (pretty, stable key order). */
+export function manifestToJson(m: FlowRegistryManifest): string {
+  return JSON.stringify(m, null, 2) + "\n";
 }

@@ -43,3 +43,45 @@ describe("buildSeedJsonl", () => {
     );
   });
 });
+
+import { mergeFlowIntoManifest, type FlowRegistryManifest } from "./flowSeedExport";
+import type { DdbFlow } from "./ddbScan";
+
+describe("mergeFlowIntoManifest", () => {
+  const base: FlowRegistryManifest = {
+    accounts: { sandbox: "111", prod: "222" },
+    instances: { sandbox: "si", prod: "pi" },
+    region: "us-west-2",
+    flows: ["existing_flow"],
+    phones: {},
+  };
+  const flow: DdbFlow = {
+    targetFlowId: "landing_new",
+    stepCount: 3,
+    queues: [],
+    metas: [{
+      dialedNumber: "+18005550000", targetFlowId: "landing_new", startStep: "start",
+      hooArn: "arn:aws:connect:us-west-2:111:instance/si/operating-hours/sandbox-hoo-uuid",
+    }],
+  };
+
+  it("adds the flow + phone entry, sandbox HOO from the arn, prod HOO defaulted to REPLACE", () => {
+    const out = mergeFlowIntoManifest(base, [flow]);
+    expect(out.flows).toContain("landing_new");
+    expect(out.phones["+18005550000"]).toEqual({
+      target_flow_id: "landing_new",
+      start_step: "start",
+      hoo: { sandbox: "sandbox-hoo-uuid", prod: "REPLACE" },
+    });
+  });
+
+  it("preserves an already-filled prod HOO instead of clobbering with REPLACE", () => {
+    const withProd: FlowRegistryManifest = {
+      ...base,
+      phones: { "+18005550000": { target_flow_id: "landing_new", start_step: "start",
+        hoo: { sandbox: "sandbox-hoo-uuid", prod: "already-prod" } } },
+    };
+    const out = mergeFlowIntoManifest(withProd, [flow]);
+    expect(out.phones["+18005550000"].hoo.prod).toBe("already-prod");
+  });
+});

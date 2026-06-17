@@ -21,3 +21,25 @@ describe("pythonJsonDumps", () => {
     );
   });
 });
+
+import { buildSeedJsonl } from "./flowSeedExport";
+import type { DdbFlowMeta } from "./ddbScan";
+
+describe("buildSeedJsonl", () => {
+  it("emits one sorted-key line per step row, then META rows, ending with a newline", () => {
+    const stepRows: Record<string, unknown>[] = [
+      { flow_id: "f1", step_id: "start", action_type: "PLAY",
+        content: { text: { eng: "Hi" } }, default_next: "END", label: "Greet" },
+    ];
+    const metas: DdbFlowMeta[] = [
+      { dialedNumber: "+18005551234", targetFlowId: "f1", startStep: "start", hooArn: "arn:hoo" },
+    ];
+    const out = buildSeedJsonl([{ stepRows, metas }]);
+    expect(out).toBe(
+      '{"action_type": "PLAY", "content": {"text": {"eng": "Hi"}}, ' +
+      '"default_next": "END", "flow_id": "f1", "label": "Greet", "step_id": "start"}\n' +
+      '{"flow_id": "+18005551234", "hoo_arn": "arn:hoo", "start_step": "start", ' +
+      '"step_id": "META", "target_flow_id": "f1"}\n',
+    );
+  });
+});

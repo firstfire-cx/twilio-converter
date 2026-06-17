@@ -7,6 +7,8 @@
 // separators, ensure_ascii (non-ASCII escaped). This keeps the converter's
 // seed.jsonl byte-compatible with the Python exporter for clean git diffs.
 
+import { metaToRow, type DdbFlowMeta } from "./ddbScan";
+
 /** A raw DynamoDB row as stored/exported (content is a nested object). */
 export type SeedRow = Record<string, unknown>;
 
@@ -45,4 +47,22 @@ export function pythonJsonDumps(value: unknown): string {
     return "{" + keys.map((k) => encodeString(k) + ": " + pythonJsonDumps(obj[k])).join(", ") + "}";
   }
   throw new Error(`pythonJsonDumps: cannot serialize ${typeof value}`);
+}
+
+export interface FlowSeedInput {
+  /** Raw step rows for the flow (step_id !== "META"), as stored in DynamoDB. */
+  stepRows: SeedRow[];
+  /** META rows (phone → flow) routing to this flow. */
+  metas: DdbFlowMeta[];
+}
+
+/** Build seed.jsonl text for the given flows: each flow's step rows followed by
+ *  its META rows, every row serialized export_flows.py-style. Trailing newline. */
+export function buildSeedJsonl(flows: FlowSeedInput[]): string {
+  const lines: string[] = [];
+  for (const { stepRows, metas } of flows) {
+    for (const row of stepRows) lines.push(pythonJsonDumps(row));
+    for (const m of metas) lines.push(pythonJsonDumps(metaToRow(m)));
+  }
+  return lines.map((l) => l + "\n").join("");
 }

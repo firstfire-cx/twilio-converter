@@ -116,3 +116,12 @@ export function mergeFlowIntoManifest(base: FlowRegistryManifest, flows: DdbFlow
 export function manifestToJson(m: FlowRegistryManifest): string {
   return JSON.stringify(m, null, 2) + "\n";
 }
+
+/** Build prod_deletes.jsonl text: one {flow_id, step_id} per old step row that a
+ *  target_flow_id rename orphaned in prod (the seeder upserts, never deletes, so
+ *  these must be pruned explicitly). Lines preserve input order. */
+export function buildProdDeletes(oldFlowId: string, oldStepIds: string[]): string {
+  return oldStepIds
+    .map((stepId) => pythonJsonDumps({ flow_id: oldFlowId, step_id: stepId }) + "\n")
+    .join("");
+}

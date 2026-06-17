@@ -85,3 +85,19 @@ describe("mergeFlowIntoManifest", () => {
     expect(out.phones["+18005550000"].hoo.prod).toBe("already-prod");
   });
 });
+
+import { buildProdDeletes } from "./flowSeedExport";
+
+describe("buildProdDeletes", () => {
+  it("emits one delete line per orphaned old step key, in input order, trailing newline", () => {
+    const out = buildProdDeletes("old_flow", ["start", "s1"]);
+    expect(out).toBe(
+      '{"flow_id": "old_flow", "step_id": "start"}\n' +
+      '{"flow_id": "old_flow", "step_id": "s1"}\n',
+    );
+  });
+
+  it("returns empty string when there are no orphaned steps", () => {
+    expect(buildProdDeletes("old_flow", [])).toBe("");
+  });
+});

@@ -21,7 +21,8 @@ import {
 import type { UseAwsCredentialsReturn, AwsCredentials, ConnectInstance } from "../hooks/useAwsCredentials";
 import { connectClient } from "../utils/awsClients";
 import { renameQueue, deleteQueue as deleteQueueOp, tagResource, createQueue } from "../utils/queueSync";
-import { FLOW_TABLE, loadFlowFromDdb, deleteFlowFromDdb, deleteSteps, editFlowMeta, renameFlow, setFlowMetaFields, type DdbState, type DdbFlow, type DdbFlowMeta, type DdbQueueUsage } from "../utils/ddbScan";
+import { FLOW_TABLE, loadFlowFromDdb, queryRawFlowRows, deleteFlowFromDdb, deleteSteps, editFlowMeta, renameFlow, setFlowMetaFields, type DdbState, type DdbFlow, type DdbFlowMeta, type DdbQueueUsage } from "../utils/ddbScan";
+import { buildSeedJsonl, mergeFlowIntoManifest, manifestToJson, type FlowRegistryManifest } from "../utils/flowSeedExport";
 import { annotationsToMap, setAnnotation, type FlowAnnotation } from "../stores/flowAnnotations";
 import { unreachableStepIds } from "../utils/flowPrune";
 import {
@@ -1375,6 +1376,14 @@ function DdbFlowsPanel({
 }) {
   const [filter, setFilter] = useState("");
   const [loadingFlow, setLoadingFlow] = useState<string | null>(null);
+  const [selectedFlows, setSelectedFlows] = useState<Set<string>>(new Set());
+  const [exportingSeed, setExportingSeed] = useState(false);
+  const toggleFlow = (rawId: string) =>
+    setSelectedFlows((prev) => {
+      const n = new Set(prev);
+      if (n.has(rawId)) n.delete(rawId); else n.add(rawId);
+      return n;
+    });
   const [loadErr, setLoadErr] = useState<string>("");
   const [deletingFlow, setDeletingFlow] = useState<string | null>(null);
   const [pruningFlow, setPruningFlow] = useState<string | null>(null);
@@ -1521,6 +1530,43 @@ function DdbFlowsPanel({
   const exportCsvFile = () => { if (registry) downloadText(`flows-registry-${stamp()}.csv`, toCsv(registry), "text/csv"); };
   const exportJsonFile = () => { if (registry) downloadText(`flows-registry-${stamp()}.json`, toJson(registry), "application/json"); };
 
+  // Export selected flows as a TwilioIVREngine seed.jsonl + flow_registry.json
+  // patch. Re-queries the raw step rows per flow (verbatim, for byte-faithful
+  // seeding), then builds both artifacts and downloads them.
+  const exportSeed = async () => {
+    if (!ddb) return;
+    const chosen: DdbFlow[] = ddb.flowDefs.filter((f) => selectedFlows.has(f.targetFlowId));
+    if (chosen.length === 0) return;
+    setExportingSeed(true);
+    setLoadErr("");
+    try {
+      const flows = [];
+      for (const f of chosen) {
+        const stepRows = await queryRawFlowRows(creds, f.targetFlowId);
+        flows.push({ stepRows, metas: f.metas });
+      }
+      downloadText(`TwilioIVRFlows.seed.${stamp()}.jsonl`, buildSeedJsonl(flows), "application/x-ndjson");
+
+      // Manifest patch: the engine repo holds the canonical flow_registry.json;
+      // this patch contributes flows[] + phones{} (hoo.sandbox derived, prod
+      // defaulted to "REPLACE") to be merged into it by hand/PR. Account/instance
+      // constants are left blank — the converter does not own prod values.
+      const base: FlowRegistryManifest = {
+        accounts: { sandbox: "", prod: "" },
+        instances: { sandbox: "", prod: "" },
+        region: "us-west-2",
+        flows: [],
+        phones: {},
+      };
+      const manifest = mergeFlowIntoManifest(base, chosen);
+      downloadText(`flow_registry.patch.${stamp()}.json`, manifestToJson(manifest), "application/json");
+    } catch (e: any) {
+      setLoadErr(e?.message ?? "Seed export failed");
+    } finally {
+      setExportingSeed(false);
+    }
+  };
+
   const handleLoadFlow = async (flow: DdbFlow) => {
     if (!onLoadFlow) return;
     setLoadingFlow(flow.targetFlowId);
@@ -1632,6 +1678,10 @@ function DdbFlowsPanel({
         <button className="btn btn-ghost" style={{ fontSize: 10 }} disabled={!registry} onClick={exportMd}>⬇ MD</button>
         <button className="btn btn-ghost" style={{ fontSize: 10 }} disabled={!registry} onClick={exportCsvFile}>⬇ CSV</button>
         <button className="btn btn-ghost" style={{ fontSize: 10 }} disabled={!registry} onClick={exportJsonFile}>⬇ JSON</button>
+        <button className="btn btn-ghost" style={{ fontSize: 10 }}
+          disabled={!registry || selectedFlows.size === 0 || exportingSeed} onClick={exportSeed}>
+          {exportingSeed ? "Seed…" : `⬇ Seed (${selectedFlows.size})`}
+        </button>
         {loadErr && (
           <span style={{ fontSize: 9, ...MONO, color: "var(--red)", marginLeft: 8 }}>{loadErr}</span>
         )}
@@ -1660,6 +1710,7 @@ function DdbFlowsPanel({
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
           <thead>
             <tr style={{ textAlign: "left", color: "var(--text-3)", ...MONO }}>
+              <th style={{ padding: "4px 6px", width: 28 }} />
               <th style={{ padding: "4px 6px" }}>Health Plan</th>
               <th style={{ padding: "4px 6px" }}>Flow</th>
               <th style={{ padding: "4px 6px" }}>Number(s)</th>
@@ -1690,6 +1741,14 @@ function DdbFlowsPanel({
                   || pruningFlow === e?.rawFlowId || renaming || savingField === e?.rawFlowId;
                 return (
                   <tr key={row.flowKey} style={{ borderTop: "1px solid var(--border)" }}>
+                    <td style={{ padding: "4px 6px", width: 28 }}>
+                      <input
+                        type="checkbox"
+                        checked={selectedFlows.has(e?.rawFlowId ?? "")}
+                        onChange={() => { if (e?.rawFlowId) toggleFlow(e.rawFlowId); }}
+                        disabled={!e?.rawFlowId}
+                      />
+                    </td>
                     <td style={{ padding: "4px 6px" }}>
                       {def && editingPlanFor === e?.rawFlowId ? (
                         <input

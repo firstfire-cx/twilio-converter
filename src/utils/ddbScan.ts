@@ -221,6 +221,31 @@ export async function loadFlowFromDdb(
   return { ir: { flow_id: flowId, nodes, start_step: startStep, hoo_arn: hooArn, meta }, meta };
 }
 
+/**
+ * Query a flow's raw step rows (everything under flow_id = target_flow_id except
+ * the META placeholder), as stored — for faithful seed export. Unlike
+ * loadFlowFromDdb this does NOT reshape into IR; it returns the rows verbatim.
+ */
+export async function queryRawFlowRows(
+  creds: AwsCredentials,
+  flowId: string,
+): Promise<Record<string, any>[]> {
+  const ddb = ddbDocClient(creds);
+  const rows: Record<string, any>[] = [];
+  let lastKey: any;
+  do {
+    const resp = await ddb.send(new QueryCommand({
+      TableName: FLOW_TABLE,
+      KeyConditionExpression: "flow_id = :f",
+      ExpressionAttributeValues: { ":f": flowId },
+      ...(lastKey ? { ExclusiveStartKey: lastKey } : {}),
+    }));
+    for (const it of resp.Items ?? []) if (it.step_id !== "META") rows.push(it);
+    lastKey = resp.LastEvaluatedKey;
+  } while (lastKey);
+  return rows;
+}
+
 /** Serialize a DdbFlowMeta to its DynamoDB META row shape. */
 export function metaToRow(meta: DdbFlowMeta): Record<string, any> {
   const item: Record<string, any> = {

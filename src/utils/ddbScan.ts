@@ -191,7 +191,7 @@ export async function loadFlowFromDdb(
   const nodes: Record<string, IVRNode> = {};
   let meta: FlowMeta | undefined;
   let startStep: string | undefined;
-  let hooArn: string | undefined;
+  let hooArn: string[] | undefined;
 
   for (const item of result.Items) {
     if (item.step_id === "META") {
@@ -199,12 +199,12 @@ export async function loadFlowFromDdb(
         dialed_number: item.dialed_number || item.flow_id,
         target_flow_id: item.target_flow_id,
         start_step: item.start_step,
-        hoo_arn: item.hoo_arn,
+        hoo_arn: item.hoo_arn ? [item.hoo_arn] : undefined,
         instance_id: item.instance_id,
         description: item.description,
       };
       startStep = item.start_step;
-      hooArn = item.hoo_arn;
+      hooArn = item.hoo_arn || undefined;
     } else {
       const node: IVRNode = {
         step_id: item.step_id,
@@ -218,7 +218,7 @@ export async function loadFlowFromDdb(
     }
   }
 
-  return { ir: { flow_id: flowId, nodes, start_step: startStep, hoo_arn: hooArn, meta }, meta };
+  return { ir: { flow_id: flowId, nodes, start_step: startStep, hoo_arn: hooArn || [], meta }, meta };
 }
 
 /**

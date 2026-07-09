@@ -87,7 +87,7 @@ export interface IR {
   flow_id: string;
   nodes: Record<string, IVRNode>;
   start_step?: string;
-  hoo_arn?: string;
+  hoo_arn?: string[]; // Connect HOO ARN or UUID (supports multiple HOOs per flow)
   meta?: Partial<FlowMeta>; // Flow metadata stored with IR
 }
 
@@ -109,7 +109,7 @@ export interface FlowMeta {
   dialed_number: string; // becomes the DDB partition key (flow_id column)
   target_flow_id: string; // which flow to load — maps to IR.flow_id
   start_step: string; // first step ID
-  hoo_arn?: string; // Connect HOO ARN or UUID
+  hoo_arn?: string[]; // Connect HOO ARN or UUID (supports multiple HOOs per flow)
   instance_id?: string; // Connect instance ID
   description?: string; // human label, not used by engine
 }

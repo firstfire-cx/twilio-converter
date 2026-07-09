@@ -177,7 +177,7 @@ export default function App() {
         ...ir.meta, // Include meta from the IR itself
         target_flow_id: ir.meta?.target_flow_id || t.meta.target_flow_id || ir.flow_id,
         start_step: ir.meta?.start_step || t.meta.start_step || ir.start_step || "",
-        hoo_arn: ir.meta?.hoo_arn || t.meta.hoo_arn || ir.hoo_arn || "",
+        hoo_arn: ir.meta?.hoo_arn || t.meta.hoo_arn || ir.hoo_arn || [],
       };
       
       // Update auth credentials if instance_id is provided in meta
@@ -307,8 +307,8 @@ export default function App() {
       }
     }
     updateActive(t => ({
-      ...tabPushIR(t, { ...ir, hoo_arn: hooArn, nodes: updatedNodes }),
-      meta: { ...t.meta, hoo_arn: hooArn },
+      ...tabPushIR(t, { ...ir, hoo_arn: hooArn ? [hooArn] : [], nodes: updatedNodes }),
+      meta: { ...t.meta, hoo_arn: hooArn ? [hooArn] : [] },
       hoo: { ...t.hoo, hooArn },
     }));
   }, [activeTab, updateActive]);

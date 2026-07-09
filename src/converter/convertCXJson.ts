@@ -989,7 +989,7 @@ export function convertCxJson(raw: any): IR {
         content: {
           transferType: "SIP",
           "X-UID": "{{uid}}",
-          "X-QueueSkill": "{{QueueSkill}}",
+          "X-SkillId": "{{QueueSkill}}",
           "X-SkillWhisper": "{{SkillWhisper}}",
           branches: {},
         },

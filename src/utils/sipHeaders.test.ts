@@ -8,12 +8,12 @@ describe("readSipHeaders", () => {
     const content: IVRContent = {
       transferType: "SIP",
       "X-UID": "{{uid}}",
-      "X-QueueSkill": "{{QueueSkill}}",
+      "X-SkillId": "{{QueueSkill}}",
       branches: {},
     };
     expect(readSipHeaders(content)).toEqual({
       "X-UID": "{{uid}}",
-      "X-QueueSkill": "{{QueueSkill}}",
+      "X-SkillId": "{{QueueSkill}}",
     });
   });
 
@@ -51,13 +51,13 @@ describe("writeSipHeaders", () => {
       branches: { "": "next" },
     } as IVRContent;
 
-    const out = writeSipHeaders(content, { "X-UID": "{{uid}}", "X-QueueSkill": "{{QueueSkill}}" });
+    const out = writeSipHeaders(content, { "X-UID": "{{uid}}", "X-SkillId": "{{QueueSkill}}" });
 
     expect(out).toEqual({
       transferType: "SIP",
       branches: { "": "next" },
       "X-UID": "{{uid}}",
-      "X-QueueSkill": "{{QueueSkill}}",
+      "X-SkillId": "{{QueueSkill}}",
     });
     // leak rule: nothing that would serialize into the SIP URI as a bad param
     expect("sipHeaders" in out).toBe(false);
@@ -81,7 +81,7 @@ describe("writeSipHeaders", () => {
           content: {
             transferType: "SIP",
             "X-UID": "{{uid}}",
-            "X-QueueSkill": "{{QueueSkill}}",
+            "X-SkillId": "{{QueueSkill}}",
             branches: {},
           } as IVRContent,
         },
@@ -96,7 +96,7 @@ describe("writeSipHeaders", () => {
     expect(uploaded).toMatchObject({
       transferType: "SIP",
       "X-UID": "{{uid}}",
-      "X-QueueSkill": "{{QueueSkill}}",
+      "X-SkillId": "{{QueueSkill}}",
     });
   });
 

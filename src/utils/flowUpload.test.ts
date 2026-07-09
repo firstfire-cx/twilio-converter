@@ -6,7 +6,7 @@ const meta: FlowMeta = {
   dialed_number: "+18005551234",
   target_flow_id: "Landing_BrightHealth",
   start_step: "start",
-  hoo_arn: "arn:hoo",
+  hoo_arn: ["arn:hoo"],
   instance_id: "inst-1",
   description: "BrightHealth landing",
 };

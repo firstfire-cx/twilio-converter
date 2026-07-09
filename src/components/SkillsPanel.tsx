@@ -647,7 +647,7 @@ function MetaAutoFill({ ir, meta, setMeta, hooArn }: {
     const autoMeta: Partial<FlowMeta> = {
       target_flow_id: meta.target_flow_id || ir.flow_id,
       start_step: meta.start_step || ir.start_step || "",
-      hoo_arn: meta.hoo_arn || hooArn || ir.hoo_arn || "",
+      hoo_arn: meta.hoo_arn || (hooArn ? [hooArn] : []) || ir.hoo_arn || [],
       dialed_number: meta.dialed_number || "",
       instance_id: meta.instance_id || "",
       description: meta.description || "",
@@ -659,7 +659,7 @@ function MetaAutoFill({ ir, meta, setMeta, hooArn }: {
     { key: "dialed_number", label: "Dialed Number", hint: "E.164 — DDB partition key" },
     { key: "target_flow_id", label: "Target Flow ID", hint: "Matches IR flow_id", auto: ir.flow_id },
     { key: "start_step", label: "Start Step ID", hint: "First node callers reach", auto: ir.start_step },
-    { key: "hoo_arn", label: "HOO ARN", hint: "Connect Hours of Operation ARN", auto: hooArn || ir.hoo_arn },
+    { key: "hoo_arn", label: "HOO ARN", hint: "Connect Hours of Operation ARN", auto: (hooArn || ir.hoo_arn || "").toString() },
     { key: "instance_id", label: "Connect Instance ID", hint: "Overrides INSTANCE_ID env var" },
     { key: "description", label: "Description", hint: "Human label" },
   ];
@@ -709,7 +709,7 @@ function MetaAutoFill({ ir, meta, setMeta, hooArn }: {
             ...localMeta,
             target_flow_id: localMeta.target_flow_id || ir.flow_id,
             start_step: localMeta.start_step || ir.start_step || "",
-            hoo_arn: localMeta.hoo_arn || hooArn || ir.hoo_arn || "",
+            hoo_arn: localMeta.hoo_arn || (hooArn ? [hooArn] : []) || ir.hoo_arn || [],
           };
           setLocalMeta(autoFilled);
           setMeta(autoFilled);
@@ -1098,7 +1098,7 @@ export default function SkillsPanel({
               <HooSection
                 hoo={hooRow}
                 setHoo={syncHooUp}
-                metaHooArn={meta?.hoo_arn ?? ir.hoo_arn}
+                metaHooArn={meta?.hoo_arn || ir.hoo_arn || ""}
                 credentials={credentials}
                 onHooCreated={arn => onHooCreated?.(arn)}
               />

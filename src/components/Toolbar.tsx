@@ -130,7 +130,7 @@ function FlowMetaModal({ ir, creds, initialMeta, onClose, onUpload }: {
     dialed_number: initialMeta?.dialed_number ?? "",
     target_flow_id: initialMeta?.target_flow_id ?? ir.flow_id,
     start_step: initialMeta?.start_step ?? ir.start_step ?? Object.keys(ir.nodes)[0] ?? "start",
-    hoo_arn: initialMeta?.hoo_arn ?? "",
+    hoo_arn: initialMeta?.hoo_arn ?? [],
     instance_id: initialMeta?.instance_id ?? "",
     description: initialMeta?.description ?? "",
   });
@@ -247,7 +247,7 @@ function MetadataEditorModal({ ir, currentMeta, onClose, onSave }: {
     dialed_number: "",
     target_flow_id: ir.flow_id,
     start_step: ir.start_step ?? Object.keys(ir.nodes)[0] ?? "start",
-    hoo_arn: ir.hoo_arn,
+    hoo_arn: ir.hoo_arn || [],
     instance_id: "",
     description: "",
   });
@@ -284,9 +284,15 @@ function MetadataEditorModal({ ir, currentMeta, onClose, onSave }: {
           {fields.map(f => (
             <div key={f.key} style={{ marginBottom: 14 }}>
               <label style={LABEL}>{f.label} <span style={{ color: "var(--text-3)", marginLeft: 4 }}>— {f.hint}</span></label>
-              <input style={INPUT} value={(meta[f.key] as string) ?? ""}
-                onChange={e => setMeta({ ...meta, [f.key]: e.target.value })}
-                placeholder={f.hint} />
+              {f.key === "hoo_arn" ? (
+                <input style={INPUT} value={(meta[f.key] as string[])?.join(", ") ?? ""}
+                  onChange={e => setMeta({ ...meta, [f.key]: e.target.value.split(",").map(s => s.trim()).filter(Boolean) })}
+                  placeholder={f.hint} />
+              ) : (
+                <input style={INPUT} value={(meta[f.key] as string) ?? ""}
+                  onChange={e => setMeta({ ...meta, [f.key]: e.target.value })}
+                  placeholder={f.hint} />
+              )}
             </div>
           ))}
         </div>

@@ -1579,12 +1579,12 @@ function DdbFlowsPanel({
         dialed_number: m0?.dialedNumber ?? "",
         target_flow_id: flow.targetFlowId,
         start_step: ir.start_step ?? flow.startStep ?? "",
-        hoo_arn: ir.hoo_arn ?? flow.hooArn,
+        hoo_arn: ir.hoo_arn ?? (flow.hooArn ? [flow.hooArn] : undefined),
         instance_id: flow.instanceId,
         description: m0?.description,
       };
       onLoadFlow(
-        { ...ir, start_step: ir.start_step ?? flow.startStep, hoo_arn: ir.hoo_arn ?? flow.hooArn, meta },
+        { ...ir, start_step: ir.start_step ?? flow.startStep, hoo_arn: ir.hoo_arn ?? (flow.hooArn ? [flow.hooArn] : undefined), meta },
         meta,
       );
     } catch (e: any) {

@@ -4,7 +4,7 @@
 // credentials. Replaces the ~6 near-identical builders that had drifted across
 // components (Connect + DynamoDB document clients).
 
-import { ConnectClient, type ConnectClientConfig } from "@aws-sdk/client-connect";
+import { ConnectClient, type ConnectClientConfig, DescribeHoursOfOperationCommand } from "@aws-sdk/client-connect";
 import { DynamoDBClient, type DynamoDBClientConfig } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 import type { AwsCredentials } from "../hooks/useAwsCredentials";
@@ -35,4 +35,30 @@ export function ddbDocClient(creds: AwsCredentials): DynamoDBDocumentClient {
   return DynamoDBDocumentClient.from(new DynamoDBClient(cfg), {
     marshallOptions: { removeUndefinedValues: true, convertEmptyValues: false },
   });
+}
+
+/**
+ * Fetch the name of a Connect Hours of Operation by ARN or UUID.
+ * Returns `null` if the HOO is not found or the API call fails.
+ */
+export async function fetchHooName(
+  creds: AwsCredentials,
+  hooArnOrId: string,
+  instanceId?: string,
+): Promise<string | null> {
+  if (!hooArnOrId) return null;
+
+  const client = connectClient(creds);
+
+  // Extract the HOO ID from ARN or use as-is
+  const hooId = hooArnOrId.includes("/") ? hooArnOrId.split("/").pop() || hooArnOrId : hooArnOrId;
+
+  const response = await client.send(
+    new DescribeHoursOfOperationCommand({
+      HoursOfOperationId: hooId,
+      ...(instanceId ? { InstanceId: instanceId } : {}),
+    }),
+  );
+
+  return response.HoursOfOperation?.Name ?? null;
 }

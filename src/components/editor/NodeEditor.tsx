@@ -5,6 +5,8 @@ import ExpressionEditor from "./ExpressionEditor";
 import NodePicker from "./NodePicker";
 import SipHeaderRow from "./SipHeaderRow";
 import { readSipHeaders, writeSipHeaders } from "../../utils/sipHeaders";
+import { fetchHooName } from "../../utils/awsClients";
+import { describeHoursOfOperationCommand } from "../../utils/awsClients";
 
 const ACTION_TYPES: ActionType[] = [
   "PLAY", "GATHER", "CHECK", "SET", "TRANSFER", "HANGUP", "WAIT", "HOURS", "START",
@@ -172,7 +174,7 @@ const COMPOSITE_TYPES = new Set<ActionType>(["MENU"]);
 // and what the PolyAI SIP endpoint expects. After that, plain rows.
 const INITIAL_SIP_HEADERS: Record<string, string> = {
   "X-UID": "{{uid}}",
-  "X-QueueSkill": "{{QueueSkill}}",
+  "X-SkillId": "{{QueueSkill}}",
   "X-SkillWhisper": "{{SkillWhisper}}",
 };
 
@@ -673,6 +675,27 @@ export default function NodeEditor({
               <div style={{ fontSize: 10, color: "var(--text-3)", marginTop: 4, fontFamily: "'IBM Plex Mono', monospace" }}>
                 Emits <code style={{ color: "var(--cyan)" }}>&lt;Pause length="{node.content?.seconds ?? "1"}"&gt;</code>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── HOURS config ── */}
+        {node.action_type === "HOURS" && (
+          <div className="form-section">
+            <div className="form-section-title">HOURS Config</div>
+            <div>
+              <label className="form-label">HOO ARN / UUID</label>
+              <input className="input" value={node.content?.hoo_arn ?? ""}
+                onChange={(e) => updateContent({ hoo_arn: e.target.value })}
+                placeholder="arn:aws:connect:us-east-1:123456789012:hours-of-operation/uuid" />
+              <div style={{ fontSize: 10, color: "var(--text-3)", marginTop: 4, fontFamily: "'IBM Plex Mono', monospace" }}>
+                Connect Hours of Operation ARN or UUID. Leave blank to use the flow-level default from META.
+              </div>
+              {node.content?.hoo_arn && (
+                <div style={{ fontSize: 11, color: "var(--text-2)", marginTop: 6 }}>
+                  HOO ID: <code style={{ color: "var(--cyan)" }}>{node.content.hoo_arn.split("/").pop() || node.content.hoo_arn}</code>
+                </div>
+              )}
             </div>
           </div>
         )}

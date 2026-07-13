@@ -1,3 +1,12 @@
+# twilio-converter — SafeRide IVR compiler (CXone → DynamoDB)
+
+**Canonical repo:** [firstfire-cx/twilio-converter](https://github.com/firstfire-cx/twilio-converter)  
+**Upstream (Carter):** [Carter-Sondrol/twilio-converter](https://github.com/Carter-Sondrol/twilio-converter) — sync with `git fetch upstream && git merge upstream/main` when Carter pushes.
+
+React/Vite desktop app: import CXone Studio JSON, post-process, upload flow rows to `TwilioIVRFlows`.
+
+---
+
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
